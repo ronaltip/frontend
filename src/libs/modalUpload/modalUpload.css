@@ -1,0 +1,18 @@
+.button-insert {
+  background-color: #55c21b;
+  display: flex;
+  align-items: center;
+  color: #fff;
+  font-size: 16px;
+  padding: 10px 24px;
+  border-radius: 4px;
+}
+.button-cancel {
+  background-color: #dc3545;
+  display: flex;
+  align-items: center;
+  color: #fff;
+  font-size: 16px;
+  padding: 10px 24px;
+  border-radius: 4px;
+}

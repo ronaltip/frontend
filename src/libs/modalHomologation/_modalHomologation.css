@@ -1,0 +1,20 @@
+.modalHomologation {
+  max-height: 300px;
+  width: 100%;
+  overflow-y: scroll;
+  padding-right: 14px;
+  overflow-x: hidden;
+}
+.modalHomologation::-webkit-scrollbar {
+  width: 10px;
+}
+.modalHomologation::-webkit-scrollbar-thumb {
+  background: rgba(191, 191, 201, 1);
+  border-radius: 4px;
+}
+.modalHomologation::-webkit-scrollbar-thumb hover {
+  background-color: rgba(140, 140, 150, 1);
+}
+.modalHomologation::-webkit-scrollbar-thumb active {
+  background-color: rgba(89, 89, 99, 1);
+}
