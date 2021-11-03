@@ -136,7 +136,7 @@ const ArchivoLas = () => {
 
   const onClickSave = value => {
     HttpServices()
-      .commandPut('homologacion_archivos', value)
+      .commandPut('archivos_homologacion', value)
       .then(response => {
         if (!response.data) {
           message.success('El archivo se ha actualizado correctamente.');
@@ -178,20 +178,24 @@ const ArchivoLas = () => {
       valueColumns &&
       valueColumns.map((colValue, key) =>
         HttpServices()
-          .get(`homologacion_archivos/${rowData.id}/${colValue}`)
+          .get(`archivos_homologacion/${rowData.id}/${colValue}`)
           .then(response => {
-            return {
-              idColumn: response.length >= 1 ? response[0].id : key,
-              nameColumn: colValue,
-              curveTypeName:
-                response.length >= 1 ? response[0].tipo_curva_nombre : '',
-              curveTypeId: response.length >= 1 ? response[0].tipo_curva_id : 0,
-              user_id:
-                userStorage && userStorage.id_usuario_sesion
-                  ? userStorage.id_usuario_sesion
-                  : '',
-              register_id: rowData.id,
-            };
+            if (response.length >= 1 && response[0].id) {
+              return {
+                homologation: response[0].id,
+                idColumn: response.length >= 1 ? response[0].id : key,
+                nameColumn: colValue,
+                curveTypeName:
+                  response.length >= 1 ? response[0].tipo_curva_nombre : '',
+                curveTypeId:
+                  response.length >= 1 ? response[0].wits_detalle_id : 0,
+                user_id:
+                  userStorage && userStorage.id_usuario_sesion
+                    ? userStorage.id_usuario_sesion
+                    : '',
+                register_id: rowData.id,
+              };
+            }
           })
           .catch(error => {
             console.log(error);

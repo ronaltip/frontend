@@ -48,6 +48,7 @@ const ModalHomologation = ({
                   className="button-insert"
                   onClick={() => onClickSave(infoByColumn)}
                   icon={<SaveOutlined />}
+                  disabled={wellId === ''}
                 >
                   Actualizar
                 </Button>

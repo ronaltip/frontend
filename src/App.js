@@ -7,17 +7,17 @@ import Routes from './routes/routes';
 const App = () => {
   const userStorage = sessionStorage.getItem('user');
   if (!userStorage && window.location.pathname !== '/') {
-    window.location.href = '/';
     sessionStorage.removeItem('user');
+    return (window.location.href = '/');
+  } else {
+    return (
+      <BrowserRouter>
+        <Switch>
+          <Route exact path="/" component={Login} />
+          <Routes />
+        </Switch>
+      </BrowserRouter>
+    );
   }
-
-  return (
-    <BrowserRouter>
-      <Switch>
-        <Route exact path="/" component={Login} />
-        <Routes />
-      </Switch>
-    </BrowserRouter>
-  );
 };
 export default App;
