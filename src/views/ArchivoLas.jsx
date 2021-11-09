@@ -180,22 +180,21 @@ const ArchivoLas = () => {
         HttpServices()
           .get(`archivos_homologacion/${rowData.id}/${colValue}`)
           .then(response => {
-            if (response.length >= 1 && response[0].id) {
-              return {
-                homologation: response[0].id,
-                idColumn: response.length >= 1 ? response[0].id : key,
-                nameColumn: colValue,
-                curveTypeName:
-                  response.length >= 1 ? response[0].tipo_curva_nombre : '',
-                curveTypeId:
-                  response.length >= 1 ? response[0].wits_detalle_id : 0,
-                user_id:
-                  userStorage && userStorage.id_usuario_sesion
-                    ? userStorage.id_usuario_sesion
-                    : '',
-                register_id: rowData.id,
-              };
-            }
+            return {
+              homologation:
+                response.length >= 1 ? response[0].wits_detalle_id : 0,
+              idColumn: response.length >= 1 ? response[0].id : key,
+              nameColumn: colValue,
+              curveTypeName:
+                response.length >= 1 ? response[0].tipo_curva_nombre : '',
+              curveTypeId:
+                response.length >= 1 ? response[0].wits_detalle_id : 0,
+              user_id:
+                userStorage && userStorage.id_usuario_sesion
+                  ? userStorage.id_usuario_sesion
+                  : '',
+              register_id: rowData.id,
+            };
           })
           .catch(error => {
             console.log(error);

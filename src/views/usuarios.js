@@ -16,7 +16,7 @@ const columns = [
   { title: 'Nombre', field: 'nombre' },
   { title: 'Email', field: 'email' },
   { title: 'Codigo', field: 'codigo' },
-  { title: 'Perfil', field: 'perfil_nombre' },
+  { title: 'Perfil', field: 'Perfil' },
 ];
 class viewUsuario extends Component {
   state = {

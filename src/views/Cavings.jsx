@@ -182,12 +182,12 @@ const Cavings = () => {
           .get(`archivos_homologacion/${rowData.id}/${colValue}`)
           .then(response => {
             return {
+              homologation: response.length >= 1 ? response[0].wits_detalle_id : key,
               idColumn: response.length >= 1 ? response[0].id : key,
-              nameColumn: colValue,
-              curveTypeName:
-                response.length >= 1 ? response[0].tipo_curva_nombre : '',
+              nameColumn: response.length >= 1 ? response[0].nombre_columna: colValue,
+              curveTypeName: response.length >= 1 ? response[0].tipo_curva_nombre : '',
               curveTypeId: response.length >= 1 ? response[0].wits_detalle_id : 0,
-              user_id: userStorage.id_usuario_sesion,
+              user_id: userStorage && userStorage.id_usuario_sesion ? userStorage.id_usuario_sesion : '',
               register_id: isRowData.id,
             };
           })
