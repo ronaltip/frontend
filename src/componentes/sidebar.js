@@ -30,6 +30,9 @@ import PersonIcon from '@material-ui/icons/Person';
 import SettingsIcon from '@material-ui/icons/Settings';
 import TimelineIcon from '@material-ui/icons/Timeline';
 import ViewListIcon from '@material-ui/icons/ViewList';
+import EventAvailable from '@material-ui/icons/EventAvailable';
+import EventNote from '@material-ui/icons/EventNote';
+
 
 const cookies = new Cookies();
  
@@ -111,8 +114,8 @@ export default props => {
                         <List component="div" disablePadding>
                             <ListItem button className={classes.nested} component={Link} to="/fields" > <ListItemIcon> <ViewListIcon />    </ListItemIcon> <ListItemText primary="Campos" /> </ListItem>
                             <ListItem button className={classes.nested} component={Link} to="/wells" > <ListItemIcon> <GradientIcon />    </ListItemIcon> <ListItemText primary="Pozos" /> </ListItem>
-                            <ListItem button className={classes.nested} component={Link} to="/tipo_curvas" >  <ListItemIcon> <AccountTreeIcon /> </ListItemIcon> <ListItemText primary="Tipos de Curvas" /> </ListItem>                            
-                            <ListItem button className={classes.nested} component={Link} to="/wits_homologacion" >  <ListItemIcon> <BlurLinearIcon /> </ListItemIcon> <ListItemText primary="Tabla Wits 0" /> </ListItem>
+                            {/*<ListItem button className={classes.nested} component={Link} to="/tipo_curvas" >  <ListItemIcon> <AccountTreeIcon /> </ListItemIcon> <ListItemText primary="Tipos de Curvas" /> </ListItem>*/}
+                            <ListItem button className={classes.nested} component={Link} to="/wits" >  <ListItemIcon> <BlurLinearIcon /> </ListItemIcon> <ListItemText primary="Tabla Wits 0" /> </ListItem>
                         </List>
                     </Collapse> 
                     <ListItem button onClick={handleClick3}>
@@ -123,8 +126,8 @@ export default props => {
                     <Collapse in={open3} timeout="auto" unmountOnExit>
                         <List component="div" disablePadding>
                             <ListItem button className={classes.nested} component={Link} to="/operaciones" > <ListItemIcon> <DateRangeIcon />    </ListItemIcon> <ListItemText primary="Operaciones" /> </ListItem>
-                            <ListItem button className={classes.nested} component={Link} to="/eventos" > <ListItemIcon> <FilterTiltShiftIcon />  </ListItemIcon> <ListItemText primary="Eventos" /> </ListItem>
-                            <ListItem button className={classes.nested} component={Link} to="/cavings" > <ListItemIcon> <BarChartIcon />         </ListItemIcon> <ListItemText primary="Cavings" /> </ListItem>
+                            <ListItem button className={classes.nested} component={Link} to="/eventos" > <ListItemIcon> <EventAvailable />  </ListItemIcon> <ListItemText primary="Eventos" /> </ListItem>
+                            <ListItem button className={classes.nested} component={Link} to="/cavings" > <ListItemIcon> <EventNote />         </ListItemIcon> <ListItemText primary="Cavings" /> </ListItem>
                             <ListItem button className={classes.nested} component={Link} to="/archivolas" > <ListItemIcon> <AttachmentIcon />    </ListItemIcon> <ListItemText primary="Archivos .Las" /> </ListItem>
                             <ListItem button className={classes.nested} component={Link} to="/homologacion_archivos" > <ListItemIcon> <FormatListNumberedRtlIcon />    </ListItemIcon> <ListItemText primary="Configuraci&oacute;n de Archivos" /> </ListItem>
                         </List>
@@ -138,7 +141,7 @@ export default props => {
                         <List component="div" disablePadding>
                             <ListItem button className={classes.nested} component={Link} to="/tiemporeal" > <ListItemIcon> <SpeedIcon />    </ListItemIcon> <ListItemText primary="Tiempo Real" /> </ListItem>
                             {/* <ListItem button className={classes.nested} component={Link} to="/visual_historicos" > <ListItemIcon> <SettingsSystemDaydreamIcon />  </ListItemIcon> <ListItemText primary="Hist&oacute;ricos" /> </ListItem>                           */}
-                            <ListItem button className={classes.nested} component={Link} to="/visual_config_lista" > <ListItemIcon> <SettingsSystemDaydreamIcon />  </ListItemIcon> <ListItemText primary="Hist&oacute;ricos" /> </ListItem>                           
+                            <ListItem button className={classes.nested} component={Link} to="/graficador" > <ListItemIcon> <SettingsSystemDaydreamIcon />  </ListItemIcon> <ListItemText primary="Hist&oacute;ricos" /> </ListItem>                           
                         </List>
                     </Collapse> 
                 <ListItem button>

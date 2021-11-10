@@ -21,4 +21,29 @@
 
 .cursor-pointer{
 	cursor: pointer;
-  }
+}
+
+.rotate {
+    transform: rotate(180deg);
+}
+
+.bg-verdeoscuro {
+    background-color: #004236 !important;
+    color: white !important;
+}
+
+
+.bg-verdeclaro {
+    background-color: #BAD405 !important;
+    color: black !important;
+}
+
+.bg-amarillo {
+    background-color: #effb97 !important;
+    color: black !important;
+}
+
+.bg-negro {
+    background-color: #000 !important;
+    color: white !important;
+}

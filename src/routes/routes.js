@@ -28,8 +28,9 @@ import viewFields from '../views/fields';
 import viewWitsHomologacion from '../views/wits_homologacion';
 import viewHomologacionArchivos from '../views/homologacion_archivos';
 
+import viewWits from '../views/wits';
 import viewGraficador from '../views/graficador';
-
+import viewTiempoReal from '../views/tiemporeal';
 
 class Routes extends Component {
     render() {
@@ -41,29 +42,30 @@ class Routes extends Component {
                     <Route exact path="/usuarios" component={viewUsuario} />
                     <Route exact path="/unidades" component={viewUnidades} />
                     <Route exact path="/cavings" component={viewCavings} />
-                    <Route exact path="/grupo_curvas" component={viewGrupoCurvas} />
+                    {/*<Route exact path="/grupo_curvas" component={viewGrupoCurvas} /> */}
                     <Route exact path="/operaciones" component={viewOperaciones} />
                     <Route exact path="/archivolas" component={viewArchivoLas} />
                     <Route exact path="/homologacion_archivos" component={viewHomologacionArchivos} />                 
                     <Route exact path="/eventos" component={viewEventos} />
                     <Route exact path="/tipo_eventos" component={viewTiposEventos} />
-                    <Route exact path="/tipo_curvas" component={viewTiposCurvas} />
+                    {/*<Route exact path="/tipo_curvas" component={viewTiposCurvas} /> 
 
                     <Route path='/visual_config_edi:id' component={viewVisualConfigEdi} />
                     <Route exact path="/visual_config_lista" component={viewVisualConfigLista} />
                     <Route exact path="/visual_config_track" component={viewVisualConfigTrack} />
-                    <Route exact path="/visual_config" component={viewVisualConfig} />                       
+                    <Route exact path="/visual_config" component={viewVisualConfig} />            */}           
 
-                    <Route exact path="/visual_historicos" component={viewVisualHistorico} />  
+                    {/* <Route exact path="/visual_historicos" component={viewVisualHistorico} />  
                     <Route exact path="/visual_historicos_dp:id" component={viewVisualHistoricoDP} />  
-                    <Route exact path="/visual_historicos_dc/:id" component={viewVisualHistoricoDPC} />  
-                    
+                    <Route exact path="/visual_historicos_dc/:id" component={viewVisualHistoricoDPC} />   */}
+
                     <Route exact path="/fields" component={viewFields} />
-                    <Route exact path="/wells" component={viewWells} />
-                    <Route exact path="/wits_homologacion" component={viewWitsHomologacion} />     
+                    <Route exact path="/wells"  component={viewWells} />
+                    <Route exact path="/wits"  component={viewWits} />
+                    <Route exact path="/tiemporeal"  component={viewTiempoReal} />
+                    {/*<Route exact path="/wits_homologacion" component={viewWitsHomologacion} />   */}  
 
-                    <Route exact path="/graficador" component={viewGraficador} />     
-
+                    <Route exact path="/graficador" component={viewGraficador} />
                 </Switch>
             </BrowserRouter>
         );
