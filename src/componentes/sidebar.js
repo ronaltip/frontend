@@ -30,6 +30,8 @@ import SettingsIcon from '@material-ui/icons/Settings';
 import TimelineIcon from '@material-ui/icons/Timeline';
 import ViewListIcon from '@material-ui/icons/ViewList';
 import AllInbox from '@material-ui/icons/AllInbox';
+import EventAvailable from '@material-ui/icons/EventAvailable';
+import EventNote from '@material-ui/icons/EventNote';
 
 const useStyles = makeStyles(theme => ({
   root: {

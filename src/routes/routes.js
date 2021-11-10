@@ -3,9 +3,9 @@ import { BrowserRouter, Switch, Route } from 'react-router-dom';
 import Login from '../views/login';
 import Home from '../views/home';
 import viewUsuario from '../views/usuarios';
-import Cavings from '../views/Cavings';
-import ArchivoLas from '../views/ArchivoLas';
-import Fels from '../views/Fels';
+import viewCavings from '../views/Cavings';
+import viewArchivoLas from '../views/ArchivoLas';
+import viewFels from '../views/Fels';
 import viewEventos from '../views/eventos';
 //import viewArchivoLase from '../views/archivolase';
 import viewGrupoCurvas from '../views/grupo_curvas';
@@ -42,11 +42,11 @@ class Routes extends Component {
                     <Route exact path="/home" component={Home} />
                     <Route exact path="/usuarios" component={viewUsuario} />
                     <Route exact path="/unidades" component={viewUnidades} />
-                    <Route exact path="/cavings" component={viewCavings} />
-                    {/*<Route exact path="/grupo_curvas" component={viewGrupoCurvas} /> */}
+                    <Route exact path="/Cavings" component={viewCavings} />
+                    <Route exact path="/Fels" component={viewFels} /> 
                     <Route exact path="/operaciones" component={viewOperaciones} />
-                    <Route exact path="/archivolas" component={viewArchivoLas} />
-                    <Route exact path="/homologacion_archivos" component={viewHomologacionArchivos} />                 
+                    <Route exact path="/ArchivoLas" component={viewArchivoLas} />
+                    {/*<Route exact path="/homologacion_archivos" component={viewHomologacionArchivos} />  */}
                     <Route exact path="/eventos" component={viewEventos} />
                     <Route exact path="/tipo_eventos" component={viewTiposEventos} />
                     {/*<Route exact path="/tipo_curvas" component={viewTiposCurvas} /> 
