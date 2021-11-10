@@ -1,19 +1,18 @@
-import React  from 'react'; 
-import { slide as Menu } from "react-burger-menu";
+import React from 'react';
+import { slide as Menu } from 'react-burger-menu';
 import { Link } from 'react-router-dom';
-import Cookies from 'universal-cookie'; 
 
-import { makeStyles } from '@material-ui/core/styles'; 
+import { makeStyles } from '@material-ui/core/styles';
 import AttachmentIcon from '@material-ui/icons/Attachment';
 import AccountTreeIcon from '@material-ui/icons/AccountTree';
 import BarChartIcon from '@material-ui/icons/BarChart';
-import BlurLinearIcon from '@material-ui/icons/BlurLinear'; 
+import BlurLinearIcon from '@material-ui/icons/BlurLinear';
 import FormatListNumberedRtlIcon from '@material-ui/icons/FormatListNumberedRtl';
 import Collapse from '@material-ui/core/Collapse';
 import DateRangeIcon from '@material-ui/icons/DateRange';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import SettingsSystemDaydreamIcon from '@material-ui/icons/SettingsSystemDaydream';
-import ExpandMore from '@material-ui/icons/ExpandMore'; 
+import ExpandMore from '@material-ui/icons/ExpandMore';
 import FormatUnderlinedIcon from '@material-ui/icons/FormatUnderlined';
 import FilterTiltShiftIcon from '@material-ui/icons/FilterTiltShift';
 import GradientIcon from '@material-ui/icons/Gradient';
@@ -25,85 +24,110 @@ import SpeedIcon from '@material-ui/icons/Speed';
 import ListItemText from '@material-ui/core/ListItemText';
 import ListAltIcon from '@material-ui/icons/ListAlt';
 import PostAddIcon from '@material-ui/icons/PostAdd';
-import PowerSettingsNewIcon from '@material-ui/icons/PowerSettingsNew'; 
+import PowerSettingsNewIcon from '@material-ui/icons/PowerSettingsNew';
 import PersonIcon from '@material-ui/icons/Person';
 import SettingsIcon from '@material-ui/icons/Settings';
 import TimelineIcon from '@material-ui/icons/Timeline';
 import ViewListIcon from '@material-ui/icons/ViewList';
-import EventAvailable from '@material-ui/icons/EventAvailable';
-import EventNote from '@material-ui/icons/EventNote';
+import AllInbox from '@material-ui/icons/AllInbox';
 
-
-const cookies = new Cookies();
- 
-const useStyles = makeStyles((theme) => ({
-    root: {
-        width: '100%',
-        maxWidth: 360, 
-        backgroundColor: '#55c21b',
-        font_size: '10px',
-    },
-    nested: {
-        paddingLeft: theme.spacing(5),         
-    },
-    a: {
-        color: '#fff',
-    }    
+const useStyles = makeStyles(theme => ({
+  root: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: '#55c21b',
+    font_size: '10px',
+  },
+  nested: {
+    paddingLeft: theme.spacing(5),
+  },
+  a: {
+    color: '#fff',
+  },
 }));
- 
+
 export default props => {
-    const classes = useStyles();
-    const [open, setOpen] = React.useState(false);
-    const [open2, setOpen2] = React.useState(false);
-    const [open3, setOpen3] = React.useState(false);
-    const [open4, setOpen4] = React.useState(false);
+  const classes = useStyles();
+  const [open, setOpen] = React.useState(false);
+  const [open2, setOpen2] = React.useState(false);
+  const [open3, setOpen3] = React.useState(false);
+  const [open4, setOpen4] = React.useState(false);
 
-    const handleClick = () => {
-        setOpen(!open);
-    }; 
+  const handleClick = () => {
+    setOpen(!open);
+  };
 
-    const handleClick2 = () => {
-        setOpen2(!open2);
-    };
+  const handleClick2 = () => {
+    setOpen2(!open2);
+  };
 
-    const handleClick3 = () => {
-        setOpen3(!open3);
-    };
+  const handleClick3 = () => {
+    setOpen3(!open3);
+  };
 
-    const handleClick4 = () => {
-        setOpen4(!open4);
-    };
-   const cerrarSesion = () => {
-        cookies.remove('id_usuario_sesion', { path: "/" });
-        cookies.remove('nombre_usuario_sesion', { path: "/" });
-        cookies.remove('perfil_id_usuario_sesion', { path: "/" });
-        window.location.href = './';
-    }
-     
+  const handleClick4 = () => {
+    setOpen4(!open4);
+  };
+  const cerrarSesion = () => {
+    sessionStorage.removeItem('user');
+    window.location.href = './';
+  };
 
-    return (
-        <div className="props">            
-            <Menu>
-            <List
-                component="nav"
-                aria-labelledby="nested-list-subheader"                
-                className={classes.root}
-            >    
-                <ListItem className={classes.nested}  >                   
-                    <ListItemText primary="Men&uacute; Principal" />
-                </ListItem>
-                <ListItem button onClick={handleClick}>
-                    <ListItemIcon> <SettingsIcon /> </ListItemIcon>
-                        <ListItemText primary="Configuraci&oacute;n" />
-                    {open ? <ExpandLess /> : <ExpandMore />}
-                </ListItem>
-                <Collapse in={open} timeout="auto" unmountOnExit>
-                    <List component="div" disablePadding>
-                            <ListItem button className={classes.nested} component={Link} to="/usuarios">      <ListItemIcon> <PersonIcon /></ListItemIcon>   <ListItemText primary="Usuarios"   /> </ListItem>                            
-                            <ListItem button className={classes.nested} component={Link} to="/unidades">      <ListItemIcon> <FormatUnderlinedIcon /></ListItemIcon> <ListItemText primary="Unidades de medida" /> </ListItem>
-                            <ListItem button className={classes.nested} component={Link} to="/tipo_eventos">  <ListItemIcon> <ListAltIcon /></ListItemIcon> <ListItemText primary="Tipos de eventos" /> </ListItem>
-                    </List>
-                    </Collapse>
+  return (
+    <div className="props">
+      <Menu>
+        <List
+          component="nav"
+          aria-labelledby="nested-list-subheader"
+          className={classes.root}
+        >
+          <ListItem className={classes.nested}>
+            <ListItemText primary="Men&uacute; Principal" />
+          </ListItem>
+          <ListItem button onClick={handleClick}>
+            <ListItemIcon>
+              <SettingsIcon />
+            </ListItemIcon>
+            <ListItemText primary="Configuraci&oacute;n" />
+            {open ? <ExpandLess /> : <ExpandMore />}
+          </ListItem>
+          <Collapse in={open} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              <ListItem
+                button
+                className={classes.nested}
+                component={Link}
+                to="/usuarios"
+              >
+                <ListItemIcon>
+                  <PersonIcon />
+                </ListItemIcon>
+                <ListItemText primary="Usuarios" />
+              </ListItem>
+              <ListItem
+                button
+                className={classes.nested}
+                component={Link}
+                to="/unidades"
+              >
+                <ListItemIcon>
+                  <FormatUnderlinedIcon />
+                </ListItemIcon>
+                <ListItemText primary="Unidades de medida" />
+              </ListItem>
+              <ListItem
+                button
+                className={classes.nested}
+                component={Link}
+                to="/tipo_eventos"
+              >
+                <ListItemIcon>
+                  <ListAltIcon />
+                </ListItemIcon>
+                <ListItemText primary="Tipos de eventos" />
+              </ListItem>
+            </List>
+          </Collapse>
 
                     <ListItem button onClick={handleClick2}>
                         <ListItemIcon> <TimelineIcon /> </ListItemIcon>
@@ -149,8 +173,7 @@ export default props => {
                         <ListItemText primary="Cerrar Sesi&oacute;n" onClickCapture={cerrarSesion} /> 
                 </ListItem>
             </List>
-            </Menu>
-            </div>
-    );
+      </Menu>
+    </div>
+  );
 };
- 

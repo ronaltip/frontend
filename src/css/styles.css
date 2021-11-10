@@ -1,95 +1,94 @@
+@import '~antd/dist/antd.css';
+
 html,
 body {
-    margin: 0;
+  margin: 0;
 }
 
 #App {
-    font-family: sans-serif;
-    /* Give app full page to work with */
-    height: 70vh;
+  font-family: sans-serif;
+  /* Give app full page to work with */
+  height: 70vh;
 }
 
 #page-wrap {
-    text-align: center;
-    /* Prevent sidebar from showing a scrollbar on page */
-    overflow: auto;
+  text-align: center;
+  /* Prevent sidebar from showing a scrollbar on page */
+  overflow: auto;
 }
 
 /* Individual item */
 .bm-item {
-    display: inline-block;
-    /* Our sidebar item styling */
-    text-decoration: none;
-    margin-bottom: 10px;
-    color: #ffffff;
-    transition: color 0.2s;
-    font-size:12px;
+  display: inline-block;
+  /* Our sidebar item styling */
+  text-decoration: none;
+  margin-bottom: 10px;
+  color: #ffffff;
+  transition: color 0.2s;
+  font-size: 12px;
 }
 
-    /* Change color on hover */
-    .bm-item:hover {
-        color: white;
-    }
+/* Change color on hover */
+.bm-item:hover {
+  color: white;
+}
 
 /* The rest copied directly from react-burger-menu docs */
 
 /* Position and sizing of burger button */
 .bm-burger-button {
-    position: fixed;
-    width: 30px;
-    height: 24px;
-    left: 30px;
-    top: 30px;
+  position: fixed;
+  width: 30px;
+  height: 24px;
+  left: 30px;
+  top: 30px;
 }
 
 /*Color del icono del menu*/
 .bm-burger-bars {
-    background: #55c21b; 
+  background: #55c21b;
 }
 
 /* Position and sizing of clickable cross button */
 .bm-cross-button {
-    height: 24px;
-    width: 24px;
+  height: 24px;
+  width: 24px;
 }
 
 /* Color/shape of close button cross */
 .bm-cross {
-    background: #ffffff; 
+  background: #ffffff;
 }
 
 /* General sidebar styles */
 .bm-menu {
-    background: #55c21b;
-    padding: 2.5em 1.5em 0;
-    font-size: 1.15em;
+  background: #55c21b;
+  padding: 2.5em 1.5em 0;
+  font-size: 1.15em;
 }
 
 /* Morph shape necessary with bubble or elastic */
 .bm-morph-shape {
-    fill: #373a47;
+  fill: #373a47;
 }
 
 /* Wrapper for item list */
 .bm-item-list {
-    color: #b8b7ad;
+  color: #b8b7ad;
 }
 
 /* Styling of overlay */
 .bm-overlay {
-    color: #fff;
-    background: rgba(0, 0, 0,0);
+  color: #fff;
+  background: rgba(0, 0, 0, 0);
 }
-
 
 .custom-modal-style {
-    width: 1000px;    
-    top: 50%;
-    left: 50%;
-    right: auto;
-    bottom: auto;
-    marginRight: -50%;
-    transform: translate(-45%, 0%);
- 
+  width: 1000px;
+  top: 50%;
+  left: 50%;
+  right: auto;
+  bottom: auto;
+  marginright: -50%;
+  transform: translate(-45%, 0%);
 }
-
