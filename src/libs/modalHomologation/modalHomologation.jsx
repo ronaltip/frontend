@@ -18,6 +18,9 @@ const { Option } = Select;
 const ModalHomologation = ({
   infoByColumn,
   wellId,
+  definitionTime,
+  definitionDate,
+  definitionHour,
   isActive,
   onClickCancel,
   onClickSave,
@@ -46,7 +49,14 @@ const ModalHomologation = ({
               <Space>
                 <Button
                   className="button-insert"
-                  onClick={() => onClickSave(infoByColumn)}
+                  onClick={() =>
+                    onClickSave(infoByColumn, {
+                      // wells_id: wellId,
+                      tiempo_inicial: definitionTime,
+                      fecha_inicial: definitionDate,
+                      hora_inicial: definitionHour,
+                    })
+                  }
                   icon={<SaveOutlined />}
                   disabled={wellId === ''}
                 >
@@ -69,18 +79,55 @@ const ModalHomologation = ({
             <Row gutter={[16, 16]}>
               <Col span={24}>
                 <Space>
-                  <div>
-                    <span>Time</span>
-                    <InputNumber />
-                  </div>
-                  <div>
-                    <span>Fecha</span>
-                    <DatePicker placeholder="Selecciona una fecha" />
-                  </div>
-                  <div>
-                    <span>Hora</span>
-                    <TimePicker placeholder="Selecciona una hora" />
-                  </div>
+                  <Row>
+                    <Col span={24}>
+                      <span>Time</span>
+                    </Col>
+                    <Col>
+                      <InputNumber
+                        defaultValue={
+                          definitionTime
+                            ? parseInt(definitionTime).toFixed()
+                            : null
+                        }
+                        onChange={e => (definitionTime = e)}
+                      />
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col span={24}>
+                      <span>Fecha</span>
+                    </Col>
+                    <Col>
+                      <DatePicker
+                        defaultValue={definitionDate}
+                        onChange={e =>
+                          (definitionDate = e.format('DD/MM/YYYY'))
+                        }
+                        placeholder="Selecciona una fecha"
+                      />
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col span={24}>
+                      <span>Hora</span>
+                    </Col>
+                    <Col>
+                      <TimePicker
+                        defaultValue={definitionHour}
+                        onChange={(time, timeString) =>
+                          (definitionHour = time.hour())
+                        }
+                        placeholder="Selecciona una hora"
+                        showNow={false}
+                        showSecond={false}
+                        showMinute={false}
+                        format={'HH'}
+                        minuteStep={60}
+                        secondStep={60}
+                      />
+                    </Col>
+                  </Row>
                 </Space>
               </Col>
             </Row>

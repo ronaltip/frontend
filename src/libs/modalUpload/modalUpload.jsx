@@ -11,7 +11,9 @@ import { pdfToBase64 } from './../../util/converterToBase64';
 import './modalUpload.css';
 
 const { Option } = Select;
+// const PDFJS = require('pdfjs-dist/build/pdf');
 
+// const images = [];
 const ModalUpload = ({
   isActive,
   fileType,
@@ -31,6 +33,8 @@ const ModalUpload = ({
     const detail = [];
     let headers = '';
     let columns = '';
+    let columnsData;
+    let isDateColumn = false;
 
     const valueUpload = value;
     if (fileType === 'LAS') {
@@ -42,12 +46,19 @@ const ModalUpload = ({
       const detailAscii = value.map(({ data }) =>
         data.indexOf('~Ascii Data Section')
       );
+      const detailDateValue = value.map(({ data }) =>
+        data.indexOf('DATE.                                       : Index')
+      );
       const valueIndexOfAscii = detailAscii.indexOf(0);
-      let columnsData = valueUpload[valueIndexOfArray + 1].data[0];
+      columnsData = valueUpload[valueIndexOfArray + 1].data[0];
       totalHeaders.push(valuesUp.splice(0, valueIndexOfArray));
-
-      columnsData = columnsData.replaceAll('#DATE.', 'DATE.');
-      columnsData = columnsData.replace('TIME', 'TIME.');
+      if (detailDateValue.indexOf(0) !== -1) {
+        columnsData = columnsData.replaceAll('#DATE.', 'DATE.');
+        columnsData = columnsData.replace('TIME', 'TIME.');
+        isDateColumn = true;
+      } else {
+        isDateColumn = false;
+      }
       totalColumns = columnsData.split('.');
       totalColumns.pop();
       totalDetails.push(valueUpload.slice(valueIndexOfAscii + 2));
@@ -80,6 +91,7 @@ const ModalUpload = ({
       detalle: detail[0],
       nombre_archivo: file.name.split('.')[0],
       extension_archivo: file.name.split('.')[1],
+      isTime: isDateColumn,
     };
     setPayload(infoUploadFile);
   };
@@ -98,18 +110,32 @@ const ModalUpload = ({
     multiple: false,
     showUploadList: false,
     accept: EXTENSIONS_LIST[fileType].toString(),
-    onChange(info) {
-      pdfToBase64(info.file).then(response => {
-        const infoUploadFile = {
-          wells_id: wellId,
-          base64upload: response,
-          usuario_id_creacion: userStorage.id_usuario_sesion,
-          tipo_archivo_id: TYPE_OF_FILES[fileType],
-          nombre_archivo: info.file.name.split('.')[0],
-          extension_archivo: info.file.name.split('.')[1],
-        };
-        setPayload(infoUploadFile);
-      });
+    async onChange(info) {
+      // pdfToBase64(info.file).then(response => {
+      //   const infoUploadFile = {
+      //     wells_id: wellId,
+      //     base64upload: response,
+      //     usuario_id_creacion: userStorage.id_usuario_sesion,
+      //     tipo_archivo_id: TYPE_OF_FILES[fileType],
+      //     nombre_archivo: info.file.name.split('.')[0],
+      //     extension_archivo: info.file.name.split('.')[1],
+      //   };
+      //   setPayload(infoUploadFile);
+      // });
+      //   var pdf = info.file;
+      //   const canvas = document.createElement('canvas');
+      //   for (let i = 0; i < pdf.numPages; i++) {
+      //     const page = await pdf.getPage(i + 1);
+      //     const viewport = page.getViewport({ scale: 1 });
+      //     const context = canvas.getContext('2d');
+      //     canvas.height = viewport.height;
+      //     canvas.width = viewport.width;
+      //     await page.render({ canvasContext: context, viewport: viewport })
+      //       .promise;
+      //     images.append(canvas.toDataURL());
+      //   }
+      //   canvas.remove();
+      //   console.log('imagenes: ', images);
     },
   };
 
@@ -211,7 +237,7 @@ const ModalUpload = ({
                 <Button icon={<UploadOutlined />}>Adjuntar archivo</Button>
                 {payload && payload.nombre_archivo && (
                   <span>
-                    {payload.nombre_archivo + payload.extension_archivo}
+                    {payload.nombre_archivo + '.' + payload.extension_archivo}
                   </span>
                 )}
               </Space>

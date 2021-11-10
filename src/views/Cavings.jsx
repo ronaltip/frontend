@@ -19,6 +19,9 @@ const Cavings = () => {
   const [infoByColumn, setInfoByColumn] = useState({
     resultArray: [],
     wellId: '',
+    definitionTime: null,
+    definitionDate: null,
+    definitionHour: null,
   });
   const columns = [
     {
@@ -72,7 +75,7 @@ const Cavings = () => {
 
   const getListByCAVING = () => {
     HttpServices()
-    .get('archivo_encabezado/tipocargue/2')
+      .get('archivo_encabezado/tipocargue/2')
       .then(response => {
         if (response) {
           setListRegistersCAVING(response);
@@ -111,11 +114,11 @@ const Cavings = () => {
     HttpServices()
       .commandDelete('archivo_encabezado', { params: payload })
       .then(response => {
-        if (!response.data) {
-          message.success('El registro se ha eliminado correctamente.');
-        } else {
-          message.error('Algo ha salido mal, por favor intente de nuevo.');
-        }
+        // if (response && response[0].id) {
+        message.success('El registro se ha eliminado correctamente.');
+        // } else {
+        //   message.error('Algo ha salido mal, por favor intente de nuevo.');
+        // }
         getListByCAVING();
         onClickCancel();
       })
@@ -130,17 +133,39 @@ const Cavings = () => {
     setInfoByColumn({
       resultArray: [],
       wellId: '',
+      definitionTime: null,
+      definitionDate: null,
+      definitionHour: null,
     });
     setIsActive(false);
     setIsActiveHom(false);
   };
 
-  const onClickSave = value => {
+  const onClickSave = (homoPayload, datePayload) => {
     HttpServices()
-      .commandPut('archivos_homologacion', value)
+      .commandPut('archivos_homologacion', homoPayload)
       .then(response => {
-        if (!response.data) {
-          message.success('El archivo se ha actualizado correctamente.');
+        if (response && response[0].id) {
+          message.success(
+            'El archivo de homologacion se ha actualizado correctamente.'
+          );
+
+          HttpServices()
+            .commandPut('archivo_encabezado', {
+              ...datePayload,
+              id: homoPayload[0].register_id,
+            })
+            .then(response => {
+              if (response && response[0].id) {
+                message.success(
+                  'La asignación en tiempos se ha actualizado correctamente.'
+                );
+              } else {
+                message.error(
+                  'Algo ha salido mal, por favor intente de nuevo.'
+                );
+              }
+            });
         } else {
           message.error('Algo ha salido mal, por favor intente de nuevo.');
         }
@@ -158,7 +183,7 @@ const Cavings = () => {
     HttpServices()
       .command('archivo_encabezado', payload)
       .then(response => {
-        if (!response.data) {
+        if (response && response[0].id) {
           message.success('El archivo se ha cargado correctamente.');
         } else {
           message.error('Algo ha salido mal, por favor intente de nuevo.');
@@ -174,21 +199,31 @@ const Cavings = () => {
   };
 
   const getInfomationByColumn = (valueColumns, rowData) => {
+    const listColumns = valueColumns.filter(
+      value => value !== 'DATE' && value !== 'TIME'
+    );
     setIsRowData(rowData);
     return (
-      valueColumns &&
-      valueColumns.map((colValue, key) =>
+      listColumns &&
+      listColumns.map((colValue, key) =>
         HttpServices()
           .get(`archivos_homologacion/${rowData.id}/${colValue}`)
           .then(response => {
             return {
-              homologation: response.length >= 1 ? response[0].wits_detalle_id : key,
+              homologation:
+                response.length >= 1 ? response[0].wits_detalle_id : key,
               idColumn: response.length >= 1 ? response[0].id : key,
-              nameColumn: response.length >= 1 ? response[0].nombre_columna: colValue,
-              curveTypeName: response.length >= 1 ? response[0].tipo_curva_nombre : '',
-              curveTypeId: response.length >= 1 ? response[0].wits_detalle_id : 0,
-              user_id: userStorage && userStorage.id_usuario_sesion ? userStorage.id_usuario_sesion : '',
-              register_id: isRowData.id,
+              nameColumn:
+                response.length >= 1 ? response[0].nombre_columna : colValue,
+              curveTypeName:
+                response.length >= 1 ? response[0].tipo_curva_nombre : '',
+              curveTypeId:
+                response.length >= 1 ? response[0].wits_detalle_id : 0,
+              user_id:
+                userStorage && userStorage.id_usuario_sesion
+                  ? userStorage.id_usuario_sesion
+                  : '',
+              register_id: rowData.id,
             };
           })
           .catch(error => {
@@ -211,6 +246,12 @@ const Cavings = () => {
         return setInfoByColumn({
           resultArray: resultArray,
           wellId: rowData.wells_id,
+          definitionTime:
+            rowData && rowData.tiempo_inicial ? rowData.tiempo_inicial : null,
+          definitionDate:
+            rowData && rowData.fecha_inicial ? rowData.fecha_inicial : null,
+          definitionHour:
+            rowData && rowData.hora_inicial ? rowData.hora_inicial : null,
         });
       })
       .catch(e => console.log(`Error capturado:  ${e}`));
@@ -294,6 +335,9 @@ const Cavings = () => {
       <ModalHomologation
         infoByColumn={infoByColumn.resultArray}
         wellId={infoByColumn.wellId}
+        definitionTime={infoByColumn.definitionTime}
+        definitionDate={infoByColumn.definitionDate}
+        definitionHour={infoByColumn.definitionHour}
         isActive={isActiveHom && infoByColumn.resultArray.length >= 1}
         onClickCancel={onClickCancel}
         onClickSave={onClickSave}

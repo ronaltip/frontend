@@ -5,32 +5,6 @@ import ModalUpload from '../libs/modalUpload/modalUpload';
 import { Col, message, Row, Table, Tooltip } from 'antd';
 import { DeleteOutlined, FileSearchOutlined } from '@ant-design/icons';
 
-const dummy = [
-  {
-    id: '1',
-    name_wells: '-Pozo 1',
-    name_upload: 'Archivo primer pozo fels',
-    date_upload: '12/6/2021',
-    urlpdf: '',
-    base64: '',
-  },
-  {
-    id: '2',
-    name_wells: '-Pozo 2',
-    name_upload: 'Archivo segundo12 pozo fels',
-    date_upload: '01/09/2021',
-    urlpdf: '',
-    base64: '',
-  },
-  {
-    id: '3',
-    name_wells: '-Pozo 1345 MIC',
-    name_upload: 'Archivo primerTICM pozo fels',
-    date_upload: '01/10/2021',
-    urlpdf: '',
-    base64: '',
-  },
-];
 const Fels = () => {
   const [listRegistersFels, setListRegistersFels] = useState([]);
   const [listWells, setListWells] = useState([]);
@@ -72,7 +46,7 @@ const Fels = () => {
       render: info_upload => (
         <Row justify="space-around">
           <Col style={{ cursor: 'pointer' }}>
-            <Tooltip title="Editar homologación">
+            <Tooltip title="Visualizar archivo PDF">
               <span onClick={() => OpenAndViewPdf(info_upload)}>
                 <FileSearchOutlined />
               </span>
@@ -92,7 +66,7 @@ const Fels = () => {
 
   const getListByFels = () => {
     HttpServices()
-      .get('fels')
+      .get('archivo_encabezado_fel')
       .then(response => {
         if (response) {
           setListRegistersFels(response);
@@ -124,7 +98,7 @@ const Fels = () => {
     };
 
     HttpServices()
-      .command('archivoFels', { params: payload })
+      .command('archivo_encabezado_fel', { params: payload })
       .then(response => {
         if (!response.data) {
           message.success('El registro se ha eliminado correctamente.');
@@ -150,22 +124,22 @@ const Fels = () => {
 
   const onClickInsert = payload => {
     console.log('payload', payload);
-    // HttpServices()
-    //   .command('archivoFelsencabezado', payload)
-    //   .then(response => {
-    //     if (!response.data) {
-    //       message.success('El archivo se ha cargado correctamente.');
-    //     } else {
-    //       message.error('Algo ha salido mal, por favor intente de nuevo.');
-    //     }
-    //     getListByFels();
-    //     onClickCancel();
-    //   })
-    //   .catch(error => {
-    //     console.log(error);
-    //     onClickCancel();
-    //     message.error('Algo ha salido mal, por favor intente de nuevo.');
-    //   });
+    HttpServices()
+      .command('archivo_encabezado_fel', payload)
+      .then(response => {
+        if (!response.data) {
+          message.success('El archivo se ha cargado correctamente.');
+        } else {
+          message.error('Algo ha salido mal, por favor intente de nuevo.');
+        }
+        getListByFels();
+        onClickCancel();
+      })
+      .catch(error => {
+        console.log(error);
+        onClickCancel();
+        message.error('Algo ha salido mal, por favor intente de nuevo.');
+      });
   };
 
   const OpenAndViewPdf = rowData => {
@@ -188,7 +162,7 @@ const Fels = () => {
           <Table
             bordered
             tableLayout="fixed"
-            dataSource={dummy}
+            dataSource={listRegistersFels}
             rowKey="id"
             key="id"
             columns={columns}
