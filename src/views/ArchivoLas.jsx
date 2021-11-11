@@ -110,11 +110,11 @@ const ArchivoLas = () => {
     HttpServices()
       .commandDelete('archivo_encabezado', { params: payload })
       .then(response => {
-        if (!response.data) {
-          message.success('El registro se ha eliminado correctamente.');
-        } else {
-          message.error('Algo ha salido mal, por favor intente de nuevo.');
-        }
+        // if (response) {
+        message.success('El registro se ha eliminado correctamente.');
+        // } else {
+        //   message.error('Algo ha salido mal, por favor intente de nuevo.');
+        // }
         getListByLas();
         onClickCancel();
       })
@@ -138,8 +138,10 @@ const ArchivoLas = () => {
     HttpServices()
       .commandPut('archivos_homologacion', value)
       .then(response => {
-        if (!response.data) {
-          message.success('El archivo se ha actualizado correctamente.');
+        if (response && response[0].id) {
+          message.success(
+            'El archivo de homologacion se ha actualizado correctamente.'
+          );
         } else {
           message.error('Algo ha salido mal, por favor intente de nuevo.');
         }
@@ -153,13 +155,14 @@ const ArchivoLas = () => {
         message.error('Algo ha salido mal, por favor intente de nuevo.');
       });
   };
-
+  const saveTheApprovealDate = () => {};
   const onClickInsert = payload => {
     HttpServices()
       .command('archivo_encabezado', payload)
       .then(response => {
-        if (!response.data) {
+        if (response && response[0].id) {
           message.success('El archivo se ha cargado correctamente.');
+          saveTheApprovealDate();
         } else {
           message.error('Algo ha salido mal, por favor intente de nuevo.');
         }
@@ -174,9 +177,12 @@ const ArchivoLas = () => {
   };
 
   const getInfomationByColumn = (valueColumns, rowData) => {
+    const listColumns = valueColumns.filter(
+      value => value !== 'DATE' && value !== 'TIME'
+    );
     return (
-      valueColumns &&
-      valueColumns.map((colValue, key) =>
+      listColumns &&
+      listColumns.map((colValue, key) =>
         HttpServices()
           .get(`archivos_homologacion/${rowData.id}/${colValue}`)
           .then(response => {
@@ -216,6 +222,9 @@ const ArchivoLas = () => {
         return setInfoByColumn({
           resultArray: resultArray,
           wellId: rowData.wells_id,
+          definitionTime: null,
+          definitionDate: null,
+          definitionHour: null,
         });
       })
       .catch(e => console.log(`Error capturado:  ${e}`));
