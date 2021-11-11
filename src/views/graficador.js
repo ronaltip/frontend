@@ -417,9 +417,8 @@ class Graficador extends Component {
                 });
                 let curvas = [...this.state.principal, ...this.state.horizontal]
                 
-                // Pintar o remover curvas en la gráfica principal
-                this.SetSerieGraficaPrincipal( curvas.filter(c=> c.grupo === null ) );
-                this.SetSerieTrackHorizontal ( curvas.filter(c=> c.grupo !== null ) );
+                this.SetSerieGraficaPrincipal( curvas.filter(c=> c.grupo === null ) )
+                this.SetSerieTrackHorizontal ( curvas.filter(c=> c.grupo !== null ) )
                 
                 this.setState({ 
                     dataCurvas: curvas,
@@ -432,7 +431,6 @@ class Graficador extends Component {
                 this.setState({ 
                     principal:  [],
                     horizontal: [],
-                    archivos_las: [],
                     modalConfig: open,
                     loadingConfig: false
                 });
@@ -853,45 +851,46 @@ class Graficador extends Component {
             const archivos_las    = data.filter(tipo => tipo.tipo_archivo_id === 3)
             const archivos_fel    = data.filter(tipo => tipo.tipo_archivo_id === 4)
 
-             //Para cada archivo
+            //Para cada archivo
             //  Para cada curva homologada
             // Crear el check 
             archivos_las.forEach( row => {
                 row.homologacion = JSON.parse(row.homologacion)
-
                 row.homologacion.forEach( h => {
                     const [curva] = this.GetDetalle(h.codigo)
                     h.descripcion = curva.descripcion
                     h.short_mnemonico = curva.short_mnemonico
                 })
-                // Falta la referencia
-                this.getDataArchivos(row.id, row.es_tiempo)
+
+                this.getDataArchivos(row.id, Number(row.es_tiempo)).then ( resp => {
+                    this.setState( prev => ({  dataArchivosCurvas: [...prev.dataArchivosCurvas,  resp] }));
+                })
             })
             
-            this.setState({ 
-                archivos_las: archivos_las
-            });
+            this.setState({ archivos_las: archivos_las });
         }).catch(error => {
             console.log(error.message);
         })
     }
 
-    getDataArchivos = async (id, tipo) => {
-        
-        axios.get(URL + `archivo_encabezado/datawell/${id}/${tipo}`).then(response => {
-            const datos = {
-                id: id,
-                datos: response.data
-            }
-            let prev = [...this.state.dataArchivosCurvas]
-            prev.push(datos)
-            this.setState({ dataArchivosCurvas: prev});
-        }).catch(error => {
-            console.log(error.message);
-        })
-
-    } 
+    
    
+    getDataArchivos = (id, tipo) => {
+        return new Promise((resolve, reject) =>  {
+            axios.get(URL + `archivo_encabezado/datawell/${id}/${tipo}`).then(response => {
+                const datos = {
+                    id: id,
+                    datos: response.data
+                }
+                resolve(datos)
+            }).catch(error => {
+                console.log(error.message);
+                reject(error)
+            })
+        }) 
+    } 
+    
+
     // 95-0 55-45 0-95 vh
     // col-md-8 col-md-12
     ToggleDivHorizontales = () => {
@@ -1023,6 +1022,8 @@ class Graficador extends Component {
 
                         this.setState({dataWits: dataFilter_Wits})
                     
+                        this.getArchivos(template.wells_id)
+
                         //Gráfica principal
                         let curvasPrincipal = curvas.filter(c=>c.mostrar === true && c.grupo === null)
                         this.SetSerieGraficaPrincipal(curvasPrincipal)
@@ -1035,7 +1036,7 @@ class Graficador extends Component {
 
                         this.getEventos(template.wells_id)
                         this.getOperaciones(template.wells_id)
-                        this.getArchivos(template.wells_id)
+                        
 
                         this.setState({
                             template:   {...template},
@@ -1053,6 +1054,8 @@ class Graficador extends Component {
                 }
                 else
                 {
+                    this.getArchivos(template.wells_id)
+
                     //Gráfica principal
                     let curvasPrincipal = curvas.filter(c=>c.mostrar === true && c.grupo === null)
                     this.SetSerieGraficaPrincipal(curvasPrincipal)
@@ -1065,8 +1068,7 @@ class Graficador extends Component {
             
                     this.getEventos(template.wells_id)
                     this.getOperaciones(template.wells_id)
-                    this.getArchivos(template.wells_id)
-
+                   
                     this.setState({
                         template:   {...template},
                         dataCurvas: [...curvas],
