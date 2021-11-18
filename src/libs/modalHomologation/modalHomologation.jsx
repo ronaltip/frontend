@@ -50,8 +50,7 @@ const ModalHomologation = ({
                 <Button
                   className="button-insert"
                   onClick={() =>
-                    onClickSave(infoByColumn, {
-                      // wells_id: wellId,
+                    onClickSave(infoByColumn, wellId, {
                       tiempo_inicial: definitionTime,
                       fecha_inicial: definitionDate,
                       hora_inicial: definitionHour,
@@ -167,6 +166,7 @@ const ModalHomologation = ({
                       >
                         <Option value="">Seleccionar</Option>
                         {listCurves &&
+                          listCurves.length > 0 &&
                           listCurves.map((curve, idKey) => (
                             <Option
                               key={idKey}

@@ -134,9 +134,13 @@ const ArchivoLas = () => {
     setIsActiveHom(false);
   };
 
-  const onClickSave = value => {
+  const onClickSave = (homoPayload, wells_id) => {
     HttpServices()
-      .commandPut('archivos_homologacion', value)
+      .commandPut('archivos_homologacion', {
+        id: homoPayload[0].register_id,
+        wellid: wells_id,
+        lista: homoPayload,
+      })
       .then(response => {
         if (response && response[0].id) {
           message.success(
