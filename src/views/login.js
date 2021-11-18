@@ -53,7 +53,9 @@ class Login extends Component {
           window.location.href = './home';
         } else {
           message.error('El usuario o contraseña no son correctos.');
-          window.location.pathname = '/';
+          setTimeout(() => {
+            window.location.href = './';
+          }, 500);
         }
       })
       .catch(error => {

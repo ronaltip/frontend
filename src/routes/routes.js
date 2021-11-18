@@ -34,42 +34,42 @@ import viewGraficador from '../views/graficador';
 import viewTiempoReal from '../views/tiemporeal';
 
 class Routes extends Component {
-    render() {
-        return (
-            <BrowserRouter>
-                <Switch>
-                    <Route exact path="/" component={Login} /> 
-                    <Route exact path="/home" component={Home} />
-                    <Route exact path="/usuarios" component={viewUsuario} />
-                    <Route exact path="/unidades" component={viewUnidades} />
-                    <Route exact path="/Cavings" component={viewCavings} />
-                    <Route exact path="/Fels" component={viewFels} /> 
-                    <Route exact path="/operaciones" component={viewOperaciones} />
-                    <Route exact path="/ArchivoLas" component={viewArchivoLas} />
-                    {/*<Route exact path="/homologacion_archivos" component={viewHomologacionArchivos} />  */}
-                    <Route exact path="/eventos" component={viewEventos} />
-                    <Route exact path="/tipo_eventos" component={viewTiposEventos} />
-                    {/*<Route exact path="/tipo_curvas" component={viewTiposCurvas} /> 
+  render() {
+    return (
+      <BrowserRouter>
+        <Switch>
+          <Route exact path="/" component={Login} />
+          <Route exact path="/home" component={Home} />
+          <Route exact path="/usuarios" component={viewUsuario} />
+          <Route exact path="/unidades" component={viewUnidades} />
+          <Route exact path="/Cavings" component={viewCavings} />
+          <Route exact path="/fels" component={viewFels} />
+          <Route exact path="/operaciones" component={viewOperaciones} />
+          <Route exact path="/ArchivoLas" component={viewArchivoLas} />
+          {/*<Route exact path="/homologacion_archivos" component={viewHomologacionArchivos} />  */}
+          <Route exact path="/eventos" component={viewEventos} />
+          <Route exact path="/tipo_eventos" component={viewTiposEventos} />
+          {/*<Route exact path="/tipo_curvas" component={viewTiposCurvas} /> 
 
                     <Route path='/visual_config_edi:id' component={viewVisualConfigEdi} />
                     <Route exact path="/visual_config_lista" component={viewVisualConfigLista} />
                     <Route exact path="/visual_config_track" component={viewVisualConfigTrack} />
-                    <Route exact path="/visual_config" component={viewVisualConfig} />            */}           
+                    <Route exact path="/visual_config" component={viewVisualConfig} />            */}
 
-                    {/* <Route exact path="/visual_historicos" component={viewVisualHistorico} />  
+          {/* <Route exact path="/visual_historicos" component={viewVisualHistorico} />  
                     <Route exact path="/visual_historicos_dp:id" component={viewVisualHistoricoDP} />  
                     <Route exact path="/visual_historicos_dc/:id" component={viewVisualHistoricoDPC} />   */}
 
-                    <Route exact path="/fields" component={viewFields} />
-                    <Route exact path="/wells"  component={viewWells} />
-                    <Route exact path="/wits"  component={viewWits} />
-                    <Route exact path="/tiemporeal"  component={viewTiempoReal} />
-                    {/*<Route exact path="/wits_homologacion" component={viewWitsHomologacion} />   */}  
+          <Route exact path="/fields" component={viewFields} />
+          <Route exact path="/wells" component={viewWells} />
+          <Route exact path="/wits" component={viewWits} />
+          <Route exact path="/tiemporeal" component={viewTiempoReal} />
+          {/*<Route exact path="/wits_homologacion" component={viewWitsHomologacion} />   */}
 
-                    <Route exact path="/graficador" component={viewGraficador} />
-                </Switch>
-            </BrowserRouter>
-        );
-    }
+          <Route exact path="/graficador" component={viewGraficador} />
+        </Switch>
+      </BrowserRouter>
+    );
+  }
 }
 export default Routes;

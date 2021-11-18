@@ -2,7 +2,16 @@ import React, { Fragment, useEffect, useState } from 'react';
 import HeaderSection from '../libs/headerSection/headerSection';
 import HttpServices from '../services/HttpServices';
 import ModalUpload from '../libs/modalUpload/modalUpload';
-import { Col, message, Row, Table, Tooltip, Modal } from 'antd';
+import {
+  Col,
+  message,
+  Row,
+  Table,
+  Tooltip,
+  Modal,
+  notification,
+  Spin,
+} from 'antd';
 import ReactCrop from 'react-image-crop';
 
 import { DeleteOutlined, FileSearchOutlined } from '@ant-design/icons';
@@ -10,6 +19,7 @@ const Fels = () => {
   const [listRegistersFels, setListRegistersFels] = useState([]);
   const [listWells, setListWells] = useState([]);
   const [isActive, setIsActive] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [userStorage, setUserStorage] = useState({});
   const [openModal, setOpenModal] = useState({
     base64: '',
@@ -128,10 +138,11 @@ const Fels = () => {
   };
 
   const onClickInsert = payload => {
-    console.log('payload', payload);
+    setIsLoading(true);
     HttpServices()
       .command('archivo_encabezado_fel', payload)
       .then(response => {
+        setIsLoading(false);
         if (!response.data) {
           message.success('El archivo se ha cargado correctamente.');
         } else {
@@ -141,6 +152,7 @@ const Fels = () => {
         onClickCancel();
       })
       .catch(error => {
+        setIsLoading(false);
         console.log(error);
         onClickCancel();
         message.error('Algo ha salido mal, por favor intente de nuevo.');
@@ -148,15 +160,23 @@ const Fels = () => {
   };
 
   const OpenAndViewPdf = rowData => {
+    notification.info({
+      message: 'Hola!',
+      description: 'Estamos procesando tu solicitud.',
+    });
     HttpServices()
       .get(`archivo_encabezado_fel/${rowData.id}`)
       .then(detailRegister => {
-        if (detailRegister && detailRegister[0].archivo_imagen !== '') {
+        if (detailRegister && detailRegister[0].archivo_imagen.length >= 1) {
           setOpenModal({
             base64: detailRegister[0].archivo_imagen,
             active: true,
           });
         } else {
+          setOpenModal({
+            base64: '',
+            active: false,
+          });
           message.error('No se encuentran referencias de cargue.');
         }
       });
@@ -220,27 +240,29 @@ const Fels = () => {
 
   return (
     <Fragment>
-      <HeaderSection
-        onClick={clickOpenFileUpload}
-        titleButton="Archivo .Fels"
-      />
-      <Row justify="space-around">
-        <Col span={22}>
-          <h3>Listado de Archivo .Fels</h3>
-        </Col>
-      </Row>
-      <Row justify="center" align="center">
-        <Col span={22}>
-          <Table
-            bordered
-            tableLayout="fixed"
-            dataSource={listRegistersFels}
-            rowKey="id"
-            key="id"
-            columns={columns}
-          />
-        </Col>
-      </Row>
+      <Spin tip="Procesando el archivo..." spinning={isLoading}>
+        <HeaderSection
+          onClick={clickOpenFileUpload}
+          titleButton="Archivo .Fels"
+        />
+        <Row justify="space-around">
+          <Col span={22}>
+            <h3>Listado de Archivo .Fels</h3>
+          </Col>
+        </Row>
+        <Row justify="center" align="center">
+          <Col span={22}>
+            <Table
+              bordered
+              tableLayout="fixed"
+              dataSource={listRegistersFels}
+              rowKey="id"
+              key="id"
+              columns={columns}
+            />
+          </Col>
+        </Row>
+      </Spin>
       <ModalUpload
         isActive={isActive}
         fileType="FEL"
@@ -252,35 +274,44 @@ const Fels = () => {
       />
       <Modal
         visible={openModal.active}
-        width="1200px"
+        width="900px"
         onCancel={() =>
           setOpenModal({
             base64: '',
             active: false,
           })
         }
-        style={{ marginTop: '15px' }}
         footer=""
         centered
       >
-        <Row justify="center">
-          <Col>
-            {/* <img
+        <Row
+          justify="center"
+          style={{
+            maxHeight: '500px',
+            overflowY: 'scroll',
+            overflowX: 'hidden',
+            marginTop: '20px',
+          }}
+          className="scrollTheme"
+        >
+          <Col style={{ maxHeigth: '500px' }}>
+            <img
               style={{
-                width: '1100px',
+                width: '850px',
                 objectFit: 'cover',
               }}
               src={openModal.base64}
               alt="IMG"
-            ></img> */}
-            <ReactCrop
+            ></img>
+            {/* <ReactCrop
               src={openModal.base64}
               imageStyle={{
-                width: '1100px',
+                width: '800px',
                 objectFit: 'cover',
+                maxHeigth: '500px',
               }}
               // onComplete={onComplete}
-            />
+            /> */}
           </Col>
         </Row>
       </Modal>
