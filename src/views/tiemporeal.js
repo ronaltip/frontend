@@ -1,28 +1,128 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ProgressBar } from "react-bootstrap";
+import Plot from 'react-plotly.js';
+import Plotly from 'plotly.js';
 import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../css/button.css";
 import Cookies from 'universal-cookie';
 import SideBar from '../componentes/sidebar';
+import { message } from 'antd';
 
 const cookies = new Cookies();
 const URL = process.env.REACT_APP_API_HOST; 
+const config_general = {
+    showSendToCloud: false,
+    editable: false,
+    displayModeBar: true,
+    locale: 'es',
+    displaylogo: false,
+    responsive: true,
+    modeBarButtonsToRemove: ['hoverClosestGl2d', 'hoverClosestPie', 'toggleHover', 'resetViews', 'zoom2d', 'select2d', 'lasso2d', 'toggleSpikelines'],  // , 'hoverClosestCartesian','hoverCompareCartesian', 'pan2d', 
+    toImageButtonOptions: {
+        format: 'png',
+        filename: 'archivo_',
+        height: 800,
+        width: 800,
+        scale: 1
+    }
+};
 
 const TiempoReal = () => {
     const [count, setCount] = useState(0);
+    const [ultimaConsulta, setUltimaConsulta] = useState('N/A');
+
     const [showgrafica, setShowGrafica] = useState(false)
     const [intervalId, setIntervalId] = useState(0);
-    const [intervalo,  setIntervalo] = useState(5000);
+    const [intervalo,  setIntervalo] = useState(10000);
     const [dataFields, setField] = useState([]);
     const [dataWells,  setWell] = useState([]);
+    const [dataTemplates,  setTemplate] = useState([]);
+    const [dataWits, setDataWits] = useState([]);
     const [dataRegistro,  setRegistro] = useState({
-        Inicio: '', Fin: '', Total: ''
+        Inicio: '', Fin: '', Total: '', id: ''
     });
     const [form, setState] = useState ({
-        field_id: 0, wells_id: 0
+        field_id: 0, wells_id: 0, id: 0
     });
+    const [curvasTemplate, setCurvas] = useState([]);
 
+    const [profundidadFinal, setProfundidad] = useState(1000)
+    const [layoutGP, setLayoutGP] = useState({
+        autosize: true,
+        uirevision: 'true',
+        margin: { l: 80, r: 40, t: 80, b: 5 }, 
+        dragmode: 'zoom',
+        hovermode: 'closest',
+        plot_bgcolor:'white' ,
+        paper_bgcolor: 'white',
+        xaxis: {
+            fixedrange: false,
+            showspikes: true,
+            spikemode: 'across',
+            textposition: 'top center',
+            side: 'top',
+            type: 'time',
+            tickformat: '%d %b %Y \n %H:%M:%S ',
+            title: 'Tiempo',
+            nticks: 10                
+        },
+        yaxis: {
+            fixedrange: false,
+            autorange: false,
+            range: [1000, -20],
+            title: 'Profundidad [ft]',
+            nticks: 10,
+            gridcolor: '#eee',
+            gridwidth: 1
+        },
+        font: { family: 'verdana', size: 11, color: 'black'},
+        showlegend: false,
+        shapes: [],
+        datarevision: 1
+    })
+    const [layoutTH, setLayoutTH] = useState({
+        autosize: true,
+        uirevision: 'true',
+        margin: { l: 60, r: 40, t: 30, b: 40 }, 
+        dragmode: 'zoom',
+        hovermode: 'x',
+        plot_bgcolor: 'white',
+        paper_bgcolor: 'white',
+        font: { family: 'verdana', size: 11, color: 'black'},
+        showlegend: false,
+        grid:  { rows: 0, columns: 1, pattern: 'independent', subplots:[]},
+        xaxis: { fixedrange: false, showspikes: true, spikemode: 'across', type: 'time', tickformat: '%d %b %Y \n %H:%M:%S ', title: 'Tiempo', nticks: 5  },
+        datarevision: 1
+    })
+    const [layoutTV, setLayoutTV] = useState({
+        autosize: true,
+        uirevision: 'true',
+        margin: { l: 5, r: 40, t: 80, b: 5 },
+        dragmode: 'zoom',
+        hovermode: 'closest',
+        plot_bgcolor: 'white',
+        paper_bgcolor: 'white',
+        font: { family: 'verdana', size: 11 },
+        showlegend: false,
+        grid:  { columns: 0, rows: 1, pattern: 'independent', subplots: []},
+        yaxis: { fixedrange: false, autorange: false, range: [1000, -20], nticks: 15, side: 'right', gridcolor: '#eee',
+        gridwidth: 1  },
+        datarevision: 1
+    })
+    const [dataGP, setDataGP] = useState([])
+    const [dataTH, setDataTH] = useState([])
+    const [dataTV, setDataTV] = useState([])
+
+    const [isLoadedPrincipal,  setIsLoadedGP] = useState(false)
+    const [isLoadedHorizontal, setIsLoadedTH] = useState(false)
+    const [isLoadedVertical,   setIsLoadedTV] = useState(false)
+   
+    const [isToggled, toggle] = useState(0)
+    const [isRunning,  setIsRunning] = useState(false)
+
+   
+    
     function getWells(id) {
     
         return new Promise((resolve, reject) =>  {
@@ -48,7 +148,22 @@ const TiempoReal = () => {
         }
         else
             return {}
-    } 
+    }
+    
+    function getTemplates(id) {
+        if (id != 0)
+        {
+            return new Promise((resolve, reject) =>  {
+                axios.get(URL + 'templates_wells/well/' + id).then(response => {
+                    resolve( response.data )
+                }).catch(error => {
+                    reject (error)
+                })
+            })            
+        }
+        else
+            return []
+    }
 
     const handleChangeForm = e => {
         const { name, value } = e.target;
@@ -60,38 +175,67 @@ const TiempoReal = () => {
                 setRegistro( {
                     Inicio: null,
                     Fin: null,
-                    Total: null
+                    Total: null,
+                    id: null
                 }) 
+                setState(prevState => ({
+                    ...prevState,
+                    wells_id: 0, 
+                    id: 0
+                }));
+                setTemplate([])
             })
             .catch(err => console.log(err.response))
                   
         }
         if (e.target.name === 'wells_id')
         {
-            getRegistro(e.target.value).then ( res =>{
-                const [regs] = res
-                              
+            if (e.target.value !== '0')
+            {
+                getTemplates(e.target.value).then ( res => {
+                    setTemplate(res)
+                })
+                .catch(err => console.log(err.response))
+                
+                getRegistro(e.target.value).then ( res =>{
+                    const [regs] = res
+
+                    setRegistro( {
+                        Inicio: regs.Inicio,
+                        Fin: regs.Fin,
+                        Total: regs.Total,
+                        id: regs.id
+                    }) 
+                    setState(prevState => ({
+                        ...prevState,
+                        id: 0
+                    }));
+                    
+                })
+                .catch(err => console.log(err.response))
+            }
+            else
+            {
                 setRegistro( {
-                    Inicio: regs.Inicio,
-                    Fin: regs.Fin,
-                    Total: regs.Total
-                }) 
-            })
-            .catch(err => console.log(err.response))
-         
+                    Inicio: null,
+                    Fin: null,
+                    Total: null,
+                    id: null
+                })
+            }
         }
 
         setState(prevState => ({
             ...prevState,
             [name]: value
         }));
-    };
+    }
 
     const handleChange = (e) => {
         let valor = 1000 * Number(e.target.value)
         setIntervalo(valor)
         
-        if (showgrafica)
+        if (showgrafica && count > 0)
         {
             if (intervalId) {
                 clearInterval(intervalId);
@@ -99,26 +243,284 @@ const TiempoReal = () => {
             }
             
             const newIntervalId = setInterval(() => {
-                setCount(prevCount => prevCount + 1);
+                toggle(prev => prev + 1)
             }, valor );
             setIntervalId(newIntervalId);
         }
     }
 
     const handleClick = () => {
-        setShowGrafica(true);
-        if (intervalId) {
-            clearInterval(intervalId);
-            setIntervalId(0);
-            return;
+        if (form.id > 0)
+        {
+            if (intervalId) {
+                clearInterval(intervalId)
+                setIntervalId(0)
+                setCount(0)
+                toggle(-1)
+
+                return;
+            }
+            
+            if (isToggled === 0)
+                getInit()
+            else
+            {
+                setCount( prev => prev + 1)
+                const newIntervalId = setInterval(() => {
+                    toggle(prev => prev + 2)
+                }, intervalo );
+                setIntervalId(newIntervalId);
+            }
         }
+        else
+        {
+            message.info("Debe seleccionar un template")
+        }
+    }
+
+    const getData = () => {
+       
+        if (isRunning)
+        {
+            setCount(prevCount => prevCount + 1)
+            setIsRunning(false)
+            axios.get(URL + `datos_wits/wells/${form.wells_id}/${dataRegistro.id}`).then(response => {
+
+                if (response.data.length > 0 )
+                {
+                    let profundidadFinal_temporal = profundidadFinal
+
+                    //Agregar datos en gráfica principal
+                    let newData = [...dataGP]
+                    let curvasPrincipal  = curvasTemplate.filter(c=>c.mostrar === true && c.grupo === null)
+                    curvasPrincipal.map( (c) => {    
+                                    
+                        if (c.mostrar)
+                        {
+                            let index = newData.findIndex((item) => item.name === c.descripcion);      
+                            const datos = response.data.map( f => ({ x: f['DATETIME'], y: f['_'+c.codigo]}) );  
+                            const x = datos.map(d=>d.x)
+                            const y = datos.map(d=>d.y)
+                            
+                            newData[index].x.push(...x)
+                            newData[index].y.push(...y)        
+                            
+                            let prof = Math.max(...newData[index].y) + 500
+                            profundidadFinal_temporal =  (prof > profundidadFinal_temporal) ? prof : profundidadFinal_temporal
+                            //console.log('incluyendo datos a ' + c.descripcion + ' prof =' + profundidadFinal_temporal)
+                        }
+                    })
+                    
+                    setDataGP( newData )
+                    let layout_Principal = {...layoutGP}
+                    layout_Principal.datarevision++
+                    layout_Principal.yaxis.range = [profundidadFinal_temporal, -20]
+                    setLayoutGP( layout_Principal )
+                    setProfundidad ( profundidadFinal_temporal )
+
+                    //Agregar datos en track horizontales
+                    let newData_TH = [...dataTH]
+                    let layout_Horizontal = {...layoutTH}
+                                        
+                    let nro_y = 1
+                    let yaxis = ''
+                    let curvasHorizontales = curvasTemplate.filter(c=>c.mostrar === true && c.grupo !== null).sort(c=>c.grupo)
+                    curvasHorizontales.map(c => {
+                        
+                        if (c.mostrar)
+                        {
+                            let index = newData_TH.findIndex((item) => item.name === c.descripcion); 
+                            const datos = response.data.map( f => ({ x: f['DATETIME'], y: f['_'+c.codigo]}) );  
+                            const x = datos.map(d=>d.x)
+                            const y = datos.map(d=>d.y)
+                           
+                            newData_TH[index].x.push(...x)
+                            newData_TH[index].y.push(...y)
+                            
+                            yaxis = 'yaxis' + (nro_y === 1 ? '' : nro_y)
+                            console.log(yaxis)
+                            layout_Horizontal[yaxis].range = [y[0] , y[y.length - 1]]
+                            console.log('termina ' + yaxis)
+
+                            nro_y++
+                        }
+                    
+                    })
+                    layout_Horizontal.xaxis.range = layout_Principal.xaxis.range
+                     
+                    layout_Horizontal.datarevision++
+                    setDataTH( newData_TH )
+                    setLayoutTH( layout_Horizontal )
+
+
+                    //Actualizar fecha, profundidad, registro
+                    const ultimo  = response.data[response.data.length - 1]
+                    let fecha = ultimo['DATETIME'].split(' ');
+                    let fechaTiempo = fecha[0].split('-');
+                    fechaTiempo = fechaTiempo[2] +'/' + fechaTiempo[1] +'/' + fechaTiempo[0] +'/ ' + fecha[1]
+                    
+                    const registro = {...dataRegistro}
+                    const total = Number(registro.Total) + response.data.length 
+                    setRegistro({ 
+                        Inicio: registro.Inicio,
+                        Fin:    fechaTiempo,
+                        Total:  total,
+                        id:     ultimo['id']
+                    })
+                }
+                else
+                    message.info("No hay más datos provenientes de telemetría")
+
+                toggle(prev => prev + 1)
+
+            }).catch(errors => {
+                message.error("Ocurrió un error consultando los datos wits del pozo. Detener e Iniciar nuevamente.")
+                console.log(errors.message);
+            })
+        }
+        else
+            message.info("Consulta y cargue en proceso")
+    }
+ 
+    const getInit = () => {
+     
+            setCount(prevCount => prevCount + 1)
+            setUltimaConsulta(now())
+           
+            const requestTemplatesWells         = axios.get(URL + "templates_wells/" + form.id);
+            const requestTemplatesWellTipoCurva = axios.get(URL + "templates_wells_wits_detalle_secciones/template_well/" + form.id);
+
+            //Obtener template y sus curvas
+            axios.all([requestTemplatesWells, requestTemplatesWellTipoCurva]).then(axios.spread((...response) => {
+                const [template] = response[0].data;
+                const curvas     = response[1].data;
+                setCurvas(curvas)
+                axios.get(URL + `datos_wits/wells/${template.wells_id}/0`).then(response => {
+
+                    setDataWits(response.data)
+                    let profundidadFinal_temporal = 1000
+                    let data = []
+                    let curvasPrincipal  = curvas.filter(c=>c.mostrar === true && c.grupo === null)
+                    curvasPrincipal.map( (c) => {                      
+                        if (c.mostrar)
+                        {
+                            const datos = response.data.map( f => ({ x: f['DATETIME'], y: f['_'+c.codigo]}) );  
+                            const x = datos.map(d=>d.x);
+                            const y = datos.map(d=>d.y);
+                            const serie = {
+                                x: x,
+                                y: y,
+                                name: c.descripcion,
+                                type: 'scatter',
+                                text: '[' + c.codigo + '] ' + c.short_mnemonico + ' - ' + c.descripcion
+                            }
+                            data.push(serie)
+        
+                            let prof = Math.max(...y) + 500
+                            profundidadFinal_temporal =  (prof > profundidadFinal_temporal) ? prof : profundidadFinal_temporal                                                    
+                        }
+                    })
+                    
+                    setDataGP( data )
+                    let layout_Principal = {...layoutGP}
+                    layout_Principal.datarevision++
+                    layout_Principal.yaxis.range = [profundidadFinal_temporal, -20]
+                    setLayoutGP( layout_Principal )
+                    setProfundidad( profundidadFinal_temporal )
+
+                    let layout_Horizontal = {...layoutTH}
+                    layout_Horizontal.grid.subplots = []
+                    let data_TracksHorizontal = []
+                    let i = 1
+                    let j = 0
+                    let grupo_anterior = 0  
+                    let curvasHorizontales = curvas.filter(c=>c.mostrar === true && c.grupo !== null).sort(c=>c.grupo)
+                    curvasHorizontales.map(c => {
+                        
+                        if (c.mostrar)
+                        {
+                            const datos = response.data.map( f => ({ x: f['DATETIME'], y: f['_'+c.codigo]}) );  
+                            const x = datos.map(d=>d.x);
+                            const y = datos.map(d=>d.y);
+                            let traza = {
+                                name : c.descripcion,
+                                x: x,
+                                y: y,
+                                xaxis: 'x',
+                                yaxis: 'y' + ((i > 1) ? String(i) : ''),
+                                text: '[' + c.codigo + '] ' + c.short_mnemonico + ' - ' + c.descripcion
+                            }
+
+                            let propertyAxi = "yaxis" + ((i > 1) ? String(i) : '')
+                            if (c.grupo == grupo_anterior)
+                                layout_Horizontal[propertyAxi] = { title: c.short_mnemonico, titlefont: { size: 10, color: '#3c5cf9', }, tickfont: { size: 8.0 }, overlaying: 'y' + ((i > 1) ? String(i - 1) : ''), side: 'right', gridcolor: '#eee' }
+                            else
+                            {
+                                layout_Horizontal[propertyAxi] = { title: c.short_mnemonico, titlefont: { size: 10, color: '#3c5cf9', }, tickfont: { size: 8.0 }, gridcolor: '#eee' }
+                            
+                                let subplot = ['xy' + ((i > 1) ? String(i) : '') ]
+                                layout_Horizontal.grid.subplots.push(subplot);
+                                j++;
+                            }
+                            i++
+                            grupo_anterior = c.grupo
+                            data_TracksHorizontal.push(traza);
+                        }
+                    
+                    })
+                    layout_Horizontal.grid.rows = j 
+                    layout_Horizontal.datarevision++
+                    setDataTH(data_TracksHorizontal)
+                    setLayoutTH( layout_Horizontal )
+
+                    const ultimo  = response.data[response.data.length - 1]
+                    const registro  = {...dataRegistro}
+                                   
+                    setRegistro({
+                        Inicio: registro.Inicio,
+                        Fin:    registro.Fin,
+                        Total:  registro.Total,
+                        id: ultimo['id']
+                    })
+
+                    setIsLoadedGP(true)
+                    setIsLoadedTH(true)
+
+                    //let traksHorizontales = curvas.filter(c=>c.mostrar === true && c.grupo !== null).sort(c=>c.grupo)
+                    //SetSerieTrackHorizontal(traksHorizontales)
+                   
+                    
+                    const newIntervalId = setInterval(() => {
+                        toggle(prev => prev + 1)
+                    }, intervalo );
+                    setIntervalId(newIntervalId);
+
+                    setShowGrafica(true)
+                }).catch(errors => {
+                    message.error("Ocurrió un error consultando los datos wits del pozo. Detener e Iniciar nuevamente.")
+                    console.log(errors.message);
+                })
+
+            })).catch(error => {
+                message.error("Ocurrió un error consultando el template del pozo. Detener e Iniciar nuevamente.")
+                console.log(error.message);
+            })     
+    } 
   
-        const newIntervalId = setInterval(() => {
-            setCount(prevCount => prevCount + 1);
-        }, intervalo );
-        setIntervalId(newIntervalId);
-    };
-  
+    useEffect(() => {
+
+        if (isToggled > 0)
+        {
+            setUltimaConsulta(now())
+            //console.log(now() + ' entra a consultar ' + isToggled + ' con último id = '+ dataRegistro.id)
+            setIsRunning(true)
+            getData()
+        }
+        else
+            message.info("Proceso de consulta automático detenido")
+
+    },[isToggled]);
+
     useEffect(() => {
         axios.get(URL + 'fields').then(response => {
             setField(  response.data );
@@ -127,6 +529,11 @@ const TiempoReal = () => {
         })
     },[]);
 
+    const now = () => {
+        let ahora = new Date().toLocaleTimeString('es-CO');
+        return ahora;
+    }
+
     return (
       
            <div className="App">
@@ -134,11 +541,11 @@ const TiempoReal = () => {
                 <div className="container-fluid ">
                     
                     <div className="row border-bottom bg-verdeoscuro">
-                        <div className="col-md-5 col-lg-5 small text-left mt-2">
-                             
+                        <div className="col-md-3 col-lg-3 small text-left mt-2 mb-2">
+                            <ProgressBar animated now={intervalId ? 100: 0} />
                         </div>
-                        <div className="col-md-4 col-lg-4 text-left  mt-1">
-                           
+                        <div className="col-md-6 col-lg-6 text-left  mt-1">
+                            Última consulta: {ultimaConsulta}
                         </div>
                         <div className="col-md-3 col-lg-3 text-right  mt-1">
                             <small>{cookies.get('nombre_usuario_sesion')}</small>
@@ -147,88 +554,137 @@ const TiempoReal = () => {
 
                     <div className="row">
                         <div className="col-md-3">
-                            <div className="card mt-3" style={{height: '92vh'}}>
-                                <div className="card-header bg-verdeclaro">
-                                    Seleccione el Pozo
-                                </div>
+                            <div className="card mt-2" >
+                               
                                 <div className="card-body">
+
+                                    <div className="form-group">
+                                        <label><b>Campo: </b></label>
+                                        <select name="field_id" id="field_id" className="form-control form-control-sm" onChange={handleChangeForm} defaultValue={form ? form.field_id : 0}>
+                                            <option key="0" value="0">Seleccionar</option>
+                                            {
+                                            dataFields ?
+                                            dataFields.map(elemento => (<option key={elemento.id} value={elemento.id}>{elemento.nombre}</option>))
+                                            :null
+                                            }
+                                        </select>
+                                    </div>                                
+
+                                    <div className="form-group">
+                                        <label><b>Pozo: </b></label>
+                                        <select name="wells_id" id="wells_id" className="form-control form-control-sm" onChange={handleChangeForm} defaultValue={form ? form.wells_id : 0}>
+                                            <option key="0" value="0">Seleccionar</option>
+                                            {
+                                                dataWells ?
+                                                dataWells.map(elemento => (<option key={elemento.id} value={elemento.id}>{elemento.nombre}</option>))
+                                                :null
+                                            }
+                                        </select>
+                                    </div>
+                            
                                     
-                                    <div className="row">
-                                        <div className="col-md-12">
-                                            <div className="form-group">
-                                                <label><b>Campo: </b></label>
-                                                <select name="field_id" id="field_id" className="form-control" onChange={handleChangeForm} defaultValue={form ? form.field_id : 0}>
-                                                    <option key="0" value="0">Seleccionar</option>
-                                                    {
-                                                    dataFields ?
-                                                    dataFields.map(elemento => (<option key={elemento.id} value={elemento.id}>{elemento.nombre}</option>))
-                                                    :null
-                                                    }
-                                                </select>
-                                            </div>
-                                        </div>
+ 
+                                    <hr/>
+                                    
+                                    <div className="form-group">
+                                        <label>Primera Fecha</label>
+                                        <input type="text" className="form-control form-control-sm" readOnly={true} defaultValue={dataRegistro.Inicio} />
                                     </div>
-                                    <div className="row">
-                                        <div className="col-md-12">
-                                            <div className="form-group">
-                                                <label><b>Pozo: </b></label>
-                                                <select name="wells_id" id="wells_id" className="form-control" onChange={handleChangeForm} defaultValue={form ? form.wells_id : 0}>
-                                                    <option key="0" value="0">Seleccionar</option>
-                                                    {
-                                                        dataWells ?
-                                                        dataWells.map(elemento => (<option key={elemento.id} value={elemento.id}>{elemento.nombre}</option>))
-                                                        :null
-                                                    }
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>                
-                                   
+                                    <div className="form-group">
+                                        <label>Última Fecha</label>
+                                        <input type="text" className="form-control form-control-sm" readOnly={true} defaultValue={dataRegistro.Fin} />
+                                    </div> 
+                                    <div className="form-group">
+                                        <label>Total registros</label>
+                                        <input type="text" className="form-control form-control-sm" readOnly={true} defaultValue={dataRegistro.Total} />
+                                    </div>
+                                    
+                                    <hr/>
+                                    
+                                    <div className="form-group">
+                                        <label><b>Template: </b></label>
+                                        <select name="id" id="id" className="form-control form-control-sm" onChange={handleChangeForm} defaultValue={form ? form.id : 0}>
+                                            <option key="0" value="0">Seleccionar</option>
+                                            {
+                                                dataTemplates ?
+                                                dataTemplates.map(elemento => (<option key={elemento.id} value={elemento.id}>{elemento.nombre}</option>))
+                                                :null
+                                            }
+                                        </select>
+                                    </div>
+                                    
                                 </div>
-                                <div className="card-header bg-verdeclaro">
-                                        Datos de Conexión
-                                    </div>
-                                    <div className="card-body">
-                                        
-                                        <div className="form-group">
-                                            <label>Primera Fecha</label>
-                                            <input type="text" className="form-control" readOnly={true} defaultValue={dataRegistro.Inicio} />
-                                        </div>
-                                        <div className="form-group">
-                                            <label>Última Fecha</label>
-                                            <input type="text" className="form-control" readOnly={true} defaultValue={dataRegistro.Fin} />
-                                        </div> <div className="form-group">
-                                            <label>Total registros</label>
-                                            <input type="text" className="form-control" readOnly={true} defaultValue={dataRegistro.Total} />
-                                        </div>
-                                        <hr/>
-                                        <div className="form-group">
-                                            <label>Intervalo de consulta [Sg]</label>
-                                            <select className="form-control" onChange={handleChange}>
-                                                <option value="5">5</option>
+                                <div className="card-footer">
+                                    <div className="row">
+                                        <div className="col-sm-7">
+                                            <label className="small">Intervalo de consulta [Sg]</label>
+                                            <select className="form-control form-control-sm" onChange={handleChange}>
                                                 <option value="10">10</option>
-                                                <option value="15">15</option>
+                                                <option value="20">20</option>
                                                 <option value="30">30</option>
                                                 <option value="60">60</option>
                                             </select>
                                         </div>
+                                        <div className="col-sm-5 mt-3">
+                                            <button className="btn btn-sm btn-primary btn-block" onClick={handleClick}> {count === 0 ? "Iniciar" : (count === 1) ? "Cargando...": "Detener"}</button>
+                                        </div>
                                     </div>
-                                <div className="card-footer">
-                                    <button className="btn btn-primary btn-block" onClick={handleClick}> {intervalId ? "Detener" : "Iniciar"}</button>
                                 </div>
                             </div>
                             
                         </div>
                         <div className="col-md-9">
                             { showgrafica ? 
-                            <div className="card mt-3" style={{height: '92vh'}}>
-                                <div className="card-header">
-                                    <ProgressBar animated now={intervalId ? 100: 0} />
-                                </div>
-                                <div className="card-body">
-                                    {count} veces se ha consultado
-                                </div>
-                            </div>
+                            
+                                
+                               
+                                    
+                                    <div className="row" >
+                                        <div id="divPrincipal" className="col-md-12">
+                                            {
+                                                
+                                                <div id="divGraficaPrincipal" className="row">
+                                                    <div className="col-md-12 col-lg-12">
+                                                        {
+                                                            isLoadedPrincipal ? 
+                                                            <Plot
+                                                                divId="plotDept"
+                                                                data={dataGP}
+                                                                layout={layoutGP}
+                                                                config={config_general}
+                                                                useResizeHandler={true}
+                                                                style={{width:"100%", height:"55vh"}}
+                                                               
+                                                            />
+                                                            :
+                                                            null
+                                                        }
+                                                    </div>
+                                                </div>
+                                               
+                                            }
+
+                                            {
+                                                
+                                                <div id="divTrackHorizontal" className="row">
+                                                    <div className="col-md-12 col-lg-12">
+                                                        <Plot
+                                                            divId="plotTracksHorizontal"
+                                                            data={dataTH}
+                                                            layout={layoutTH}
+                                                            config={config_general}
+                                                            useResizeHandler={true}
+                                                            style={{width:"100%", height:"40vh"}}
+                                                        />
+                                                    </div>
+                                                </div>
+                                               
+                                            }
+                                        </div>
+                                        
+                                    </div>
+                               
+                          
                             :
                             null
                             }

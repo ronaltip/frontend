@@ -1038,7 +1038,7 @@ class Graficador extends Component {
             {
                 if (this.state.dataWits.length === 0)
                 {                      
-                    axios.get(URL + "datos_wits/wells/" + template.wells_id).then(response => {
+                    axios.get(URL + "datos_wits/wells/" + template.wells_id + '/0').then(response => {
                         const data_Wits       = response.data;
                         const datosToSimplyfy = data_Wits.map( e => ({x: e['id'], y: Number(e['_0108'])}) );
                         const dataSimplyfy    = Simplify(datosToSimplyfy, 0.9075).map( prop => prop.x ); 
@@ -2976,6 +2976,7 @@ class Graficador extends Component {
                         <button className="btn btn-secondary" onClick={() => this.toggleModalAlgoritmo(false)}><Close /> Cerrar</button>
                     </ModalFooter>
                 </Modal>
+
             </div>
         )
 
