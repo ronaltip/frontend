@@ -3,6 +3,7 @@ import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../css/login.css';
 import md5 from 'md5';
+import { message } from 'antd';
 
 const url = process.env.REACT_APP_API_HOST;
 
@@ -51,7 +52,10 @@ class Login extends Component {
           sessionStorage.setItem('user', JSON.stringify(user));
           window.location.href = './home';
         } else {
-          alert('El usuario o la contraseña no son correctos');
+          message.error('El usuario o contraseña no son correctos.');
+          setTimeout(() => {
+            window.location.href = './';
+          }, 500);
         }
       })
       .catch(error => {

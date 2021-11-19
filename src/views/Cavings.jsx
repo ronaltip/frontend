@@ -141,9 +141,13 @@ const Cavings = () => {
     setIsActiveHom(false);
   };
 
-  const onClickSave = (homoPayload, datePayload) => {
+  const onClickSave = (homoPayload, wells_id, datePayload) => {
     HttpServices()
-      .commandPut('archivos_homologacion', homoPayload)
+      .commandPut('archivos_homologacion', {
+        id: homoPayload[0].register_id,
+        wellid: wells_id,
+        lista: homoPayload,
+      })
       .then(response => {
         if (response && response[0].id) {
           message.success(
@@ -200,7 +204,11 @@ const Cavings = () => {
 
   const getInfomationByColumn = (valueColumns, rowData) => {
     const listColumns = valueColumns.filter(
-      value => value !== 'DATE' && value !== 'TIME'
+      value =>
+        value !== 'DATE' &&
+        value !== 'TIME' &&
+        value !== 'FECHA' &&
+        value !== 'HORA'
     );
     setIsRowData(rowData);
     return (

@@ -52,9 +52,9 @@ const ModalUpload = ({
       const valueIndexOfAscii = detailAscii.indexOf(0);
       columnsData = valueUpload[valueIndexOfArray + 1].data[0];
       totalHeaders.push(valuesUp.splice(0, valueIndexOfArray));
+      columnsData = columnsData.replaceAll('#DATE.', 'DATE.');
+      columnsData = columnsData.replace('TIME', 'TIME.');
       if (detailDateValue.indexOf(0) !== -1) {
-        columnsData = columnsData.replaceAll('#DATE.', 'DATE.');
-        columnsData = columnsData.replace('TIME', 'TIME.');
         isDateColumn = true;
       } else {
         isDateColumn = false;
@@ -67,6 +67,7 @@ const ModalUpload = ({
       }
       detail.push(totalDetails[0].map(({ data }) => data));
     } else {
+      isDateColumn = true;
       totalColumns = value[0].data;
       const removeCharactersCol = totalColumns[totalColumns.length - 1].slice(
         0,
@@ -111,31 +112,17 @@ const ModalUpload = ({
     showUploadList: false,
     accept: EXTENSIONS_LIST[fileType].toString(),
     async onChange(info) {
-      // pdfToBase64(info.file).then(response => {
-      //   const infoUploadFile = {
-      //     wells_id: wellId,
-      //     base64upload: response,
-      //     usuario_id_creacion: userStorage.id_usuario_sesion,
-      //     tipo_archivo_id: TYPE_OF_FILES[fileType],
-      //     nombre_archivo: info.file.name.split('.')[0],
-      //     extension_archivo: info.file.name.split('.')[1],
-      //   };
-      //   setPayload(infoUploadFile);
-      // });
-      //   var pdf = info.file;
-      //   const canvas = document.createElement('canvas');
-      //   for (let i = 0; i < pdf.numPages; i++) {
-      //     const page = await pdf.getPage(i + 1);
-      //     const viewport = page.getViewport({ scale: 1 });
-      //     const context = canvas.getContext('2d');
-      //     canvas.height = viewport.height;
-      //     canvas.width = viewport.width;
-      //     await page.render({ canvasContext: context, viewport: viewport })
-      //       .promise;
-      //     images.append(canvas.toDataURL());
-      //   }
-      //   canvas.remove();
-      //   console.log('imagenes: ', images);
+      pdfToBase64(info.file).then(response => {
+        const infoUploadFile = {
+          wells_id: wellId,
+          base64upload: response,
+          usuario_id_creacion: userStorage.id_usuario_sesion,
+          tipo_archivo_id: TYPE_OF_FILES[fileType],
+          nombre_archivo: info.file.name.split('.')[0],
+          extension_archivo: info.file.name.split('.')[1],
+        };
+        setPayload(infoUploadFile);
+      });
     },
   };
 

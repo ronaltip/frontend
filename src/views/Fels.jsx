@@ -2,14 +2,29 @@ import React, { Fragment, useEffect, useState } from 'react';
 import HeaderSection from '../libs/headerSection/headerSection';
 import HttpServices from '../services/HttpServices';
 import ModalUpload from '../libs/modalUpload/modalUpload';
-import { Col, message, Row, Table, Tooltip } from 'antd';
-import { DeleteOutlined, FileSearchOutlined } from '@ant-design/icons';
+import {
+  Col,
+  message,
+  Row,
+  Table,
+  Tooltip,
+  Modal,
+  notification,
+  Spin,
+} from 'antd';
+import ReactCrop from 'react-image-crop';
 
+import { DeleteOutlined, FileSearchOutlined } from '@ant-design/icons';
 const Fels = () => {
   const [listRegistersFels, setListRegistersFels] = useState([]);
   const [listWells, setListWells] = useState([]);
   const [isActive, setIsActive] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [userStorage, setUserStorage] = useState({});
+  const [openModal, setOpenModal] = useState({
+    base64: '',
+    active: false,
+  });
   const [infoByColumn, setInfoByColumn] = useState({
     resultArray: [],
     wellId: '',
@@ -46,7 +61,7 @@ const Fels = () => {
       render: info_upload => (
         <Row justify="space-around">
           <Col style={{ cursor: 'pointer' }}>
-            <Tooltip title="Visualizar archivo PDF">
+            <Tooltip title="Visualizar archivo">
               <span onClick={() => OpenAndViewPdf(info_upload)}>
                 <FileSearchOutlined />
               </span>
@@ -91,14 +106,14 @@ const Fels = () => {
   const commandDeteteRegister = value => {
     var payload = {
       id: value.id,
-      pkuser:
-        userStorage && userStorage.id_usuario_sesion
-          ? userStorage.id_usuario_sesion
-          : '',
+      // pkuser:
+      //   userStorage && userStorage.id_usuario_sesion
+      //     ? userStorage.id_usuario_sesion
+      //     : '',
     };
 
     HttpServices()
-      .command('archivo_encabezado_fel', { params: payload })
+      .commandDelete('archivo_encabezado_fel', { params: payload })
       .then(response => {
         if (!response.data) {
           message.success('El registro se ha eliminado correctamente.');
@@ -123,10 +138,11 @@ const Fels = () => {
   };
 
   const onClickInsert = payload => {
-    console.log('payload', payload);
+    setIsLoading(true);
     HttpServices()
       .command('archivo_encabezado_fel', payload)
       .then(response => {
+        setIsLoading(false);
         if (!response.data) {
           message.success('El archivo se ha cargado correctamente.');
         } else {
@@ -136,6 +152,7 @@ const Fels = () => {
         onClickCancel();
       })
       .catch(error => {
+        setIsLoading(false);
         console.log(error);
         onClickCancel();
         message.error('Algo ha salido mal, por favor intente de nuevo.');
@@ -143,32 +160,109 @@ const Fels = () => {
   };
 
   const OpenAndViewPdf = rowData => {
+    notification.info({
+      message: 'Hola!',
+      description: 'Estamos procesando tu solicitud.',
+    });
+    HttpServices()
+      .get(`archivo_encabezado_fel/${rowData.id}`)
+      .then(detailRegister => {
+        if (detailRegister && detailRegister[0].archivo_imagen.length >= 1) {
+          setOpenModal({
+            base64: detailRegister[0].archivo_imagen,
+            active: true,
+          });
+        } else {
+          setOpenModal({
+            base64: '',
+            active: false,
+          });
+          message.error('No se encuentran referencias de cargue.');
+        }
+      });
+
     console.log('-info?View', rowData);
+  };
+
+  const onComplete = crop => {
+    console.log('22222', crop);
+    // if (openModal.base64 !== '' && crop.width && crop.height) {
+    //   const croppedImageUrl = getCroppedImg(
+    //     openModal.base64,
+    //     crop,
+    //     'newImage.png'
+    //   );
+    // }
+  };
+  const getCroppedImg = (image, crop, fileName) => {
+    const canvas = document.createElement('canvas');
+    const pixelRatio = window.devicePixelRatio;
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = crop.width * pixelRatio * scaleX;
+    canvas.height = crop.height * pixelRatio * scaleY;
+
+    ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+    ctx.imageSmoothingQuality = 'high';
+
+    ctx.drawImage(
+      image,
+      crop.x * scaleX,
+      crop.y * scaleY,
+      crop.width * scaleX,
+      crop.height * scaleY,
+      0,
+      0,
+      crop.width * scaleX,
+      crop.height * scaleY
+    );
+
+    return new Promise((resolve, reject) => {
+      canvas.toBlob(
+        blob => {
+          if (!blob) {
+            //reject(new Error('Canvas is empty'));
+            console.error('Canvas is empty');
+            return;
+          }
+          blob.name = fileName;
+          window.URL.revokeObjectURL(this.fileUrl);
+          this.fileUrl = window.URL.createObjectURL(blob);
+          resolve(this.fileUrl);
+        },
+        'image/png',
+        1
+      );
+    });
   };
 
   return (
     <Fragment>
-      <HeaderSection
-        onClick={clickOpenFileUpload}
-        titleButton="Archivo .Fels"
-      />
-      <Row justify="space-around">
-        <Col span={22}>
-          <h3>Listado de Archivo .Fels</h3>
-        </Col>
-      </Row>
-      <Row justify="center" align="center">
-        <Col span={22}>
-          <Table
-            bordered
-            tableLayout="fixed"
-            dataSource={listRegistersFels}
-            rowKey="id"
-            key="id"
-            columns={columns}
-          />
-        </Col>
-      </Row>
+      <Spin tip="Procesando el archivo..." spinning={isLoading}>
+        <HeaderSection
+          onClick={clickOpenFileUpload}
+          titleButton="Archivo .Fels"
+        />
+        <Row justify="space-around">
+          <Col span={22}>
+            <h3>Listado de Archivo .Fels</h3>
+          </Col>
+        </Row>
+        <Row justify="center" align="center">
+          <Col span={22}>
+            <Table
+              bordered
+              tableLayout="fixed"
+              dataSource={listRegistersFels}
+              rowKey="id"
+              key="id"
+              columns={columns}
+            />
+          </Col>
+        </Row>
+      </Spin>
       <ModalUpload
         isActive={isActive}
         fileType="FEL"
@@ -178,6 +272,49 @@ const Fels = () => {
         onClickInsert={onClickInsert}
         userStorage={userStorage}
       />
+      <Modal
+        visible={openModal.active}
+        width="900px"
+        onCancel={() =>
+          setOpenModal({
+            base64: '',
+            active: false,
+          })
+        }
+        footer=""
+        centered
+      >
+        <Row
+          justify="center"
+          style={{
+            maxHeight: '500px',
+            overflowY: 'scroll',
+            overflowX: 'hidden',
+            marginTop: '20px',
+          }}
+          className="scrollTheme"
+        >
+          <Col style={{ maxHeigth: '500px' }}>
+            <img
+              style={{
+                width: '850px',
+                objectFit: 'cover',
+              }}
+              src={openModal.base64}
+              alt="IMG"
+            ></img>
+            {/* <ReactCrop
+              src={openModal.base64}
+              imageStyle={{
+                width: '800px',
+                objectFit: 'cover',
+                maxHeigth: '500px',
+              }}
+              // onComplete={onComplete}
+            /> */}
+          </Col>
+        </Row>
+      </Modal>
     </Fragment>
   );
 };
