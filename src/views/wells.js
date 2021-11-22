@@ -248,6 +248,7 @@ class viewWells extends Component {
                 id="nombre"
                 onChange={this.handleChange}
                 value={form ? form.nombre : ''}
+                autoComplete="off"
               />
               <br />
               <label htmlFor="tag">Tag</label>
@@ -258,6 +259,7 @@ class viewWells extends Component {
                 id="tag"
                 onChange={this.handleChange}
                 value={form ? form.tag : ''}
+                autoComplete="off"
               />
               <br />
               <label htmlFor="ip">Direcci&oacute;n IP</label>
@@ -268,6 +270,7 @@ class viewWells extends Component {
                 id="ip"
                 onChange={this.handleChange}
                 value={form ? form.ip : ''}
+                autoComplete="off"
               />
               <br />
               <label htmlFor="puerto">Puerto</label>
@@ -278,6 +281,7 @@ class viewWells extends Component {
                 id="puerto"
                 onChange={this.handleChange}
                 value={form ? form.puerto : ''}
+                autoComplete="off"
               />
               <br />
               <label htmlFor="url">URL</label>
@@ -288,6 +292,7 @@ class viewWells extends Component {
                 id="url"
                 onChange={this.handleChange}
                 value={form ? form.url : ''}
+                autoComplete="off"
               />
               <br />
               {/* <label htmlFor="usuario">Usuario</label>
