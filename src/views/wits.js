@@ -25,11 +25,11 @@ import SaveAlt from '@material-ui/icons/SaveAlt';
 import Search from '@material-ui/icons/Search';
 import ViewColumn from '@material-ui/icons/ViewColumn';
 
-import Cookies from 'universal-cookie';
+//import Cookies from 'universal-cookie';
 import SideBar from "../componentes/sidebar";
 import Cabecera from "../componentes/cabecera";
 import '../css/styles.css';
-const cookies = new Cookies();
+//const cookies = new Cookies();
 
 const URL = process.env.REACT_APP_API_HOST; 
 //const url = "http://localhost:9000/wits_homologacion";
@@ -123,7 +123,7 @@ class viewWits extends Component {
                 [e.target.name]: e.target.value
             }
         });
-        this.state.form.pkuser = cookies.get('pk_usuario_sesion');          
+        //this.state.form.pkuser = cookies.get('pk_usuario_sesion');          
     }
 
     componentDidMount() {

@@ -17,10 +17,10 @@ import SideBar from '../componentes/sidebar';
 import {Save, HorizontalSplit, BarChart, Brush, CalendarToday, Delete, EventNote, Close, Home, PlaylistAddCheck, EventAvailable, PlayCircleOutline, MultilineChart, SlowMotionVideo, LayersClear, InvertColorsOff, CreateNewFolderOutlined } from '@material-ui/icons';
 import { TextField, Menu, MenuItem } from '@material-ui/core'
 
-import Cookies from 'universal-cookie';
+//import Cookies from 'universal-cookie';
 
 
-const cookies = new Cookies();
+//const cookies = new Cookies();
 
 const URL = process.env.REACT_APP_API_HOST; 
 
@@ -46,11 +46,12 @@ class Graficador extends Component {
     constructor(props) {
         super(props);
         this.state = {
+            userStorage: 0,
             form_template  : {
                 tmpNombre: '',
                 tmpDescripcion: '',
                 wells_id: 0,
-                pkuser: cookies.get('pk_usuario_sesion')
+                pkuser: 0
             },
             alert_algoritmo: {
                 tipo: '',
@@ -1737,7 +1738,9 @@ class Graficador extends Component {
       
         var datos = {
             'id': this.state.formDeleteTemplate.id,
-            'pkuser': cookies.get('pk_usuario_sesion')
+            'pkuser': this.state.userStorage && this.state.userStorage.id_usuario_sesion
+            ? this.state.userStorage.id_usuario_sesion
+            : ''
         };
             
         axios.delete(URL + 'templates', { data: datos }).then( response => {
@@ -1756,7 +1759,9 @@ class Graficador extends Component {
             ))
             const data = {
                 curvas: curvas,
-                pkuser: cookies.get('pk_usuario_sesion')
+                pkuser: this.state.userStorage && this.state.userStorage.id_usuario_sesion
+                ? this.state.userStorage.id_usuario_sesion
+                : ''
             }
             axios.put(URL + 'templates_wells_wits_detalle_secciones', data ).then(response => {          
             console.log('Actualizado')
@@ -1969,7 +1974,9 @@ class Graficador extends Component {
         const evento   = {...this.state.evento}
         var datos = {
             'id': evento.id,
-            'pkuser': 2
+            'pkuser': this.state.userStorage && this.state.userStorage.id_usuario_sesion
+            ? this.state.userStorage.id_usuario_sesion
+            : ''
         };
         
         axios.delete(URL + 'eventos', { data: datos }).then( response => {
@@ -2019,7 +2026,9 @@ class Graficador extends Component {
     InsertEvent = () => {
         delete this.state.evento.id
         this.state.evento.wells_id =  this.state.template.wells_id;
-        this.state.evento.pkuser = 2;
+        this.state.evento.pkuser = this.state.userStorage && this.state.userStorage.id_usuario_sesion
+        ? this.state.userStorage.id_usuario_sesion
+        : '';
 
         let fechaInicio = this.state.evento.fecha_inicial + ' ' + this.state.evento.hora_inicial;
         let fechaFinal = ''
@@ -2118,6 +2127,7 @@ class Graficador extends Component {
         this.getTipoEventos();
         this.getConvencion();
         this.getWitsDetalle();
+        this.setState({userStorage: JSON.parse(sessionStorage.getItem('user'))})
     }     
 
     render() { 
@@ -2152,7 +2162,7 @@ class Graficador extends Component {
                             <button title="Ver/Ocultar Tracks Verticales" onClick={() => this.CollapseTrackVertical()} className="btn btn-sm btn-danger btn-circle"><BarChart fontSize="small" /></button>
                         </div>
                         <div className="col-md-3 col-lg-3 text-right  mt-1">
-                            <small>{cookies.get('nombre_usuario_sesion')}</small>
+                            <small> {this.state.userStorage.nombre_usuario_sesion} </small>
                         </div>
                     </div>
                   

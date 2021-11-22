@@ -5,11 +5,11 @@ import Plotly from 'plotly.js';
 import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../css/button.css";
-import Cookies from 'universal-cookie';
+//import Cookies from 'universal-cookie';
 import SideBar from '../componentes/sidebar';
 import { message } from 'antd';
 
-const cookies = new Cookies();
+//const cookies = new Cookies();
 const URL = process.env.REACT_APP_API_HOST; 
 const config_general = {
     showSendToCloud: false,
@@ -29,6 +29,7 @@ const config_general = {
 };
 
 const TiempoReal = () => {
+    const [userStorage, setUserStorage] = useState({});
     const [count, setCount] = useState(0);
     const [ultimaConsulta, setUltimaConsulta] = useState('N/A');
 
@@ -522,6 +523,8 @@ const TiempoReal = () => {
     },[isToggled]);
 
     useEffect(() => {
+        setUserStorage(JSON.parse(sessionStorage.getItem('user')));
+
         axios.get(URL + 'fields').then(response => {
             setField(  response.data );
         }).catch(error => {
@@ -548,7 +551,7 @@ const TiempoReal = () => {
                             Última consulta: {ultimaConsulta}
                         </div>
                         <div className="col-md-3 col-lg-3 text-right  mt-1">
-                            <small>{cookies.get('nombre_usuario_sesion')}</small>
+                            <small> {userStorage.nombre_usuario_sesion} </small>
                         </div>
                     </div>
 
