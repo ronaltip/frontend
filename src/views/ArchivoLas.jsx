@@ -22,6 +22,12 @@ const ArchivoLas = () => {
 
   const columns = [
     {
+      title: 'Id',
+      dataIndex: 'id',
+      key: 'id',
+      width: '5%',
+    },
+    {
       title: 'Pozo',
       dataIndex: 'nombre_wells',
       key: 'nombre_wells',

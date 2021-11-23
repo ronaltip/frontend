@@ -1,15 +1,18 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ProgressBar } from "react-bootstrap";
 import Plot from 'react-plotly.js';
 import Plotly from 'plotly.js';
 import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../css/button.css";
-//import Cookies from 'universal-cookie';
+import hexRgb from 'hex-rgb';
+
 import SideBar from '../componentes/sidebar';
 import { message } from 'antd';
+import {AlgoritmoOperaciones} from '../util/utilities';
+import { Modal, ModalBody,  ModalHeader, Spinner } from 'reactstrap';
 
-//const cookies = new Cookies();
+
 const URL = process.env.REACT_APP_API_HOST; 
 const config_general = {
     showSendToCloud: false,
@@ -121,9 +124,31 @@ const TiempoReal = () => {
    
     const [isToggled, toggle] = useState(0)
     const [isRunning,  setIsRunning] = useState(false)
+    const [toggleAlgoritmo, setToggleAlgoritmo] = useState(false)
+    const [ejecutando, setEjecutando] = useState(false)
+    const [procesarAlgoritmo, setProcesarAlgoritmo] = useState(false)
+    const [_DBTM, setDBTM] = useState(0)
 
-   
-    
+
+    const [operacion, setOperacion] = useState({
+        DATETIME   : [],
+        operacion_0: [],
+        operacion_2: [],
+        operacion_3: [],
+        operacion_4: [],
+        operacion_7: [],
+        operacion_8: [],
+        operacion_9: [],
+        operacion_35: [],
+        operacion_36: [],
+        operacion_37: [],
+        operacion_38: [],
+        operacion_39: [],
+        operacion_40: [],
+        operacion_41: []
+    })
+    const [dataConvencion, setDataConvencion] = useState({})
+
     function getWells(id) {
     
         return new Promise((resolve, reject) =>  {
@@ -258,14 +283,18 @@ const TiempoReal = () => {
                 setIntervalId(0)
                 setCount(0)
                 toggle(-1)
-
+                console.log('DETENIDO')
                 return;
             }
             
             if (isToggled === 0)
+            {
                 getInit()
+                console.log('PRIMER CARGUE')
+            }
             else
             {
+                console.log('RE INICIA')
                 setCount( prev => prev + 1)
                 const newIntervalId = setInterval(() => {
                     toggle(prev => prev + 2)
@@ -285,6 +314,7 @@ const TiempoReal = () => {
         {
             setCount(prevCount => prevCount + 1)
             setIsRunning(false)
+           
             axios.get(URL + `datos_wits/wells/${form.wells_id}/${dataRegistro.id}`).then(response => {
 
                 if (response.data.length > 0 )
@@ -308,10 +338,84 @@ const TiempoReal = () => {
                             
                             let prof = Math.max(...newData[index].y) + 500
                             profundidadFinal_temporal =  (prof > profundidadFinal_temporal) ? prof : profundidadFinal_temporal
-                            //console.log('incluyendo datos a ' + c.descripcion + ' prof =' + profundidadFinal_temporal)
+                            
                         }
                     })
+
+                    if (procesarAlgoritmo)
+                    {
+                        // Ejecutar algoritmo
+                        let operacion_0  = {x:[], y:[]}, operacion_2  = {x:[], y:[]}, operacion_3  = {x:[], y:[]}, operacion_4  = {x:[], y:[]}, operacion_7  = {x:[], y:[]}, operacion_8 = {x:[], y:[]}, operacion_9 = {x:[], y:[]};
+                        let operacion_35 = {x:[], y:[]}, operacion_36 = {x:[], y:[]}, operacion_37 = {x:[], y:[]}, operacion_38 = {x:[], y:[]}, operacion_39 = {x:[], y:[]};
+                        let operacion_40 = {x:[], y:[]}, operacion_41 = {x:[], y:[]};
+
+                        let algoritmo = {
+                            _0108: 0,
+                            _0110: 0,
+                            _0113: 0,
+                            _0116: 0,
+                            _0118: 0,
+                            _0120: 0,
+                            _0130: 0
+                        }
+                        
+                        let DBTM_0  = 0
+                        let DBTM    = _DBTM
                     
+                        // Ejecutar y seleccionar la operación
+                        response.data.forEach(wits => {
+                            algoritmo[0] = ( wits.hasOwnProperty('_0108') ? wits['_0108'] : 0 )
+                            algoritmo[1] = ( wits.hasOwnProperty('_0110') ? wits['_0110'] : 0 )
+                            algoritmo[2] = ( wits.hasOwnProperty('_0113') ? wits['_0113'] : 0 )
+                            algoritmo[3] = ( wits.hasOwnProperty('_0116') ? wits['_0116'] : 0 )
+                            algoritmo[4] = ( wits.hasOwnProperty('_0118') ? wits['_0118'] : 0 )
+                            algoritmo[5] = ( wits.hasOwnProperty('_0120') ? wits['_0120'] : 0 )
+                            algoritmo[6] = ( wits.hasOwnProperty('_0130') ? wits['_0130'] : 0 )
+                            //AlgoritmoOperaciones(DBTM_0, DMEA, DBTM, RPMA, ROPA, MFIA, TQA, WOBA)
+                            let operacion = AlgoritmoOperaciones(DBTM_0, algoritmo[1], algoritmo[0], algoritmo[5], algoritmo[2], algoritmo[6], algoritmo[4], algoritmo[3]).Operacion;
+                            DBTM = algoritmo[1]
+
+                            switch (operacion)
+                            {
+                                case 0:  operacion_0.x.push(wits.DATETIME); operacion_0.y.push(DBTM); break;
+                                case 2:  operacion_2.x.push(wits.DATETIME); operacion_2.y.push(DBTM); break;
+                                case 3:  operacion_3.x.push(wits.DATETIME); operacion_3.y.push(DBTM); break;
+                                case 4:  operacion_4.x.push(wits.DATETIME); operacion_4.y.push(DBTM); break;
+                                case 7:  operacion_7.x.push(wits.DATETIME); operacion_7.y.push(DBTM); break;
+                                case 8:  operacion_8.x.push(wits.DATETIME); operacion_8.y.push(DBTM); break;
+                                case 9:  operacion_9.x.push(wits.DATETIME); operacion_9.y.push(DBTM); break;
+                                case 35: operacion_35.x.push(wits.DATETIME); operacion_35.y.push(DBTM); break;
+                                case 36: operacion_36.x.push(wits.DATETIME); operacion_36.y.push(DBTM); break;
+                                case 37: operacion_37.x.push(wits.DATETIME); operacion_37.y.push(DBTM); break;
+                                case 38: operacion_38.x.push(wits.DATETIME); operacion_38.y.push(DBTM); break;
+                                case 39: operacion_39.x.push(wits.DATETIME); operacion_39.y.push(DBTM); break;
+                                case 40: operacion_40.x.push(wits.DATETIME); operacion_40.y.push(DBTM); break;
+                                case 41: operacion_41.x.push(wits.DATETIME); operacion_41.y.push(DBTM); break;
+                                default: break;
+                            }
+                            
+                            DBTM_0 = DBTM;
+                        });
+
+                        setDBTM( DBTM )
+                    
+                        newData.push( { x: operacion_0.x,  y: operacion_0.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_0.nombre , marker : {color: hexRgb(dataConvencion.Op_0.color,  {format: 'css'}) , symbol: '100' }} );
+                        newData.push( { x: operacion_2.x,  y: operacion_2.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_2.nombre , marker : {color: hexRgb(dataConvencion.Op_2.color,  {format: 'css'}) , symbol: '100' }} );
+                        newData.push( { x: operacion_3.x,  y: operacion_3.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_3.nombre , marker : {color: hexRgb(dataConvencion.Op_3.color,  {format: 'css'}) , symbol: '100' }} );
+                        newData.push( { x: operacion_4.x,  y: operacion_4.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_4.nombre , marker : {color: hexRgb(dataConvencion.Op_4.color,  {format: 'css'}) , symbol: '100' }} );
+                        newData.push( { x: operacion_7.x,  y: operacion_7.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_7.nombre , marker : {color: hexRgb(dataConvencion.Op_7.color,  {format: 'css'}) , symbol: '100' }} );
+                        newData.push( { x: operacion_8.x,  y: operacion_8.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_8.nombre , marker : {color: hexRgb(dataConvencion.Op_8.color,  {format: 'css'}) , symbol: '100' }} );
+                        newData.push( { x: operacion_9.x,  y: operacion_9.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_9.nombre , marker : {color: hexRgb(dataConvencion.Op_9.color,  {format: 'css'}) , symbol: '100' }} );
+                        newData.push( { x: operacion_35.x, y: operacion_35.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_35.nombre, marker : {color: hexRgb(dataConvencion.Op_35.color, {format: 'css'}) , symbol: '100' }} );
+                        newData.push( { x: operacion_36.x, y: operacion_36.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_36.nombre, marker : {color: hexRgb(dataConvencion.Op_36.color, {format: 'css'}) , symbol: '100' }} );
+                        newData.push( { x: operacion_37.x, y: operacion_37.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_37.nombre, marker : {color: hexRgb(dataConvencion.Op_37.color, {format: 'css'}) , symbol: '100' }} );
+                        newData.push( { x: operacion_38.x, y: operacion_38.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_38.nombre, marker : {color: hexRgb(dataConvencion.Op_38.color, {format: 'css'}) , symbol: '100' }} );
+                        newData.push( { x: operacion_39.x, y: operacion_39.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_39.nombre, marker : {color: hexRgb(dataConvencion.Op_39.color, {format: 'css'}) , symbol: '100' }} );
+                        newData.push( { x: operacion_40.x, y: operacion_40.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_40.nombre, marker : {color: hexRgb(dataConvencion.Op_40.color, {format: 'css'}) , symbol: '100' }} );
+                        newData.push( { x: operacion_41.x, y: operacion_41.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_41.nombre, marker : {color: hexRgb(dataConvencion.Op_41.color, {format: 'css'}) , symbol: '100' }} );
+                        
+                    }
+
                     setDataGP( newData )
                     let layout_Principal = {...layoutGP}
                     layout_Principal.datarevision++
@@ -339,9 +443,7 @@ const TiempoReal = () => {
                             newData_TH[index].y.push(...y)
                             
                             yaxis = 'yaxis' + (nro_y === 1 ? '' : nro_y)
-                            console.log(yaxis)
-                            layout_Horizontal[yaxis].range = [y[0] , y[y.length - 1]]
-                            console.log('termina ' + yaxis)
+                            layout_Horizontal[yaxis].range = [y[0] , y[y.length - 1]]                         
 
                             nro_y++
                         }
@@ -382,6 +484,108 @@ const TiempoReal = () => {
         else
             message.info("Consulta y cargue en proceso")
     }
+
+    const ContinuarData = () => {
+        setToggleAlgoritmo(false)
+        setProcesarAlgoritmo(false)
+        const newIntervalId = setInterval(() => {
+            toggle(prev => prev + 1)
+        }, intervalo );
+        setIntervalId(newIntervalId);
+    }
+
+    const InitEjecutarAlgoritmo = async () => {
+        //Algoritmo de Operaciones
+        setEjecutando(true)
+        setProcesarAlgoritmo(true)
+        await delay(1000);
+        let data      = [...dataGP]  
+        let datosWits = JSON.parse( sessionStorage.getItem('datosWits') )
+        
+        let operacion_0  = {x:[], y:[]}, operacion_2  = {x:[], y:[]}, operacion_3  = {x:[], y:[]}, operacion_4  = {x:[], y:[]}, operacion_7  = {x:[], y:[]}, operacion_8 = {x:[], y:[]}, operacion_9 = {x:[], y:[]};
+        let operacion_35 = {x:[], y:[]}, operacion_36 = {x:[], y:[]}, operacion_37 = {x:[], y:[]}, operacion_38 = {x:[], y:[]}, operacion_39 = {x:[], y:[]};
+        let operacion_40 = {x:[], y:[]}, operacion_41 = {x:[], y:[]};
+
+        let algoritmo = {
+            _0108: 0,
+            _0110: 0,
+            _0113: 0,
+            _0116: 0,
+            _0118: 0,
+            _0120: 0,
+            _0130: 0
+        }
+        
+        let DBTM_0  = 0
+        let DBTM    = 0
+       
+        // Ejecutar y seleccionar la operación
+        datosWits.forEach(wits => {
+            algoritmo[0] = ( wits.hasOwnProperty('_0108') ? wits['_0108'] : 0 )
+            algoritmo[1] = ( wits.hasOwnProperty('_0110') ? wits['_0110'] : 0 )
+            algoritmo[2] = ( wits.hasOwnProperty('_0113') ? wits['_0113'] : 0 )
+            algoritmo[3] = ( wits.hasOwnProperty('_0116') ? wits['_0116'] : 0 )
+            algoritmo[4] = ( wits.hasOwnProperty('_0118') ? wits['_0118'] : 0 )
+            algoritmo[5] = ( wits.hasOwnProperty('_0120') ? wits['_0120'] : 0 )
+            algoritmo[6] = ( wits.hasOwnProperty('_0130') ? wits['_0130'] : 0 )
+            //AlgoritmoOperaciones(DBTM_0, DMEA, DBTM, RPMA, ROPA, MFIA, TQA, WOBA)
+            let operacion = AlgoritmoOperaciones(DBTM_0, algoritmo[1], algoritmo[0], algoritmo[5], algoritmo[2], algoritmo[6], algoritmo[4], algoritmo[3]).Operacion;
+            DBTM = algoritmo[1]
+
+            switch (operacion)
+            {
+                case 0:  operacion_0.x.push(wits.DATETIME); operacion_0.y.push(DBTM); break;
+                case 2:  operacion_2.x.push(wits.DATETIME); operacion_2.y.push(DBTM); break;
+                case 3:  operacion_3.x.push(wits.DATETIME); operacion_3.y.push(DBTM); break;
+                case 4:  operacion_4.x.push(wits.DATETIME); operacion_4.y.push(DBTM); break;
+                case 7:  operacion_7.x.push(wits.DATETIME); operacion_7.y.push(DBTM); break;
+                case 8:  operacion_8.x.push(wits.DATETIME); operacion_8.y.push(DBTM); break;
+                case 9:  operacion_9.x.push(wits.DATETIME); operacion_9.y.push(DBTM); break;
+                case 35: operacion_35.x.push(wits.DATETIME); operacion_35.y.push(DBTM); break;
+                case 36: operacion_36.x.push(wits.DATETIME); operacion_36.y.push(DBTM); break;
+                case 37: operacion_37.x.push(wits.DATETIME); operacion_37.y.push(DBTM); break;
+                case 38: operacion_38.x.push(wits.DATETIME); operacion_38.y.push(DBTM); break;
+                case 39: operacion_39.x.push(wits.DATETIME); operacion_39.y.push(DBTM); break;
+                case 40: operacion_40.x.push(wits.DATETIME); operacion_40.y.push(DBTM); break;
+                case 41: operacion_41.x.push(wits.DATETIME); operacion_41.y.push(DBTM); break;
+                default: break;
+            }
+            
+            DBTM_0 = DBTM;
+        });
+
+        setDBTM(DBTM)
+        
+        data.push( { x: operacion_0.x,  y: operacion_0.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_0.nombre , marker : {color: hexRgb(dataConvencion.Op_0.color,  {format: 'css'}) , symbol: '100' }} );
+        data.push( { x: operacion_2.x,  y: operacion_2.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_2.nombre , marker : {color: hexRgb(dataConvencion.Op_2.color,  {format: 'css'}) , symbol: '100' }} );
+        data.push( { x: operacion_3.x,  y: operacion_3.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_3.nombre , marker : {color: hexRgb(dataConvencion.Op_3.color,  {format: 'css'}) , symbol: '100' }} );
+        data.push( { x: operacion_4.x,  y: operacion_4.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_4.nombre , marker : {color: hexRgb(dataConvencion.Op_4.color,  {format: 'css'}) , symbol: '100' }} );
+        data.push( { x: operacion_7.x,  y: operacion_7.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_7.nombre , marker : {color: hexRgb(dataConvencion.Op_7.color,  {format: 'css'}) , symbol: '100' }} );
+        data.push( { x: operacion_8.x,  y: operacion_8.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_8.nombre , marker : {color: hexRgb(dataConvencion.Op_8.color,  {format: 'css'}) , symbol: '100' }} );
+        data.push( { x: operacion_9.x,  y: operacion_9.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_9.nombre , marker : {color: hexRgb(dataConvencion.Op_9.color,  {format: 'css'}) , symbol: '100' }} );
+        data.push( { x: operacion_35.x, y: operacion_35.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_35.nombre, marker : {color: hexRgb(dataConvencion.Op_35.color, {format: 'css'}) , symbol: '100' }} );
+        data.push( { x: operacion_36.x, y: operacion_36.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_36.nombre, marker : {color: hexRgb(dataConvencion.Op_36.color, {format: 'css'}) , symbol: '100' }} );
+        data.push( { x: operacion_37.x, y: operacion_37.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_37.nombre, marker : {color: hexRgb(dataConvencion.Op_37.color, {format: 'css'}) , symbol: '100' }} );
+        data.push( { x: operacion_38.x, y: operacion_38.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_38.nombre, marker : {color: hexRgb(dataConvencion.Op_38.color, {format: 'css'}) , symbol: '100' }} );
+        data.push( { x: operacion_39.x, y: operacion_39.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_39.nombre, marker : {color: hexRgb(dataConvencion.Op_39.color, {format: 'css'}) , symbol: '100' }} );
+        data.push( { x: operacion_40.x, y: operacion_40.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_40.nombre, marker : {color: hexRgb(dataConvencion.Op_40.color, {format: 'css'}) , symbol: '100' }} );
+        data.push( { x: operacion_41.x, y: operacion_41.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_41.nombre, marker : {color: hexRgb(dataConvencion.Op_41.color, {format: 'css'}) , symbol: '100' }} );
+        
+        await delay(1000);
+        setDataGP( data )
+        
+        let layout_Principal = {...layoutGP}
+        layout_Principal.datarevision++
+        setLayoutGP( layout_Principal )
+        
+        setEjecutando(false)
+        setToggleAlgoritmo(false)
+
+        const newIntervalId = setInterval(() => {
+            toggle(prev => prev + 1)
+        }, intervalo );
+        setIntervalId(newIntervalId);
+    }
  
     const getInit = () => {
      
@@ -398,7 +602,9 @@ const TiempoReal = () => {
                 setCurvas(curvas)
                 axios.get(URL + `datos_wits/wells/${template.wells_id}/0`).then(response => {
 
-                    setDataWits(response.data)
+                    //setDataWits(response.data)
+                    sessionStorage.setItem('datosWits',    JSON.stringify(response.data) )
+                    
                     let profundidadFinal_temporal = 1000
                     let data = []
                     let curvasPrincipal  = curvas.filter(c=>c.mostrar === true && c.grupo === null)
@@ -421,7 +627,9 @@ const TiempoReal = () => {
                             profundidadFinal_temporal =  (prof > profundidadFinal_temporal) ? prof : profundidadFinal_temporal                                                    
                         }
                     })
-                    
+                  
+
+                    // Guardar el estado                   
                     setDataGP( data )
                     let layout_Principal = {...layoutGP}
                     layout_Principal.datarevision++
@@ -486,17 +694,11 @@ const TiempoReal = () => {
 
                     setIsLoadedGP(true)
                     setIsLoadedTH(true)
-
-                    //let traksHorizontales = curvas.filter(c=>c.mostrar === true && c.grupo !== null).sort(c=>c.grupo)
-                    //SetSerieTrackHorizontal(traksHorizontales)
-                   
-                    
-                    const newIntervalId = setInterval(() => {
-                        toggle(prev => prev + 1)
-                    }, intervalo );
-                    setIntervalId(newIntervalId);
-
                     setShowGrafica(true)
+                   
+                    setToggleAlgoritmo(true)
+                    
+                    message.success('Cargue inicial de datos finalizado')
                 }).catch(errors => {
                     message.error("Ocurrió un error consultando los datos wits del pozo. Detener e Iniciar nuevamente.")
                     console.log(errors.message);
@@ -513,7 +715,6 @@ const TiempoReal = () => {
         if (isToggled > 0)
         {
             setUltimaConsulta(now())
-            //console.log(now() + ' entra a consultar ' + isToggled + ' con último id = '+ dataRegistro.id)
             setIsRunning(true)
             getData()
         }
@@ -530,6 +731,46 @@ const TiempoReal = () => {
         }).catch(error => {
             console.log(error.message);
         })
+
+        axios.get(URL + 'convencion_datos_operacion').then(response => {
+            
+            
+             // Agregar las curvas a la gráfica
+            let [Op_0]  = response.data.filter( c => c.id === 0  ).map( p => ({ nombre: p.nombre, color: p.color }) );
+            let [Op_2]  = response.data.filter( c => c.id === 2  ).map( p => ({ nombre: p.nombre, color: p.color }) );
+            let [Op_3]  = response.data.filter( c => c.id === 3  ).map( p => ({ nombre: p.nombre, color: p.color }) );
+            let [Op_4]  = response.data.filter( c => c.id === 4  ).map( p => ({ nombre: p.nombre, color: p.color }) );
+            let [Op_7]  = response.data.filter( c => c.id === 7  ).map( p => ({ nombre: p.nombre, color: p.color }) );
+            let [Op_8]  = response.data.filter( c => c.id === 8  ).map( p => ({ nombre: p.nombre, color: p.color }) );
+            let [Op_9]  = response.data.filter( c => c.id === 9  ).map( p => ({ nombre: p.nombre, color: p.color }) );
+            let [Op_35] = response.data.filter( c => c.id === 35 ).map( p => ({ nombre: p.nombre, color: p.color }) );
+            let [Op_36] = response.data.filter( c => c.id === 36 ).map( p => ({ nombre: p.nombre, color: p.color }) );
+            let [Op_37] = response.data.filter( c => c.id === 37 ).map( p => ({ nombre: p.nombre, color: p.color }) );
+            let [Op_38] = response.data.filter( c => c.id === 38 ).map( p => ({ nombre: p.nombre, color: p.color }) );
+            let [Op_39] = response.data.filter( c => c.id === 39 ).map( p => ({ nombre: p.nombre, color: p.color }) );
+            let [Op_40] = response.data.filter( c => c.id === 40 ).map( p => ({ nombre: p.nombre, color: p.color }) );
+            let [Op_41] = response.data.filter( c => c.id === 41 ).map( p => ({ nombre: p.nombre, color: p.color }) );
+
+            setDataConvencion( {
+                Op_0  : Op_0,
+                Op_2  : Op_2,
+                Op_3  : Op_3,
+                Op_4  : Op_4,
+                Op_7  : Op_7,
+                Op_8  : Op_8,
+                Op_9  : Op_9,
+                Op_35 : Op_35,
+                Op_36 : Op_36,
+                Op_37 : Op_37,
+                Op_38 : Op_38,
+                Op_39 : Op_39,
+                Op_40 : Op_40,
+                Op_41 : Op_41
+            });
+        }).catch(error => {
+            console.log(error.message);
+        })
+        
     },[]);
 
     const now = () => {
@@ -537,166 +778,196 @@ const TiempoReal = () => {
         return ahora;
     }
 
+    const delay = ms => new Promise(res => setTimeout(res, ms));
+
     return (
       
-           <div className="App">
-                <SideBar pageWrapId={"page-wrap"} outerContainerId={"App"} />
-                <div className="container-fluid ">
-                    
-                    <div className="row border-bottom bg-verdeoscuro">
-                        <div className="col-md-3 col-lg-3 small text-left mt-2 mb-2">
-                            <ProgressBar animated now={intervalId ? 100: 0} />
-                        </div>
-                        <div className="col-md-6 col-lg-6 text-left  mt-1">
-                            Última consulta: {ultimaConsulta}
-                        </div>
-                        <div className="col-md-3 col-lg-3 text-right  mt-1">
-                            <small> {userStorage.nombre_usuario_sesion} </small>
-                        </div>
+        <div className="App">
+            <SideBar pageWrapId={"page-wrap"} outerContainerId={"App"} />
+            <div className="container-fluid ">
+                
+                <div className="row border-bottom bg-verdeoscuro">
+                    <div className="col-md-3 col-lg-3 small text-left mt-2 mb-2">
+                        <ProgressBar animated now={intervalId ? 100: 0} />
                     </div>
+                    <div className="col-md-6 col-lg-6 text-left  mt-1">
+                        Última consulta: {ultimaConsulta}
+                    </div>
+                    <div className="col-md-3 col-lg-3 text-right  mt-1">
+                        <small> {userStorage.nombre_usuario_sesion} </small>
+                    </div>
+                </div>
 
-                    <div className="row">
-                        <div className="col-md-3">
-                            <div className="card mt-2" >
-                               
-                                <div className="card-body">
-
-                                    <div className="form-group">
-                                        <label><b>Campo: </b></label>
-                                        <select name="field_id" id="field_id" className="form-control form-control-sm" onChange={handleChangeForm} defaultValue={form ? form.field_id : 0}>
-                                            <option key="0" value="0">Seleccionar</option>
-                                            {
-                                            dataFields ?
-                                            dataFields.map(elemento => (<option key={elemento.id} value={elemento.id}>{elemento.nombre}</option>))
-                                            :null
-                                            }
-                                        </select>
-                                    </div>                                
-
-                                    <div className="form-group">
-                                        <label><b>Pozo: </b></label>
-                                        <select name="wells_id" id="wells_id" className="form-control form-control-sm" onChange={handleChangeForm} defaultValue={form ? form.wells_id : 0}>
-                                            <option key="0" value="0">Seleccionar</option>
-                                            {
-                                                dataWells ?
-                                                dataWells.map(elemento => (<option key={elemento.id} value={elemento.id}>{elemento.nombre}</option>))
-                                                :null
-                                            }
-                                        </select>
-                                    </div>
+                <div className="row">
+                    <div className="col-md-3 col-lg-2 col-xl-2">
+                        <div className="card mt-2" >
                             
-                                    
- 
-                                    <hr/>
-                                    
-                                    <div className="form-group">
-                                        <label>Primera Fecha</label>
-                                        <input type="text" className="form-control form-control-sm" readOnly={true} defaultValue={dataRegistro.Inicio} />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Última Fecha</label>
-                                        <input type="text" className="form-control form-control-sm" readOnly={true} defaultValue={dataRegistro.Fin} />
-                                    </div> 
-                                    <div className="form-group">
-                                        <label>Total registros</label>
-                                        <input type="text" className="form-control form-control-sm" readOnly={true} defaultValue={dataRegistro.Total} />
-                                    </div>
-                                    
-                                    <hr/>
-                                    
-                                    <div className="form-group">
-                                        <label><b>Template: </b></label>
-                                        <select name="id" id="id" className="form-control form-control-sm" onChange={handleChangeForm} defaultValue={form ? form.id : 0}>
-                                            <option key="0" value="0">Seleccionar</option>
-                                            {
-                                                dataTemplates ?
-                                                dataTemplates.map(elemento => (<option key={elemento.id} value={elemento.id}>{elemento.nombre}</option>))
-                                                :null
-                                            }
+                            <div className="card-body">
+
+                                <div className="form-group">
+                                    <label><b>Campo: </b></label>
+                                    <select name="field_id" id="field_id" className="form-control form-control-sm" onChange={handleChangeForm} defaultValue={form ? form.field_id : 0}>
+                                        <option key="0" value="0">Seleccionar</option>
+                                        {
+                                        dataFields ?
+                                        dataFields.map(elemento => (<option key={elemento.id} value={elemento.id}>{elemento.nombre}</option>))
+                                        :null
+                                        }
+                                    </select>
+                                </div>                                
+
+                                <div className="form-group">
+                                    <label><b>Pozo: </b></label>
+                                    <select name="wells_id" id="wells_id" className="form-control form-control-sm" onChange={handleChangeForm} defaultValue={form ? form.wells_id : 0}>
+                                        <option key="0" value="0">Seleccionar</option>
+                                        {
+                                            dataWells ?
+                                            dataWells.map(elemento => (<option key={elemento.id} value={elemento.id}>{elemento.nombre}</option>))
+                                            :null
+                                        }
+                                    </select>
+                                </div>
+                        
+                                
+
+                                <hr/>
+                                
+                                <div className="form-group">
+                                    <label>Primera Fecha</label>
+                                    <input type="text" className="form-control form-control-sm" readOnly={true} defaultValue={dataRegistro.Inicio} />
+                                </div>
+                                <div className="form-group">
+                                    <label>Última Fecha</label>
+                                    <input type="text" className="form-control form-control-sm" readOnly={true} defaultValue={dataRegistro.Fin} />
+                                </div> 
+                                <div className="form-group">
+                                    <label>Total registros</label>
+                                    <input type="text" className="form-control form-control-sm" readOnly={true} defaultValue={dataRegistro.Total} />
+                                </div>
+                                
+                                <hr/>
+                                
+                                <div className="form-group">
+                                    <label><b>Template: </b></label>
+                                    <select name="id" id="id" className="form-control form-control-sm" onChange={handleChangeForm} defaultValue={form ? form.id : 0}>
+                                        <option key="0" value="0">Seleccionar</option>
+                                        {
+                                            dataTemplates ?
+                                            dataTemplates.map(elemento => (<option key={elemento.id} value={elemento.id}>{elemento.nombre}</option>))
+                                            :null
+                                        }
+                                    </select>
+                                </div>
+                                
+                            </div>
+                            <div className="card-footer">
+                                <div className="row">
+                                    <div className="col-sm-7">
+                                        <label className="small">Intervalo de consulta [Sg]</label>
+                                        <select className="form-control form-control-sm" onChange={handleChange}>
+                                            <option value="10">10</option>
+                                            <option value="20">20</option>
+                                            <option value="30">30</option>
+                                            <option value="60">60</option>
                                         </select>
                                     </div>
-                                    
-                                </div>
-                                <div className="card-footer">
-                                    <div className="row">
-                                        <div className="col-sm-7">
-                                            <label className="small">Intervalo de consulta [Sg]</label>
-                                            <select className="form-control form-control-sm" onChange={handleChange}>
-                                                <option value="10">10</option>
-                                                <option value="20">20</option>
-                                                <option value="30">30</option>
-                                                <option value="60">60</option>
-                                            </select>
-                                        </div>
-                                        <div className="col-sm-5 mt-3">
-                                            <button className="btn btn-sm btn-primary btn-block" onClick={handleClick}> {count === 0 ? "Iniciar" : (count === 1) ? "Cargando...": "Detener"}</button>
-                                        </div>
+                                    <div className="col-sm-5 mt-3">
+                                        <button className="btn btn-sm btn-primary btn-block" onClick={handleClick}> {count === 0 ? "Iniciar" : (count === 1) ? "Cargando...": "Detener"}</button>
                                     </div>
                                 </div>
                             </div>
-                            
                         </div>
-                        <div className="col-md-9">
-                            { showgrafica ? 
-                            
+                        
+                    </div>
+                    <div className="col-md-9 col-lg-10 col-xl-10">
+                        { showgrafica ? 
+                                                 
                                 
-                               
-                                    
-                                    <div className="row" >
-                                        <div id="divPrincipal" className="col-md-12">
-                                            {
-                                                
-                                                <div id="divGraficaPrincipal" className="row">
-                                                    <div className="col-md-12 col-lg-12">
-                                                        {
-                                                            isLoadedPrincipal ? 
-                                                            <Plot
-                                                                divId="plotDept"
-                                                                data={dataGP}
-                                                                layout={layoutGP}
-                                                                config={config_general}
-                                                                useResizeHandler={true}
-                                                                style={{width:"100%", height:"55vh"}}
-                                                               
-                                                            />
-                                                            :
-                                                            null
-                                                        }
-                                                    </div>
-                                                </div>
-                                               
-                                            }
-
-                                            {
-                                                
-                                                <div id="divTrackHorizontal" className="row">
-                                                    <div className="col-md-12 col-lg-12">
+                                <div className="row" >
+                                    <div id="divPrincipal" className="col-md-12">
+                                        {
+                                            
+                                            <div id="divGraficaPrincipal" className="row">
+                                                <div className="col-md-12 col-lg-12">
+                                                    {
+                                                        isLoadedPrincipal ? 
                                                         <Plot
-                                                            divId="plotTracksHorizontal"
-                                                            data={dataTH}
-                                                            layout={layoutTH}
+                                                            divId="plotDept"
+                                                            data={dataGP}
+                                                            layout={layoutGP}
                                                             config={config_general}
                                                             useResizeHandler={true}
-                                                            style={{width:"100%", height:"40vh"}}
+                                                            style={{width:"100%", height:"55vh"}}
+                                                            
                                                         />
-                                                    </div>
+                                                        :
+                                                        null
+                                                    }
                                                 </div>
-                                               
-                                            }
-                                        </div>
-                                        
+                                            </div>
+                                            
+                                        }
+
+                                        {
+                                            
+                                            <div id="divTrackHorizontal" className="row">
+                                                <div className="col-md-12 col-lg-12">
+                                                    <Plot
+                                                        divId="plotTracksHorizontal"
+                                                        data={dataTH}
+                                                        layout={layoutTH}
+                                                        config={config_general}
+                                                        useResizeHandler={true}
+                                                        style={{width:"100%", height:"40vh"}}
+                                                    />
+                                                </div>
+                                            </div>
+                                            
+                                        }
                                     </div>
-                               
-                          
-                            :
-                            null
-                            }
-                        </div>
+                                    
+                                </div>
+                            
+                        
+                        :
+                        null
+                        }
                     </div>
                 </div>
             </div>
 
-   
+            <Modal isOpen={toggleAlgoritmo} aria-labelledby="contained-modal-title-vcenter" centered>
+                <ModalHeader>
+                    <div id="contained-modal-title-vcenter" className="col-12 text-center">
+                        Desea ejecutar el Algoritmo de Operaciones ?
+                    </div>
+                </ModalHeader>
+                <ModalBody>
+                    { !ejecutando ?
+                        <div className="row ">
+                            <div className="col-md-6">
+                                <button className="btn btn-success btn-block" onClick={() => InitEjecutarAlgoritmo()}>Si</button>
+                            </div>
+                            <div className="col-md-6">
+                                <button className="btn btn-secondary btn-block" onClick={() => ContinuarData()}> No</button>
+                            </div>
+                        </div>
+                    :
+                        <div className="row ">
+                            <div className="col-md-12 text-center">
+                                <Spinner 
+                                    color="success" 
+                                    animation="border"
+                                    size="md"
+                                    role="status"
+                                    aria-hidden="true" 
+                                />
+                            </div>
+                        </div>
+                    }
+                </ModalBody>
+            </Modal>
+        </div>
     );
 };
 
