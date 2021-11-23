@@ -16,11 +16,12 @@ import SideBar from '../componentes/sidebar';
 
 import {Save, HorizontalSplit, BarChart, Brush, CalendarToday, Delete, EventNote, Close, Home, PlaylistAddCheck, EventAvailable, PlayCircleOutline, MultilineChart, SlowMotionVideo, LayersClear, InvertColorsOff, CreateNewFolderOutlined } from '@material-ui/icons';
 import { TextField, Menu, MenuItem } from '@material-ui/core'
+import { message } from 'antd';
 
-import Cookies from 'universal-cookie';
+//import Cookies from 'universal-cookie';
 
 
-const cookies = new Cookies();
+//const cookies = new Cookies();
 
 const URL = process.env.REACT_APP_API_HOST; 
 
@@ -46,11 +47,12 @@ class Graficador extends Component {
     constructor(props) {
         super(props);
         this.state = {
+            userStorage: 0,
             form_template  : {
                 tmpNombre: '',
                 tmpDescripcion: '',
                 wells_id: 0,
-                pkuser: cookies.get('pk_usuario_sesion')
+                pkuser: 0
             },
             alert_algoritmo: {
                 tipo: '',
@@ -159,7 +161,7 @@ class Graficador extends Component {
             optionsDetalle: [],
             loadingAlgoritmo: false,
             darkMode: false,
-
+            showing:false,
             archivos_las: [],
             dataArchivosCurvas: []
         }
@@ -203,6 +205,7 @@ class Graficador extends Component {
         datos.forEach( wits => {
             
             DATETIME.push( wits.DATETIME );
+
             let index = 0
             for (const opt in selects) {
 
@@ -236,7 +239,7 @@ class Graficador extends Component {
             }
             
             //let operacion = AlgoritmoOperaciones(DBTM_0, DMEA, DBTM, RPMA, ROPA, MFIA, TQA, WOBA).Operacion;
-            let operacion = AlgoritmoOperaciones(DBTM_0, algoritmo[1], algoritmo[0], algoritmo[5], algoritmo[2], algoritmo[7], algoritmo[4], algoritmo[3]).Operacion;
+            let operacion = AlgoritmoOperaciones(DBTM_0, algoritmo[1], algoritmo[0], algoritmo[5], algoritmo[2], algoritmo[6], algoritmo[4], algoritmo[3]).Operacion;
             DBTM = algoritmo[1]
 
             if (operacion === 0)  { operacion_0.push(DBTM)}  else { operacion_0.push(null) }
@@ -274,20 +277,20 @@ class Graficador extends Component {
         let [Op_40] = convencion.filter( c => c.id === 40 ).map( p => ({ nombre: p.nombre, color: p.color }) );
         let [Op_41] = convencion.filter( c => c.id === 41 ).map( p => ({ nombre: p.nombre, color: p.color }) );
 
-        data.push( { x: DATETIME, y: operacion_0,   mode: "markers",  type: "scatter", name: Op_0.nombre , marker : {color: hexRgb(Op_0.color, {format: 'css'}) }} );
-        data.push( { x: DATETIME, y: operacion_2,   mode: "markers",  type: "scatter", name: Op_2.nombre , marker : {color: hexRgb(Op_2.color, {format: 'css'}) }} );
-        data.push( { x: DATETIME, y: operacion_3,   mode: "markers",  type: "scatter", name: Op_3.nombre , marker : {color: hexRgb(Op_3.color, {format: 'css'}) }} );
-        data.push( { x: DATETIME, y: operacion_4,   mode: "markers",  type: "scatter", name: Op_4.nombre , marker : {color: hexRgb(Op_4.color, {format: 'css'}) }} );
-        data.push( { x: DATETIME, y: operacion_7,   mode: "markers",  type: "scatter", name: Op_7.nombre , marker : {color: hexRgb(Op_7.color, {format: 'css'}) }} );
-        data.push( { x: DATETIME, y: operacion_8,   mode: "markers",  type: "scatter", name: Op_8.nombre , marker : {color: hexRgb(Op_8.color, {format: 'css'}) }} );
-        data.push( { x: DATETIME, y: operacion_9,   mode: "markers",  type: "scatter", name: Op_9.nombre , marker : {color: hexRgb(Op_9.color, {format: 'css'}) }} );
-        data.push( { x: DATETIME, y: operacion_35,  mode: "markers",  type: "scatter", name: Op_35.nombre, marker : {color: hexRgb(Op_35.color, {format: 'css'}) }} );
-        data.push( { x: DATETIME, y: operacion_36,  mode: "markers",  type: "scatter", name: Op_36.nombre, marker : {color: hexRgb(Op_36.color, {format: 'css'}) }} );
-        data.push( { x: DATETIME, y: operacion_37,  mode: "markers",  type: "scatter", name: Op_37.nombre, marker : {color: hexRgb(Op_37.color, {format: 'css'}) }} );
-        data.push( { x: DATETIME, y: operacion_38,  mode: "markers",  type: "scatter", name: Op_38.nombre, marker : {color: hexRgb(Op_38.color, {format: 'css'}) }} );
-        data.push( { x: DATETIME, y: operacion_39,  mode: "markers",  type: "scatter", name: Op_39.nombre, marker : {color: hexRgb(Op_39.color, {format: 'css'}) }} );
-        data.push( { x: DATETIME, y: operacion_40,  mode: "markers",  type: "scatter", name: Op_40.nombre, marker : {color: hexRgb(Op_40.color, {format: 'css'}) }} );
-        data.push( { x: DATETIME, y: operacion_41,  mode: "markers",  type: "scatter", name: Op_41.nombre, marker : {color: hexRgb(Op_41.color, {format: 'css'}) }} );
+        data.push( { x: DATETIME, y: operacion_0,   mode: "markers",  type: "scatter", name: Op_0.nombre , marker : {color: hexRgb(Op_0.color,  {format: 'css'}), symbol: '100' }} );
+        data.push( { x: DATETIME, y: operacion_2,   mode: "markers",  type: "scatter", name: Op_2.nombre , marker : {color: hexRgb(Op_2.color,  {format: 'css'}), symbol: '100' }} );
+        data.push( { x: DATETIME, y: operacion_3,   mode: "markers",  type: "scatter", name: Op_3.nombre , marker : {color: hexRgb(Op_3.color,  {format: 'css'}), symbol: '100' }} );
+        data.push( { x: DATETIME, y: operacion_4,   mode: "markers",  type: "scatter", name: Op_4.nombre , marker : {color: hexRgb(Op_4.color,  {format: 'css'}), symbol: '100' }} );
+        data.push( { x: DATETIME, y: operacion_7,   mode: "markers",  type: "scatter", name: Op_7.nombre , marker : {color: hexRgb(Op_7.color,  {format: 'css'}), symbol: '100' }} );
+        data.push( { x: DATETIME, y: operacion_8,   mode: "markers",  type: "scatter", name: Op_8.nombre , marker : {color: hexRgb(Op_8.color,  {format: 'css'}), symbol: '100' }} );
+        data.push( { x: DATETIME, y: operacion_9,   mode: "markers",  type: "scatter", name: Op_9.nombre , marker : {color: hexRgb(Op_9.color,  {format: 'css'}), symbol: '100' }} );
+        data.push( { x: DATETIME, y: operacion_35,  mode: "markers",  type: "scatter", name: Op_35.nombre, marker : {color: hexRgb(Op_35.color, {format: 'css'}), symbol: '100' }} );
+        data.push( { x: DATETIME, y: operacion_36,  mode: "markers",  type: "scatter", name: Op_36.nombre, marker : {color: hexRgb(Op_36.color, {format: 'css'}), symbol: '100' }} );
+        data.push( { x: DATETIME, y: operacion_37,  mode: "markers",  type: "scatter", name: Op_37.nombre, marker : {color: hexRgb(Op_37.color, {format: 'css'}), symbol: '100' }} );
+        data.push( { x: DATETIME, y: operacion_38,  mode: "markers",  type: "scatter", name: Op_38.nombre, marker : {color: hexRgb(Op_38.color, {format: 'css'}), symbol: '100' }} );
+        data.push( { x: DATETIME, y: operacion_39,  mode: "markers",  type: "scatter", name: Op_39.nombre, marker : {color: hexRgb(Op_39.color, {format: 'css'}), symbol: '100' }} );
+        data.push( { x: DATETIME, y: operacion_40,  mode: "markers",  type: "scatter", name: Op_40.nombre, marker : {color: hexRgb(Op_40.color, {format: 'css'}), symbol: '100' }} );
+        data.push( { x: DATETIME, y: operacion_41,  mode: "markers",  type: "scatter", name: Op_41.nombre, marker : {color: hexRgb(Op_41.color, {format: 'css'}), symbol: '100' }} );
         layout.datarevision++
        
         return { result: true, data: data, layout: layout}
@@ -531,10 +534,15 @@ class Graficador extends Component {
             let ls    = [...this.state.archivos_las]
             if (ls.length > 0)
             {    
-                ls.filter(l=>l.es_tiempo === true).map( opt => 
-                    opt.homologacion.map( h => {
-                        op_wd.push( { value: 'ls_' + opt.id + '_' + h.codigo, text: 'LAS ' + opt.id + ' - [' + h.codigo + '] ' + h.short_mnemonico + ' - ' + h.descripcion } )
-                    })
+                ls.map( opt => 
+                    {
+                        if (opt.es_tiempo === true)
+                        {  
+                            opt.homologacion.map( h => {
+                                op_wd.push( { value: 'ls_' + opt.id + '_' + h.codigo, text: 'LAS ' + opt.id + ' - [' + h.codigo + '] ' + h.short_mnemonico + ' - ' + h.descripcion } )
+                            })
+                        }
+                    }
                 )
             }
 
@@ -1595,7 +1603,6 @@ class Graficador extends Component {
         let layout_h = {...this.state.layoutTH}
         let layout_v = {...this.state.layoutTV}
             
-        console.log(this.state.toggleHorizontales + ' -> '+ newMax)
         layout_v.yaxis.range = [newMax, -20]
 
         layout_p.datarevision++
@@ -1737,7 +1744,9 @@ class Graficador extends Component {
       
         var datos = {
             'id': this.state.formDeleteTemplate.id,
-            'pkuser': cookies.get('pk_usuario_sesion')
+            'pkuser': this.state.userStorage && this.state.userStorage.id_usuario_sesion
+            ? this.state.userStorage.id_usuario_sesion
+            : ''
         };
             
         axios.delete(URL + 'templates', { data: datos }).then( response => {
@@ -1756,7 +1765,9 @@ class Graficador extends Component {
             ))
             const data = {
                 curvas: curvas,
-                pkuser: cookies.get('pk_usuario_sesion')
+                pkuser: this.state.userStorage && this.state.userStorage.id_usuario_sesion
+                ? this.state.userStorage.id_usuario_sesion
+                : ''
             }
             axios.put(URL + 'templates_wells_wits_detalle_secciones', data ).then(response => {          
             console.log('Actualizado')
@@ -1774,27 +1785,34 @@ class Graficador extends Component {
 
     UpdateEvent = () => {
        
-        let fechaInicio = this.state.evento.fecha_inicial + ' ' + this.state.evento.hora_inicial;
-        let fechaFinal = this.state.evento.fecha_final + ' ' + this.state.evento.hora_final;
+        let eventoUpd = {...this.state.evento}
+
+        let fechaInicio = eventoUpd.fecha_inicial + ' ' + eventoUpd.hora_inicial;
+        let fechaFinal  = eventoUpd.fecha_final + ' ' + eventoUpd.hora_final;
         let numberFecI = new Date(fechaInicio).getTime();
         let numberFecF = new Date(fechaFinal).getTime();
-        let profundidadInicio = this.state.evento.profundidad_inicial.replace(',', '.');
-        let profundidadFinal = this.state.evento.profundidad_final.replace(',', '.');
+        let profundidadInicio = eventoUpd.profundidad_inicial.replace(',', '.');
+        let profundidadFinal  = eventoUpd.profundidad_final.replace(',', '.');
 
         if (this.state.showing)
-            this.state.evento.tipo_tiempo = 2;
+        {
+            eventoUpd.tipo_tiempo = 2
+            //this.state.evento.tipo_tiempo = 2;
+        }
         else
         {
-            this.state.evento.tipo_tiempo = 1;
-            this.state.evento.fecha_final = this.state.evento.fecha_inicial;
-            this.state.evento.hora_final = this.state.evento.hora_inicial;
-            this.state.evento.profundidad_final = this.state.evento.profundidad_inicial;
+            eventoUpd.tipo_tiempo = 1;
+            eventoUpd.fecha_final = eventoUpd.fecha_inicial;
+            eventoUpd.hora_final  = eventoUpd.hora_inicial;
+            eventoUpd.profundidad_final = eventoUpd.profundidad_inicial;           
         }
-        const evento   = {...this.state.evento}
+
+        this.setState({ ...this.state.evento, eventoUpd })
+        //const evento   = {...this.state.evento}
         const anterior = {...this.state.eventoAnterior}
         
         //Actualizar
-        axios.put(URL + 'eventos', this.state.evento)
+        axios.put(URL + 'eventos', eventoUpd)
             .then( response => {
                 
                 
@@ -1807,16 +1825,16 @@ class Graficador extends Component {
                 //console.log(anterior);
                 //console.log(evento);
                 // Es el mismo tipo de evento (traza) ?
-                if (anterior.tipo_evento_id === evento.tipo_evento_id)
+                if (anterior.tipo_evento_id === eventoUpd.tipo_evento_id)
                 {
                     
                     //Evento Puntual (Anterior)
                     if (anterior.tipo_tiempo === 1)
                     {
                         if (
-                            (anterior.fecha_inicial !== evento.fecha_inicial) || 
-                            (anterior.hora_inicial  !== evento.hora_inicial) || 
-                            (anterior.profundidad_inicial !== evento.profundidad_inicial)
+                            (anterior.fecha_inicial !== eventoUpd.fecha_inicial) || 
+                            (anterior.hora_inicial  !== eventoUpd.hora_inicial) || 
+                            (anterior.profundidad_inicial !== eventoUpd.profundidad_inicial)
                         )
                         {
                             //Actualizar el punto
@@ -1827,11 +1845,11 @@ class Graficador extends Component {
                         }
 
                         // De Puntual a En el tiempo
-                        if (evento.tipo_tiempo === 2)
+                        if (eventoUpd.tipo_tiempo === 2)
                         {
                             //Agegar shape
-                            let color = hexRgb(evento.color, {format: 'css'});
-                            let shape = { name: evento.id, type: 'rect', xref: 'x', yref: 'y', 
+                            let color = hexRgb(eventoUpd.color, {format: 'css'});
+                            let shape = { name: eventoUpd.id, type: 'rect', xref: 'x', yref: 'y', 
                                 x0: numberFecI, y0: profundidadInicio, x1: numberFecF, y1: profundidadFinal ,
                                 line: {color: color , width: 1}
                             };
@@ -1844,12 +1862,12 @@ class Graficador extends Component {
                     {
                     // Evento en tiempo (Anterior)
                         if (
-                            (anterior.fecha_inicial !== evento.fecha_inicial) || 
-                            (anterior.hora_inicial  !== evento.hora_inicial) || 
-                            (anterior.profundidad_inicial !== evento.profundidad_inicial) ||
-                            (anterior.fecha_final !== evento.fecha_final) || 
-                            (anterior.hora_final  !== evento.hora_final) || 
-                            (anterior.profundidad_final !== evento.profundidad_final)
+                            (anterior.fecha_inicial !== eventoUpd.fecha_inicial) || 
+                            (anterior.hora_inicial  !== eventoUpd.hora_inicial) || 
+                            (anterior.profundidad_inicial !== eventoUpd.profundidad_inicial) ||
+                            (anterior.fecha_final !== eventoUpd.fecha_final) || 
+                            (anterior.hora_final  !== eventoUpd.hora_final) || 
+                            (anterior.profundidad_final !== eventoUpd.profundidad_final)
                         )
                         {
                             //Actualizar el punto
@@ -1857,10 +1875,10 @@ class Graficador extends Component {
                             newData[index].y.splice(0, 1, profundidadInicio);      
                             
                         }
-                        if (evento.tipo_tiempo === 2)
+                        if (eventoUpd.tipo_tiempo === 2)
                         {
                             //Actualizar el shape
-                            let indexLayout = newLayout.shapes.findIndex((shape) => shape.name === evento.id);                          
+                            let indexLayout = newLayout.shapes.findIndex((shape) => shape.name === eventoUpd.id);                          
                         
                             newLayout.shapes[indexLayout].x0 = numberFecI;
                             newLayout.shapes[indexLayout].y0 = profundidadInicio;
@@ -1870,7 +1888,7 @@ class Graficador extends Component {
                         else
                         {
                             //Remover el shape  anterior
-                            let indexLayout = newLayout.shapes.findIndex((shape) => shape.name === evento.id);
+                            let indexLayout = newLayout.shapes.findIndex((shape) => shape.name === eventoUpd.id);
                             newLayout.shapes.splice(indexLayout, 1)                               
                         }
                         updateGrafica = true;
@@ -1882,7 +1900,7 @@ class Graficador extends Component {
                 else
                 {
                     //Remover punto anterior de ese tipo de evento
-                    let nextIndex = newData[index].text.findIndex((subitem) => subitem === evento.id)
+                    let nextIndex = newData[index].text.findIndex((subitem) => subitem === eventoUpd.id)
                                         
                         //si es único registro, remover la traza
                     if (newData[index].x.length === 0)
@@ -1896,7 +1914,7 @@ class Graficador extends Component {
                     }
                     
                     //Agregar punto a traza nueva
-                    let indexNew = newData.findIndex((item) => item.name === evento.TipoEvento);
+                    let indexNew = newData.findIndex((item) => item.name === eventoUpd.TipoEvento);
                     
 
                     if (indexNew >= 0)
@@ -1904,18 +1922,18 @@ class Graficador extends Component {
                         //Agrega la data en traza existente
                         newData[indexNew].x.push(fechaInicio);
                         newData[indexNew].y.push(profundidadInicio);            
-                        newData[indexNew].text.push(evento.id);
+                        newData[indexNew].text.push(eventoUpd.id);
                     }
                     else
                     {
                         //Agregar data en traza nueva
-                        let color = hexRgb(evento.color, {format: 'css'});
+                        let color = hexRgb(eventoUpd.color, {format: 'css'});
                         let x = [], y = [], t = [];
                         x.push(fechaInicio);
                         y.push(profundidadInicio);
-                        t.push(evento.id);
+                        t.push(eventoUpd.id);
                         let traceEvento = {
-                            x: x, y: y, name: evento.TipoEvento, mode: 'markers', type: 'scatter', 
+                            x: x, y: y, name: eventoUpd.TipoEvento, mode: 'markers', type: 'scatter', 
                             marker: { symbol: '303', size: 10, color: color }, hovertemplate:'%{x}, %{y}', text: t
                         }
                         newData.push(traceEvento)
@@ -1925,16 +1943,16 @@ class Graficador extends Component {
                     if (anterior.tipo_tiempo === 2)
                     {
                         //Remover shape anterior
-                        let indexLayout = newLayout.shapes.findIndex((shape) => shape.name === evento.id);
+                        let indexLayout = newLayout.shapes.findIndex((shape) => shape.name === eventoUpd.id);
                         newLayout.shapes.splice(indexLayout, 1)
 
                     } 
-                    if (evento.tipo_tiempo === 2)
+                    if (eventoUpd.tipo_tiempo === 2)
                     {
                         //Agegar nuevo shape
                       
-                        let color = hexRgb(evento.color, {format: 'css'});
-                        let shape = { name: evento.id, type: 'rect', xref: 'x', yref: 'y', 
+                        let color = hexRgb(eventoUpd.color, {format: 'css'});
+                        let shape = { name: eventoUpd.id, type: 'rect', xref: 'x', yref: 'y', 
                             x0: numberFecI, y0: profundidadInicio, x1: numberFecF, y1: profundidadFinal ,
                             line: {color: color , width: 2}
                         };
@@ -1959,9 +1977,13 @@ class Graficador extends Component {
                     this.setState({ openModalEvento: false });
 
                 console.log('OK Update')
+                message.success('Evento actualizado con éxito')
                 
             })
-            .catch( error => console.log('Error Actualizar Evento: ' + error.message))
+            .catch( error => {
+                console.log('Error Actualizar Evento: ' + error.message)
+                message.error('Ocurrió un error actualizando el evento, intente nuevamente')
+            })
        
     }
 
@@ -1969,7 +1991,9 @@ class Graficador extends Component {
         const evento   = {...this.state.evento}
         var datos = {
             'id': evento.id,
-            'pkuser': 2
+            'pkuser': this.state.userStorage && this.state.userStorage.id_usuario_sesion
+            ? this.state.userStorage.id_usuario_sesion
+            : ''
         };
         
         axios.delete(URL + 'eventos', { data: datos }).then( response => {
@@ -2011,15 +2035,24 @@ class Graficador extends Component {
 
             }
             console.log('OK Delete')
-
+            message.success('Evento eliminado con éxito')
         })
-        .catch( error => console.log('Error Eliminar Evento: ' + error.message))
+        .catch( error => {
+            console.log('Error Eliminar Evento: ' + error.message)
+            message.error('Ocurrió un error eliminando el evento, intente nuevamente')
+        })
+
     }
 
     InsertEvent = () => {
         delete this.state.evento.id
-        this.state.evento.wells_id =  this.state.template.wells_id;
-        this.state.evento.pkuser = 2;
+        
+        let eventoIns = {...this.state.evento}
+
+        eventoIns.wells_id =  this.state.template.wells_id;
+        eventoIns.pkuser   = this.state.userStorage && this.state.userStorage.id_usuario_sesion
+        ? this.state.userStorage.id_usuario_sesion
+        : '';
 
         let fechaInicio = this.state.evento.fecha_inicial + ' ' + this.state.evento.hora_inicial;
         let fechaFinal = ''
@@ -2032,27 +2065,27 @@ class Graficador extends Component {
             fechaFinal = this.state.evento.fecha_final + ' ' + this.state.evento.hora_final;
             numberFecF = new Date(fechaFinal).getTime();
             profundidadFinal = this.state.evento.profundidad_final.replace(',', '.');
-            this.state.evento.tipo_tiempo = 2;
+            eventoIns.tipo_tiempo = 2;
         }
         else
         {
             fechaFinal = this.state.evento.fecha_inicial + ' ' + this.state.evento.hora_inicial;
             numberFecF = new Date(fechaInicio).getTime();
             profundidadFinal = this.state.evento.profundidad_inicial.replace(',', '.');
-            this.state.evento.fecha_final = this.state.evento.fecha_inicial;
-            this.state.evento.hora_final = this.state.evento.hora_inicial;
-            this.state.evento.profundidad_final = this.state.evento.profundidad_inicial;
-            this.state.evento.tipo_tiempo = 1; 
+            eventoIns.fecha_final = this.state.evento.fecha_inicial;
+            eventoIns.hora_final = this.state.evento.hora_inicial;
+            eventoIns.profundidad_final = this.state.evento.profundidad_inicial;
+            eventoIns.tipo_tiempo = 1; 
         }
           
 
-        const evento   = {...this.state.evento}
+        //const evento   = {...this.state.evento}
         
-        axios.post(URL + 'eventos', this.state.evento).then( response => {
-            evento.id = response.data[0].id;
+        axios.post(URL + 'eventos', eventoIns).then( response => {
+            eventoIns.id = response.data[0].id;
            
             let newData = [...this.state.dataGP]
-            let index = newData.findIndex((item) => item.name === evento.TipoEvento);
+            let index = newData.findIndex((item) => item.name === eventoIns.TipoEvento);
 
             const newLayout = Object.assign({}, this.state.layoutGP)
 
@@ -2061,28 +2094,28 @@ class Graficador extends Component {
             {
                 newData[index].x.push(fechaInicio);
                 newData[index].y.push(profundidadInicio);            
-                newData[index].text.push(evento.id);      
+                newData[index].text.push(eventoIns.id);      
             }
             else
             {
             //no existe traza, crear
-                let color = hexRgb(evento.color, {format: 'css'});
+                let color = hexRgb(eventoIns.color, {format: 'css'});
                 let x = [], y = [], t = [];
                 x.push(fechaInicio);
                 y.push(profundidadInicio);
-                t.push(evento.id);
+                t.push(eventoIns.id);
                 let traceEvento = {
-                    x: x, y: y, name: evento.TipoEvento, mode: 'markers', type: 'scatter', 
+                    x: x, y: y, name: eventoIns.TipoEvento, mode: 'markers', type: 'scatter', 
                     marker: { symbol: '303', size: 10, color: color }, hovertemplate:'%{x}, %{y}', text: t
                 }
                 newData.push(traceEvento)
             }
             
             //Si es en el tiempo
-            if (evento.tipo_tiempo == 2)
+            if (eventoIns.tipo_tiempo == 2)
             {
-                let color = hexRgb(evento.color, {format: 'css'});
-                let shape = { name: evento.id, type: 'rect', xref: 'x', yref: 'y', 
+                let color = hexRgb(eventoIns.color, {format: 'css'});
+                let shape = { name: eventoIns.id, type: 'rect', xref: 'x', yref: 'y', 
                     x0: numberFecI, y0: profundidadInicio, x1: numberFecF, y1: profundidadFinal ,
                     line: {color: color , width: 2}
                 };
@@ -2097,10 +2130,12 @@ class Graficador extends Component {
                     openModalEvento: false
                 }
             )
-            console.log('OK Evento '+ evento.id)
+            message.success('Evento creado con éxito.')
+            console.log('OK Evento '+ eventoIns.id)
             
         }).catch(error => {
             console.log('Error Insertar Evento: ' + error.message);
+            message.error('Ocurrió un error creando el evento, intente nuevamente.')
         })
     }
 
@@ -2118,6 +2153,7 @@ class Graficador extends Component {
         this.getTipoEventos();
         this.getConvencion();
         this.getWitsDetalle();
+        this.setState({userStorage: JSON.parse(sessionStorage.getItem('user'))})
     }     
 
     render() { 
@@ -2152,7 +2188,7 @@ class Graficador extends Component {
                             <button title="Ver/Ocultar Tracks Verticales" onClick={() => this.CollapseTrackVertical()} className="btn btn-sm btn-danger btn-circle"><BarChart fontSize="small" /></button>
                         </div>
                         <div className="col-md-3 col-lg-3 text-right  mt-1">
-                            <small>{cookies.get('nombre_usuario_sesion')}</small>
+                            <small> {this.state.userStorage.nombre_usuario_sesion} </small>
                         </div>
                     </div>
                   
