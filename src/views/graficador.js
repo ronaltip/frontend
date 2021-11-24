@@ -194,13 +194,13 @@ class Graficador extends Component {
         let datos   = this.state.dataWits
         let selects = this.state.algoritmo
         let algoritmo = {
-            wd_0108: '0',
-            wd_0110: '0',
-            wd_0113: '0',
-            wd_0116: '0',
-            wd_0118: '0',
-            wd_0120: '0',
-            wd_0130: '0'
+            wd_0108: 0,
+            wd_0110: 0,
+            wd_0113: 0,
+            wd_0116: 0,
+            wd_0118: 0,
+            wd_0120: 0,
+            wd_0130: 0
         }
         datos.forEach( wits => {
             
@@ -225,7 +225,7 @@ class Graficador extends Component {
                             algoritmo[index] = dato
                         }
                         else
-                            algoritmo[index] = 0
+                            algoritmo[index] = -999.25
                         
                         break;
                     case 'cv':
@@ -1002,7 +1002,7 @@ class Graficador extends Component {
         let layout_Vertical = {
             autosize: true,
             uirevision: 'true',
-            margin: { l: 5, r: 40, t: 80, b: 5 },
+            margin: { l: 40, r: 40, t: 80, b: 5 },
             dragmode: 'zoom',
             hovermode: 'closest',
             plot_bgcolor: 'white',
@@ -1411,7 +1411,7 @@ class Graficador extends Component {
 
     MaxTrackVertical = (P1Y1, P2Y1) => {
         let P1X1 = 0;
-        let P2X1 = 51.5;
+        let P2X1 = 51.7;
     
         let punto = 99.5;
     

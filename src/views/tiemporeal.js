@@ -364,13 +364,13 @@ const TiempoReal = () => {
                     
                         // Ejecutar y seleccionar la operación
                         response.data.forEach(wits => {
-                            algoritmo[0] = ( wits.hasOwnProperty('_0108') ? wits['_0108'] : 0 )
-                            algoritmo[1] = ( wits.hasOwnProperty('_0110') ? wits['_0110'] : 0 )
-                            algoritmo[2] = ( wits.hasOwnProperty('_0113') ? wits['_0113'] : 0 )
-                            algoritmo[3] = ( wits.hasOwnProperty('_0116') ? wits['_0116'] : 0 )
-                            algoritmo[4] = ( wits.hasOwnProperty('_0118') ? wits['_0118'] : 0 )
-                            algoritmo[5] = ( wits.hasOwnProperty('_0120') ? wits['_0120'] : 0 )
-                            algoritmo[6] = ( wits.hasOwnProperty('_0130') ? wits['_0130'] : 0 )
+                            algoritmo[0] = ( wits.hasOwnProperty('_0108') ? wits['_0108'] : -999.25 )
+                            algoritmo[1] = ( wits.hasOwnProperty('_0110') ? wits['_0110'] : -999.25 )
+                            algoritmo[2] = ( wits.hasOwnProperty('_0113') ? wits['_0113'] : -999.25 )
+                            algoritmo[3] = ( wits.hasOwnProperty('_0116') ? wits['_0116'] : -999.25 )
+                            algoritmo[4] = ( wits.hasOwnProperty('_0118') ? wits['_0118'] : -999.25 )
+                            algoritmo[5] = ( wits.hasOwnProperty('_0120') ? wits['_0120'] : -999.25 )
+                            algoritmo[6] = ( wits.hasOwnProperty('_0130') ? wits['_0130'] : -999.25 )
                             //AlgoritmoOperaciones(DBTM_0, DMEA, DBTM, RPMA, ROPA, MFIA, TQA, WOBA)
                             let operacion = AlgoritmoOperaciones(DBTM_0, algoritmo[1], algoritmo[0], algoritmo[5], algoritmo[2], algoritmo[6], algoritmo[4], algoritmo[3]).Operacion;
                             DBTM = algoritmo[1]
