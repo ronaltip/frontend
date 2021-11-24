@@ -5,7 +5,7 @@ import Home from '../views/home';
 import viewUsuario from '../views/usuarios';
 import viewCavings from '../views/Cavings';
 import viewArchivoLas from '../views/ArchivoLas';
-import viewFels from '../views/Fels';
+import viewFels from '../views/components/Fels';
 import viewEventos from '../views/eventos';
 //import viewArchivoLase from '../views/archivolase';
 import viewGrupoCurvas from '../views/grupo_curvas';
