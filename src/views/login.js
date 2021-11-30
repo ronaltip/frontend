@@ -29,38 +29,43 @@ class Login extends Component {
 
   iniciarSesion = async () => {
     //await axios.get(url + 'usuarios', { params: { codigo: this.state.form.codigo, clave: md5(this.state.form.clave) } })
-    await axios
-      .get(
-        url +
+    if (this.state.form.codigo == '' || this.state.form.clave == '') {
+      message.error('El usuario o contraseña no son correctos.');
+    }
+    else {
+      await axios
+        .get(
+          url +
           'usuarios/' +
           this.state.form.codigo +
           '/' +
           md5(this.state.form.clave)
-      )
-      .then(response => {
-        return response.data;
-      })
-      .then(response => {
-        if (response.length > 0) {
-          var respuesta = response[0];
-          const user = {
-            id_usuario_sesion: respuesta.id,
-            nombre_usuario_sesion: respuesta.nombre,
-            perfil_id_usuario_sesion: respuesta.perfil_id,
-            pk_usuario_sesion: respuesta.id,
-          };
-          sessionStorage.setItem('user', JSON.stringify(user));
-          window.location.href = './home';
-        } else {
-          message.error('El usuario o contraseña no son correctos.');
-          setTimeout(() => {
-            window.location.href = './';
-          }, 500);
-        }
-      })
-      .catch(error => {
-        console.log(error);
-      });
+        )
+        .then(response => {
+          return response.data;
+        })
+        .then(response => {
+          if (response.length > 0) {
+            var respuesta = response[0];
+            const user = {
+              id_usuario_sesion: respuesta.id,
+              nombre_usuario_sesion: respuesta.nombre,
+              perfil_id_usuario_sesion: respuesta.perfil_id,
+              pk_usuario_sesion: respuesta.id,
+            };
+            sessionStorage.setItem('user', JSON.stringify(user));
+            window.location.href = './home';
+          } else {
+            message.error('El usuario o contraseña no son correctos.');
+            setTimeout(() => {
+              window.location.href = './';
+            }, 500);
+          }
+        })
+        .catch(error => {
+          console.log(error);
+        });
+    }
   };
 
   render() {
@@ -69,7 +74,7 @@ class Login extends Component {
         <div className="containerPrincipal">
           <div className="containerSecundario">
             <div className="form-groop">
-              <label className="title"> EcoAge </label> 1.0 <br />
+              <label className="title"> EcoAge </label> 2.0 <br />
               <label>Usuario:</label>
               <br />
               <input
@@ -78,6 +83,7 @@ class Login extends Component {
                 name="codigo"
                 className="form-control"
                 autoComplete="off"
+                required="required"
                 onChange={this.handleChange}
               />
               <br />
@@ -89,6 +95,7 @@ class Login extends Component {
                 name="clave"
                 className="form-control"
                 autoComplete="off"
+                required="required"
                 onChange={this.handleChange}
               />
               <br />

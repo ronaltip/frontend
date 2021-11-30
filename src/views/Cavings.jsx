@@ -40,11 +40,11 @@ const Cavings = () => {
       title: 'Fecha de Cargue',
       dataIndex: 'fecha_creacion',
       key: 'fecha_creacion',
-      width: '10%',
+      width: '15%',
     },
     {
-      title: '',
-      width: '10%',
+      title: 'Acción',
+      width: '5%',
       render: info_upload => (
         <Row justify="space-around">
           <Col style={{ cursor: 'pointer' }}>

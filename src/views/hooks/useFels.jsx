@@ -45,7 +45,7 @@ const useFels = () => {
       width: '15%',
     },
     {
-      title: '',
+      title: 'Acción',
       width: '10%',
       render: info_upload => (
         <Row justify="space-around">
