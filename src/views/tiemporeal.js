@@ -787,10 +787,10 @@ const TiempoReal = () => {
             <div className="container-fluid ">
                 
                 <div className="row border-bottom bg-verdeoscuro">
-                    <div className="col-md-3 col-lg-3 small text-left mt-2 mb-2">
+                    <div className="col-md-3 col-lg-2 small text-left mt-2 mb-2">
                         <ProgressBar animated now={intervalId ? 100: 0} />
                     </div>
-                    <div className="col-md-6 col-lg-6 text-left  mt-1">
+                    <div className="col-md-6 col-lg-7 text-left  mt-1">
                         Última consulta: {ultimaConsulta}
                     </div>
                     <div className="col-md-3 col-lg-3 text-right  mt-1">
@@ -872,7 +872,7 @@ const TiempoReal = () => {
                                         </select>
                                     </div>
                                     <div className="col-sm-5 mt-3">
-                                        <button className="btn btn-sm btn-primary btn-block" onClick={handleClick}> {count === 0 ? "Iniciar" : (count === 1) ? "Cargando...": "Detener"}</button>
+                                        <button className="btn btn-sm btn-primary btn-block" onClick={handleClick}> {count === 0 ? "Iniciar" : (count === 1) ? "Cargando": "Detener"}</button>
                                     </div>
                                 </div>
                             </div>
