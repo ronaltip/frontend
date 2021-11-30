@@ -192,7 +192,6 @@ class viewTiposCurvas extends Component {
                 id="nombre"
                 onChange={this.handleChange}
                 value={form ? form.nombre : ''}
-                autoComplete="off"
               />
               <br />
               <label htmlFor="descripcion">Descripción</label>
