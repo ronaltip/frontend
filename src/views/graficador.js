@@ -18,11 +18,6 @@ import {Save, HorizontalSplit, BarChart, Brush, CalendarToday, Delete, EventNote
 import { TextField, Menu, MenuItem } from '@material-ui/core'
 import { message } from 'antd';
 
-//import Cookies from 'universal-cookie';
-
-
-//const cookies = new Cookies();
-
 const URL = process.env.REACT_APP_API_HOST; 
 
 const config_general = {
@@ -113,15 +108,21 @@ class Graficador extends Component {
             plotDeptVH:  '95vh',
             plotTrackVH: '0vh',
             plotDeptCol: 'col-md-12',
+            colVertical:    'col-md-12',
+            colVerticalFEL: 'col-md-12',
 
             modalConfig: false,
             profundidadFinal: 0,
 
             principal: [],
             horizontal: [],
+            archivos_las: [],
+            fel: {},
             isLoadedPrincipal: false,
             isLoadedHorizontal:false,
             isLoadedVertical: false,
+            isLoadedVerticalFEL: false,
+
 
             openModalOperacion: false,
             openModalEvento: false,
@@ -162,8 +163,12 @@ class Graficador extends Component {
             loadingAlgoritmo: false,
             darkMode: false,
             showing:false,
-            archivos_las: [],
-            dataArchivosCurvas: []
+            
+            dataArchivosCurvas: [],
+
+            layoutFEL: {},
+            dataFEL: [],
+            registroFEL: { id: '', inicio: '', fin: '', paso: '', checked_fel: true}
         }
     }
     
@@ -394,6 +399,7 @@ class Graficador extends Component {
         const p = [...dataCurvas.filter( c =>  c.grupo === null )]
         const h = [...dataCurvas.filter( c =>  c.grupo !== null )]
         const a = [...this.state.archivos_las]
+        const f = {...this.state.fel}
 
         if (open)
         {
@@ -401,17 +407,22 @@ class Graficador extends Component {
             sessionStorage.setItem('principal',    JSON.stringify(p) )
             sessionStorage.setItem('horizontal',   JSON.stringify(h) )
             sessionStorage.setItem('archivos_las', JSON.stringify(a) )
+            sessionStorage.setItem('fel', JSON.stringify(f) )
+
 
             let principal    = JSON.parse( sessionStorage.getItem('principal') )
             let horizontal   = JSON.parse( sessionStorage.getItem('horizontal') )
             let archivos_las = JSON.parse( sessionStorage.getItem('archivos_las') )
+            let fel = JSON.parse( sessionStorage.getItem('fel') )
+
             
             this.setState({ 
                 principal:    principal,
                 horizontal:   horizontal,
                 archivos_las: archivos_las,
+                fel:          fel,
                 modalConfig:  open,
-                loadingConfig: false
+                loadingConfig: false,
             });
             
         }
@@ -429,6 +440,8 @@ class Graficador extends Component {
                 
                 this.SetSerieTrackVertical()
 
+                this.setState({isLoadedVerticalFEL: this.state.fel.checked_fel})
+
                 this.setState({ 
                     dataCurvas: curvas,
                     modalConfig: open,
@@ -440,6 +453,7 @@ class Graficador extends Component {
                 this.setState({ 
                     principal:  [],
                     horizontal: [],
+                    fel: {},
                     modalConfig: open,
                     loadingConfig: false
                 });
@@ -447,6 +461,8 @@ class Graficador extends Component {
             sessionStorage.removeItem('principal');
             sessionStorage.removeItem('horizontal');
             sessionStorage.removeItem('archivos_las');
+            sessionStorage.removeItem('fel');
+
         }
     } 
 
@@ -649,6 +665,15 @@ class Graficador extends Component {
             archivos_las: a
         })
         
+    }
+
+    handleChangeFel = (e) => {
+        this.setState({ 
+            fel: {
+            ...this.state.fel, 
+            checked_fel: e.target.checked
+            }
+        })
     }
 
     getFields = async () => {
@@ -865,7 +890,6 @@ class Graficador extends Component {
             const data   = response.data;
             const archivos_caving = data.filter(tipo => tipo.tipo_archivo_id === 2)
             const archivos_las    = data.filter(tipo => tipo.tipo_archivo_id === 3)
-            const archivos_fel    = data.filter(tipo => tipo.tipo_archivo_id === 4)
 
             //Para cada archivo
             //  Para cada curva homologada
@@ -902,7 +926,85 @@ class Graficador extends Component {
             })
         }) 
     } 
-    
+    getFEL = async (id) => {
+        axios.get(URL + 'archivo_encabezado_fel/well/' + id).then(response => {
+            const [fel]   = response.data;
+            
+            if (fel !== undefined)
+            {
+                if (fel.archivo_imagen_recorte !== null)
+                {
+                    
+                    const imagen = 'data:image/png;base64,' + fel.archivo_imagen_recorte;
+                    const layout_FEL = {
+                        autosize: true,
+                        uirevision: 'true',
+                        margin: { l: 0, r: 40, t: 80, b: 5 },
+                        dragmode: 'zoom',
+                        hovermode: 'closest',
+                        plot_bgcolor: 'white',
+                        paper_bgcolor: 'white',
+                        font: { family: 'verdana', size: 11 },
+                        showlegend: false,
+                        xaxis: { fixedrange: false, autorange: false, range: [0, 1], nticks: 1 },   title: fel.id + '_FEL', titlefont: { size: 10, color: 'brown' }, side: 'top', textposition: 'top center',
+                        yaxis: { fixedrange: false, autorange: false, range: [this.state.profundidadFinal, -20], nticks: 15, side: 'right', gridcolor: '#eee', gridwidth: 1  },
+                        datarevision: 1,
+                        images: [
+                            {
+                            "source": imagen,
+                            "xref": "x",
+                            "yref": "y",
+                            "x": 0,
+                            "y": fel.inicio_recorte,
+                            "sizex": fel.inicio_recorte,
+                            "sizey": fel.fin_recorte,
+                            "xanchor": "left",
+                            "yanchor": "top",
+                            "sizing": "contain"
+                            }
+                        ]
+                    };
+                    let y = []
+                    let x = []
+
+                    for (let i=fel.inicio_recorte; i<= fel.fin_recorte; i = i + fel.paso_recorte)
+                    {
+                        y.push(i)
+                        x.push(0)
+                    }
+                    
+                    const serie = {
+                        x: x,
+                        y, y,
+                        name: fel.id + '_FEL',
+                        type: 'scatter',
+                    }
+                    const data = [serie] 
+                    this.setState ({ layoutFEL: layout_FEL, dataFEL: data, isLoadedVerticalFEL: true,
+                        fel: {
+                            id: fel.id,
+                            inicio: fel.inicio_recorte,
+                            fin: fel.fin_recorte,
+                            paso: fel.paso_recorte,
+                            checked_fel: true
+                        }
+                    })
+                    
+                }
+                else
+                {
+                    this.setState ( {layoutFEL :  {}, dataFEL: [], isLoadedVerticalFEL: false })
+                    message.info('Aún no se ha recortado el área del archivo FEL')
+                }
+            }
+            else
+                this.setState ( {layoutFEL :  {}, dataFEL: [], isLoadedVerticalFEL: false })
+                       
+        }).catch(error => {
+            console.log(error.message);
+            message.error('Ocurrió un error consultando el archivo FEL, intente nuevamente ')
+        })
+    }
 
     // 95-0 55-45 0-95 vh
     // col-md-8 col-md-12
@@ -974,7 +1076,7 @@ class Graficador extends Component {
                 fixedrange: false,
                 autorange: false,
                 range: [profundidadFinal_temporal, -20],
-                title: 'Profundidad [ft]',
+                title: 'Profundidad',
                 nticks: 10,
                 gridcolor: '#eee',
                 gridwidth: 1
@@ -1055,7 +1157,7 @@ class Graficador extends Component {
 
                         this.setState({dataWits: dataFilter_Wits})
                     
-                        this.getArchivos(template.wells_id)
+                       
 
                         //Gráfica principal
                         let curvasPrincipal = curvas.filter(c=>c.mostrar === true && c.grupo === null)
@@ -1067,9 +1169,8 @@ class Graficador extends Component {
                         this.SetSerieTrackHorizontal(traksHorizontales)
                         //                       
 
-                        this.getEventos(template.wells_id)
-                        this.getOperaciones(template.wells_id)
                         
+                        this.getFEL(template.wells_id)
 
                         this.setState({
                             template:   {...template},
@@ -1080,14 +1181,19 @@ class Graficador extends Component {
                         })
                         
                         this.ToggleDivHorizontales()
+                        //this.CollapseVerticalPlots()
                     }).catch(errors => {
                         console.log(errors.message);
                     })
 
+                    this.getArchivos(template.wells_id)
+                    this.getEventos(template.wells_id)
+                    this.getOperaciones(template.wells_id)
                 }
                 else
                 {
                     this.getArchivos(template.wells_id)
+                    this.getFEL(template.wells_id)
 
                     //Gráfica principal
                     let curvasPrincipal = curvas.filter(c=>c.mostrar === true && c.grupo === null)
@@ -1110,6 +1216,7 @@ class Graficador extends Component {
                         toggleHorizontales: 0
                     })
                     this.ToggleDivHorizontales()
+                    //this.CollapseVerticalPlots()
                 }
             }
             else
@@ -1148,24 +1255,34 @@ class Graficador extends Component {
         let layout_p = {...this.state.layoutGP}
         let layout_h = {...this.state.layoutTH}
         let layout_v = {...this.state.layoutTV}
+        let layout_f = {...this.state.layoutFEL}
+
 
         layout_p.plot_bgcolor  = this.state.darkMode ? 'white' : 'black'
         layout_h.plot_bgcolor  = this.state.darkMode ? 'white' : 'black'
         layout_v.plot_bgcolor  = this.state.darkMode ? 'white' : 'black'
+        layout_f.plot_bgcolor  = this.state.darkMode ? 'white' : 'black'
+
 
         layout_p.paper_bgcolor = this.state.darkMode ? 'white' : 'black'
         layout_h.paper_bgcolor = this.state.darkMode ? 'white' : 'black'
         layout_v.paper_bgcolor = this.state.darkMode ? 'white' : 'black'
+        layout_f.paper_bgcolor = this.state.darkMode ? 'white' : 'black'
+
 
         layout_p.font.color = this.state.darkMode ? 'black' : 'white' 
         layout_h.font.color = this.state.darkMode ? 'black' : 'white' 
         layout_v.font.color = this.state.darkMode ? 'black' : 'white' 
+        layout_f.font.color = this.state.darkMode ? 'black' : 'white' 
+
 
         layout_p.datarevision++
         layout_h.datarevision++
         layout_v.datarevision++
+        layout_f.datarevision++
 
-        this.setState({darkMode: !this.state.darkMode, layoutGP: layout_p, layoutTH: layout_h, layoutTV: layout_v})
+
+        this.setState({darkMode: !this.state.darkMode, layoutGP: layout_p, layoutTH: layout_h, layoutTV: layout_v, layoutFEL: layout_f})
 
     }
 
@@ -1267,6 +1384,12 @@ class Graficador extends Component {
            
         })
 
+        //Para DBTM o DMEA de un LAS en tiempo Homologado
+        
+        let data   = [...this.state.dataGP]
+        let layout = {...this.state.layoutGP}
+        let profundidadFinal_temporal = layout.yaxis.range ? layout.yaxis.range[0] : 1000
+        let refreshPrincipal = false
         this.state.archivos_las.forEach ( ar => {
             if (ar.es_tiempo === true)
             {
@@ -1278,29 +1401,63 @@ class Graficador extends Component {
                         const x = datos.map(d=>d.x);
                         const y = datos.map(d=>d.y);
                         
-                        let traza = {
-                            name : ar.id+'_'+hm.short_mnemonico,
-                            x: x,
-                            y: y,
-                            xaxis: 'x',
-                            yaxis: 'y' + ((i > 1) ? String(i) : ''),
-                            text: '[' + hm.codigo + '] ' + hm.short_mnemonico + ' - ' + hm.descripcion
+                        //Si son DBTM o DMEA, van para gráfica principal
+                        if (hm.codigo === '0108' || hm.codigo === '0110' )
+                        {
+                            const serie = {
+                                x: x,
+                                y: y,
+                                name: ar.id + '_' + hm.descripcion,
+                                type: 'scatter',
+                                text: '[' + hm.codigo + '] ' + hm.short_mnemonico + ' - ' + hm.descripcion
+                            }
+                            data.push(serie)
+
+                            let prof = Math.max(...y) + 500
+                            profundidadFinal_temporal =  (prof > profundidadFinal_temporal) ? prof : profundidadFinal_temporal
+                            layout.yaxis.range = [profundidadFinal_temporal, -20]
+
+                            refreshPrincipal = true
                         }
-        
-                        let propertyAxi = "yaxis" + ((i > 1) ? String(i) : '')
-                        //if (0 == grupo_anterior)
-                        //    layout_Horizontal[propertyAxi] = { title: ar.id+'_'+hm.short_mnemonico, titlefont: { size: 10, color: '#3c5cf9', }, tickfont: { size: 8.0 }, overlaying: 'y' + ((i > 1) ? String(i - 1) : ''), side: 'right', gridcolor: '#eee' }
-                        //else
-                        //{
-                            layout_Horizontal[propertyAxi] = { title: ar.id+'_'+hm.short_mnemonico, titlefont: { size: 10, color: '#3c5cf9', }, tickfont: { size: 8.0 }, gridcolor: '#eee' }
-                        
-                            let subplot = ['xy' + ((i > 1) ? String(i) : '') ]
-                            layout_Horizontal.grid.subplots.push(subplot);
-                            j++;
-                        //}
-                        i++
-                        //grupo_anterior = 0
-                        datosGraficasHorizontales.push(traza);
+                        else
+                        {
+                            let traza = {
+                                name : ar.id+'_'+hm.short_mnemonico,
+                                x: x,
+                                y: y,
+                                xaxis: 'x',
+                                yaxis: 'y' + ((i > 1) ? String(i) : ''),
+                                text: '[' + hm.codigo + '] ' + hm.short_mnemonico + ' - ' + hm.descripcion
+                            }
+            
+                            let propertyAxi = "yaxis" + ((i > 1) ? String(i) : '')
+                            //if (0 == grupo_anterior)
+                            //    layout_Horizontal[propertyAxi] = { title: ar.id+'_'+hm.short_mnemonico, titlefont: { size: 10, color: '#3c5cf9', }, tickfont: { size: 8.0 }, overlaying: 'y' + ((i > 1) ? String(i - 1) : ''), side: 'right', gridcolor: '#eee' }
+                            //else
+                            //{
+                                layout_Horizontal[propertyAxi] = { title: ar.id+'_'+hm.short_mnemonico, titlefont: { size: 10, color: '#3c5cf9', }, tickfont: { size: 8.0 }, gridcolor: '#eee' }
+                            
+                                let subplot = ['xy' + ((i > 1) ? String(i) : '') ]
+                                layout_Horizontal.grid.subplots.push(subplot);
+                                j++;
+                            //}
+                            i++
+                            //grupo_anterior = 0
+                            datosGraficasHorizontales.push(traza);
+                        }
+                    }
+                    else
+                    {
+                        //Remover curva si es de un LAS DBTM o DMEA
+                        if (hm.codigo === '0108' || hm.codigo === '0110' )
+                        {
+                            let index = data.findIndex((item) => item.name ===  ar.id + '_' + hm.descripcion);
+                            if (index >= 0)
+                            {
+                                data.splice(index, 1)
+                                refreshPrincipal = true
+                            }
+                        }
                     }
                 })
             }
@@ -1313,6 +1470,15 @@ class Graficador extends Component {
             layoutTH:   layout_Horizontal,
             isLoadedHorizontal: datosGraficasHorizontales.length > 0 ? true : false
         });
+
+        if (refreshPrincipal)
+        {
+            this.setState({
+                dataGP: data,
+                layoutGP: layout,
+                profundidadFinal: profundidadFinal_temporal
+            });
+        }
     }
     
     //Actualizar las curvas de los tracks verticales
@@ -1388,12 +1554,18 @@ class Graficador extends Component {
             }
         })
 
-                
+        let layout_fel = {...this.state.layoutFEL}
+        layout_fel.datarevision++
+
         this.setState({
             dataTV:     datosGraficasVerticales,
             layoutTV:   layout_Vertical,
-            isLoadedVertical: datosGraficasVerticales.length > 0 ? true : false
+            layoutFEL:   layout_fel,
+            isLoadedVertical: datosGraficasVerticales.length > 0 ? true : false,
+            colVertical: datosGraficasVerticales.length > 0 ?   (this.state.isLoadedVerticalFEL ?   'col-md-9' : 'col-md-12' ) : null,
+            colVerticalFEL: datosGraficasVerticales.length > 0 ? 'col-md-3' : 'col-md-12'
         });
+       
     }
 
     GetDetalle = (codigo) => {
@@ -1544,17 +1716,31 @@ class Graficador extends Component {
             }
             Plotly.Fx.hover('plotTracksVertical', curves_v, coords_v);
         }
+        if (this.state.isLoadedVerticalFEL && this.state.toggleTrackVertical)
+        {
+            let nt_f = this.state.dataFEL.length;
+            let coords_f = []
+            let curves_f = []
+            for(let i=0; i<nt_f; i++) {
+                curves_f.push({curveNumber: i, yval: e.yvals[0]})
+                coords_f.push('x' + ((i>0)? String(i+1) : '') + 'y')
+            }
+            Plotly.Fx.hover('plotFel', curves_f, coords_f);
+        }
     }
     PlotOnUnHover = () => {
         if (this.state.isLoadedHorizontal && this.state.toggleTrackHorizontal)
             Plotly.Fx.unhover('plotTracksHorizontal')
         if (this.state.isLoadedVertical && this.state.toggleTrackVertical)
             Plotly.Fx.unhover('plotTracksVertical')
+        if (this.state.isLoadedVerticalFEL && this.state.toggleTrackVertical)
+            Plotly.Fx.unhover('plotFel')
     }
     PlotOnRelayout = (eventdata) => {
         
         let layout_hor = {...this.state.layoutTH}
         let layout_ver = {...this.state.layoutTV}
+        let layout_fel = {...this.state.layoutFEL}
         
         if (eventdata['xaxis.range[0]'] !== undefined)
         {
@@ -1572,21 +1758,28 @@ class Graficador extends Component {
         
         if (eventdata['yaxis.range[0]'] !== undefined) 
         {
-          
-            let newMax = this.MaxTrackVertical(eventdata['yaxis.range[1]'], eventdata['yaxis.range[0]'])
+            let newMax = eventdata['yaxis.range[0]']
+            if (this.state.toggleHorizontales === 2)
+                newMax = this.MaxTrackVertical(eventdata['yaxis.range[1]'], eventdata['yaxis.range[0]'])
 
             layout_ver.yaxis = {
-                range: [ newMax, eventdata['yaxis.range[1]'] ], nticks: 15
+                range: [ newMax, eventdata['yaxis.range[1]'] ], autorange: false, fixedrange: false
+            }
+            layout_fel.yaxis = {
+                range: [ newMax, eventdata['yaxis.range[1]'] ], autorange: false, fixedrange: false
             }
             
         }
         
         layout_hor.datarevision++
         layout_ver.datarevision++
+        layout_fel.datarevision++
+
 
         this.setState({
             layoutTH: layout_hor,
-            layoutTV: layout_ver
+            layoutTV: layout_ver,
+            layoutFEL: layout_fel,
         })
     }
     // Fin Eventos Gráfica
@@ -1602,34 +1795,46 @@ class Graficador extends Component {
         let layout_p = {...this.state.layoutGP}
         let layout_h = {...this.state.layoutTH}
         let layout_v = {...this.state.layoutTV}
+        let layout_f = {...this.state.layoutFEL}
+
             
         layout_v.yaxis.range = [newMax, -20]
+        layout_f.yaxis.range = [newMax, -20]
+
 
         layout_p.datarevision++
         layout_h.datarevision++
         layout_v.datarevision++
+        layout_f.datarevision++
+
 
         this.setState({
             layoutGP: layout_p,
             layoutTH: layout_h,
             layoutTV: layout_v,
+            layoutFEL: layout_f
         });
     }
     CollapseTrackVertical = () => {
         let layout_p = {...this.state.layoutGP}
         let layout_h = {...this.state.layoutTH}
+        let layout_f = {...this.state.layoutFEL}
+
 
         layout_p.datarevision++
         layout_h.datarevision++
+        layout_f.datarevision++
+
 
         this.setState({
             toggleTrackVertical: !this.state.toggleTrackVertical,
             plotDeptCol: this.state.toggleTrackVertical ? 'col-md-12' : 'col-md-8',
             layoutGP: layout_p,
-            layoutTH: layout_h
+            layoutTH: layout_h,
+            layoutFEL: layout_f
         });
     }
-    
+   
 
     handleChangeEvento = (e) => {
         this.setState({
@@ -1709,19 +1914,22 @@ class Graficador extends Component {
     }
     GuardarTemplate = () => {
        
-        axios.post(URL + 'templates', this.state.form_template ).then(response => {
-            let rta = response.data[0]
-            if ( rta.Result === 1)
-            {
-                this.getTemplates(this.state.template.wells_id)
-                this.setState({modalNuevo: false, modalStart: true})    
-            }
-            else
-                console.log(rta.Error);
-
-        }).catch(error => {
-            console.log(error.message);
-        })
+            axios.post(URL + 'templates', this.state.form_template ).then(response => {
+                let rta = response.data[0]
+                if ( rta.Result === 1)
+                {
+                    this.getTemplates(this.state.template.wells_id)
+                    this.setState({modalNuevo: false, modalStart: true})    
+                }
+                else
+                {
+                    message.warning(rta.Error)
+                }
+            }).catch(error => {
+                message.error('Ocurrió un error al obtener el template, intente nuevamente o contacte al administrador')
+                console.log(error.message);
+            })
+       
         
     }
     EliminarTemplate = (id) => {
@@ -1752,6 +1960,8 @@ class Graficador extends Component {
         axios.delete(URL + 'templates', { data: datos }).then( response => {
             this.setState({ openModalDeleteTemplate: false, modalStart: true });
             this.getTemplates(this.state.template.wells_id);
+            message.success('Template eliminado con éxito')
+
         }).catch(error => {
             console.log(error.message);
         })
@@ -1760,24 +1970,29 @@ class Graficador extends Component {
     ActualizaTemplate = () => {
         if (this.state.dataCurvas.length > 0)
         {
-            const curvas = this.state.dataCurvas.map(curva => (
-                { id: curva.id, mostrar: curva.mostrar, grupo: curva.grupo }
-            ))
-            const data = {
-                curvas: curvas,
-                pkuser: this.state.userStorage && this.state.userStorage.id_usuario_sesion
-                ? this.state.userStorage.id_usuario_sesion
-                : ''
+            if (this.state.form_template.id > 0)
+            {   
+                const curvas = this.state.dataCurvas.map(curva => (
+                    { id: curva.id, mostrar: curva.mostrar, grupo: curva.grupo }
+                ))
+                const data = {
+                    curvas: curvas,
+                    pkuser: this.state.userStorage && this.state.userStorage.id_usuario_sesion
+                    ? this.state.userStorage.id_usuario_sesion
+                    : ''
+                }
+                axios.put(URL + 'templates_wells_wits_detalle_secciones', data ).then(response => {          
+                    message.success('Template actualizado')
+                }).catch(error => {
+                    console.log(error.message);
+                })
             }
-            axios.put(URL + 'templates_wells_wits_detalle_secciones', data ).then(response => {          
-            console.log('Actualizado')
-            }).catch(error => {
-                console.log(error.message);
-            })
+            else
+                message.info('No hay un template abierto')
         }
         else
         {
-            console.log('Nada para guardar')
+            message.info('No existen curvas seleccionadas para guardar')
         }
     }
 
@@ -1855,7 +2070,7 @@ class Graficador extends Component {
                             };
                             newLayout.shapes.push(shape);
                             updateGrafica = true;
-                            console.log('De puntual a en el Tiempo')
+                            
                         }
                     }
                     else
@@ -2154,10 +2369,11 @@ class Graficador extends Component {
         this.getConvencion();
         this.getWitsDetalle();
         this.setState({userStorage: JSON.parse(sessionStorage.getItem('user'))})
+        
     }     
 
     render() { 
-        const { template } = this.state; 
+        const { template, fel }      = this.state; 
         
         return (
             <div className="App">
@@ -2246,7 +2462,8 @@ class Graficador extends Component {
                             this.state.toggleTrackVertical ?
                             <div id="divTrackVertical" className="col-md-4">
                                 <div className="row">
-                                    <div className="col-md-12">
+                                    {this.state.isLoadedVertical ?
+                                    <div className={this.state.colVertical}>
                                         <Plot
                                             divId="plotTracksVertical"
                                             style={{width:"100%", height:"95vh"}}
@@ -2256,6 +2473,19 @@ class Graficador extends Component {
                                             useResizeHandler={true}
                                         />
                                     </div>
+                                    : null }
+                                    { this.state.isLoadedVerticalFEL ?
+                                    <div className={this.state.colVerticalFEL}>
+                                        <Plot
+                                            divId="plotFel"
+                                            style={{width:"100%", height:"95vh"}}
+                                            data={this.state.dataFEL}
+                                            layout={this.state.layoutFEL}
+                                            config={null}
+                                            useResizeHandler={true}
+                                        />
+                                    </div>
+                                    : null}
                                 </div>           
                             </div>
                             :
@@ -2604,7 +2834,7 @@ class Graficador extends Component {
                                     <label><b>Campo: </b></label>
                                     <select name="field_id" id="field_id" className="form-control" onChange={this.handleChange} defaultValue={template ? template.field_id : 0}>
                                         <option key="0" value="0">Seleccionar</option>
-                                        {this.state.dataFields.map(elemento => (<option key={elemento.id} value={elemento.id}>{elemento.nombre}</option>))}
+                                        {this.state.dataFields.length > 0 ? this.state.dataFields.map(elemento => (<option key={elemento.id} value={elemento.id}>{elemento.nombre}</option>)) :null } 
                                     </select>
                                 </div>
                             </div>
@@ -2613,7 +2843,7 @@ class Graficador extends Component {
                                     <label><b>Pozo: </b></label>
                                     <select name="wells_id" id="wells_id" className="form-control" onChange={this.handleChange} defaultValue={template ? template.wells_id : 0}>
                                         <option key="0" value="0">Seleccionar</option>
-                                        {this.state.dataWells.map(elemento => (<option key={elemento.id} value={elemento.id}>{elemento.nombre}</option>))}
+                                        {this.state.dataWells ? this.state.dataWells.map(elemento => (<option key={elemento.id} value={elemento.id}>{elemento.nombre}</option>)) : null}
                                     </select>
                                 </div>
                             </div>
@@ -2860,11 +3090,38 @@ class Graficador extends Component {
 
                             <Card>
                                 <Accordion.Toggle as={Card.Header} eventKey="4" className="bg-verdeoscuro  small cursor-pointer">
-                                    FEL
+                                    FEL ({this.state.dataFEL.length})
                                 </Accordion.Toggle>
                                 <Accordion.Collapse eventKey="4">
                                     <Card.Body>
-                                        FEL 1 , 2 , 3,
+                                        <table className="table table-sm">
+                                            <tbody>
+                                                { 
+                                                    fel.id !== '' ? 
+
+                                                        <tr key={'rowfel_'+fel.id}>
+                                                            <td>
+                                                                <div key={'fel_'+fel.id}  className="form-check">
+                                                                    <input className="form-check-input" type="checkbox" id={`checked_fel`} name={`checked_fel}`} checked={fel.checked_fel} onChange={(e) =>this.handleChangeFel(e)} />
+                                                                    <label className="form-check-label" htmlFor={`checked_fel_${fel.id}`}> <b>ID:</b> {fel.id} </label>
+                                                                </div> 
+                                                            </td>
+                                                            <td>
+                                                                <b>INICIO:</b> {fel.inicio} 
+                                                            </td>
+                                                            <td>
+                                                                <b>FIN:</b> {fel.fin}
+                                                            </td>
+                                                            <td>
+                                                                <b>PASO:</b> {fel.paso}
+                                                            </td>
+                                                        </tr>
+                                                    
+                                                    :
+                                                    null
+                                                }
+                                            </tbody>
+                                        </table>
                                     </Card.Body>
                                 </Accordion.Collapse>
                             </Card>
