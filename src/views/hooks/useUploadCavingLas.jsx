@@ -24,10 +24,16 @@ const useUploadCavingLas = typeFile => {
 
   const columns = [
     {
+      title: 'Id',
+      dataIndex: 'id',
+      key: 'id',
+      width: '5%',
+    },
+    {
       title: 'Pozo',
       dataIndex: 'nombre_wells',
       key: 'nombre_wells',
-      width: '20%',
+      width: '10%',
     },
     {
       title: 'Encabezados',
@@ -39,11 +45,17 @@ const useUploadCavingLas = typeFile => {
       title: 'Fecha de Cargue',
       dataIndex: 'fecha_creacion',
       key: 'fecha_creacion',
-      width: '15%',
+      width: '10%',
+    },
+    {
+      title: 'Tipo de Cargue',
+      dataIndex: 'TipoCargue',
+      key: 'TipoCargue',
+      width: '10%',
     },
     {
       title: 'Acción',
-      width: '15%',
+      width: '5%',
       render: info_upload => (
         <Row justify="space-around">
           <Col style={{ cursor: 'pointer' }}>
