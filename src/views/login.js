@@ -29,17 +29,16 @@ class Login extends Component {
 
   iniciarSesion = async () => {
     //await axios.get(url + 'usuarios', { params: { codigo: this.state.form.codigo, clave: md5(this.state.form.clave) } })
-    if (this.state.form.codigo == '' || this.state.form.clave == '') {
+    if (this.state.form.codigo === '' || this.state.form.clave === '') {
       message.error('El usuario o contraseña no son correctos.');
-    }
-    else {
+    } else {
       await axios
         .get(
           url +
-          'usuarios/' +
-          this.state.form.codigo +
-          '/' +
-          md5(this.state.form.clave)
+            'usuarios/' +
+            this.state.form.codigo +
+            '/' +
+            md5(this.state.form.clave)
         )
         .then(response => {
           return response.data;
@@ -102,6 +101,9 @@ class Login extends Component {
               <button
                 className="btn btn-primary"
                 onClick={() => this.iniciarSesion()}
+                disabled={
+                  this.state.form.codigo === '' && this.state.form.clave === ''
+                }
               >
                 Ingresar
               </button>

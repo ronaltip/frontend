@@ -1,9 +1,13 @@
-import { DeleteOutlined, FileSearchOutlined } from '@ant-design/icons';
-import { Tooltip } from '@material-ui/core';
-import { Button, Col, message, notification, Row } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import HttpServices from '../../services/HttpServices';
+import {
+  DeleteOutlined,
+  FileSearchOutlined,
+  ScissorOutlined,
+} from '@ant-design/icons';
+import { Tooltip } from '@material-ui/core';
+import { Button, Col, message, notification, Row, Space } from 'antd';
 import { generateImgCanvanTobase64 } from '../../util/converterToBase64';
+import HttpServices from '../../services/HttpServices';
 
 const useFels = () => {
   const imgRef = useRef(null);
@@ -13,10 +17,16 @@ const useFels = () => {
   const [isActive, setIsActive] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [openModal, setOpenModal] = useState(false);
+  const [openModalCrop, setOpenModalCrop] = useState(false);
   const [registerRowId, setRegisterRowId] = useState('');
   const [upImg, setUpImg] = useState();
   const [crop, setCrop] = useState({
     unit: '%',
+  });
+  const [stepFields, setStepFields] = useState({
+    startCut: 0,
+    endCut: 0,
+    stepCut: 0,
   });
 
   useEffect(() => {
@@ -50,19 +60,24 @@ const useFels = () => {
       render: info_upload => (
         <Row justify="space-around">
           <Col style={{ cursor: 'pointer' }}>
+            <Tooltip title="Visualizar recorte">
+              <span onClick={() => OpenCrop(info_upload)}>
+                <ScissorOutlined />
+              </span>
+            </Tooltip>
+          </Col>
+          <Col style={{ cursor: 'pointer' }}>
             <Tooltip title="Visualizar archivo">
               <span onClick={() => OpenAndViewPdf(info_upload)}>
                 <FileSearchOutlined />
               </span>
             </Tooltip>
           </Col>
-          <Col style={{ cursor: 'pointer' }}>
-            <Tooltip title="Eliminar cargue">
-              <span onClick={() => commandDeteteRegister(info_upload)}>
-                <DeleteOutlined />
-              </span>
-            </Tooltip>
-          </Col>
+          <Tooltip title="Eliminar cargue">
+            <span onClick={() => commandDeteteRegister(info_upload)}>
+              <DeleteOutlined />
+            </span>
+          </Tooltip>
         </Row>
       ),
     },
@@ -115,8 +130,16 @@ const useFels = () => {
       });
   };
   const onClickCancel = () => {
+    setStepFields({
+      startCut: 0,
+      endCut: 0,
+      stepCut: 0,
+    });
     setOpenModal(false);
+    setOpenModalCrop(false);
+    setUpImg(null);
     setIsActive(false);
+    notification.destroy();
   };
 
   const onClickInsert = payload => {
@@ -141,6 +164,23 @@ const useFels = () => {
       });
   };
 
+  const OpenCrop = rowData => {
+    HttpServices()
+      .get(`archivo_imagenes_fel/${rowData.id}`)
+      .then(responseCrop => {
+        if (responseCrop && responseCrop[0].archivo_imagen_recorte) {
+          setUpImg(responseCrop[0].archivo_imagen_recorte);
+          setOpenModalCrop(true);
+        } else {
+          onClickCancel();
+          message.warning('No existe un recorte realizado.');
+        }
+      })
+      .catch(() => {
+        onClickCancel();
+        message.error('Algo ha salido mal,spor favor intente de nuevo.');
+      });
+  };
   const OpenAndViewPdf = rowData => {
     setCrop({
       unit: '%',
@@ -167,24 +207,27 @@ const useFels = () => {
     imgRef.current = img;
   }, []);
 
-  const makeClientCrop = crop => {
+  const makeClientCrop = (crop, stepFields) => {
     if (imgRef && crop.width && crop.height) {
       notification.destroy();
       const croppedImageUrl = generateImgCanvanTobase64(imgRef.current, crop);
-      croppedImageUrl.length >= 1 && openNotification(croppedImageUrl);
+      croppedImageUrl.length >= 1 &&
+        openNotification(croppedImageUrl, stepFields);
     } else {
       notification.destroy();
     }
   };
 
-  const changeCropImg = base64Img => {
-    setOpenModal(false);
+  const changeCropImg = (base64Img, stepFields) => {
     notification.destroy();
 
     HttpServices()
       .command('archivo_imagenes_fel', {
         archivoEncabezadoFelId: registerRowId,
         imagenBase64: base64Img,
+        inicioRecorte: stepFields.startCut,
+        finRecorte: stepFields.endCut,
+        pasoRecorte: stepFields.stepCut,
       })
       .then(response => {
         if (!response.data) {
@@ -201,9 +244,10 @@ const useFels = () => {
         onClickCancel();
         message.error('Algo ha salido mal, por favor intente de nuevo.');
       });
+    onClickCancel();
   };
 
-  const openNotification = base64Img => {
+  const openNotification = (base64Img, stepFields) => {
     const args = {
       message: 'Ya tienes una sección seleccionada',
       description: 'Deseas guardar el recorte?',
@@ -212,7 +256,7 @@ const useFels = () => {
           shape="round"
           style={{ backgroundColor: '#55c21b', color: '#fff' }}
           onClick={() => {
-            changeCropImg(base64Img);
+            changeCropImg(base64Img, stepFields);
           }}
         >
           Guardar
@@ -222,27 +266,29 @@ const useFels = () => {
     };
     notification.open(args);
   };
-  const cancelCrop = () => {
-    setOpenModal(false);
-    notification.destroy();
-  };
+
   return {
     userStorage,
     columns,
-    isLoading,
-    isActive,
-    openModal,
-    upImg,
-    crop,
-    listRegistersFels,
-    listWells,
-    clickOpenFileUpload,
-    onClickCancel,
-    onClickInsert,
-    cancelCrop,
-    onLoad,
-    setCrop,
-    makeClientCrop,
+    states: {
+      isLoading,
+      isActive,
+      openModal,
+      openModalCrop,
+      upImg,
+      crop,
+      stepFields,
+    },
+    listResponse: { listRegistersFels, listWells },
+    functions: {
+      clickOpenFileUpload,
+      onClickCancel,
+      onClickInsert,
+      onLoad,
+      setCrop,
+      makeClientCrop,
+      setStepFields,
+    },
   };
 };
 

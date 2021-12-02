@@ -11,9 +11,7 @@ import { pdfToBase64 } from './../../util/converterToBase64';
 import './modalUpload.css';
 
 const { Option } = Select;
-// const PDFJS = require('pdfjs-dist/build/pdf');
 
-// const images = [];
 const ModalUpload = ({
   isActive,
   fileType,
@@ -54,6 +52,7 @@ const ModalUpload = ({
       totalHeaders.push(valuesUp.splice(0, valueIndexOfArray));
       columnsData = columnsData.replaceAll('#DATE.', 'DATE.');
       columnsData = columnsData.replace('TIME', 'TIME.');
+      columnsData = columnsData.replace('#DEPT.', 'DEPT.');
       if (detailDateValue.indexOf(0) !== -1) {
         isDateColumn = true;
       } else {
