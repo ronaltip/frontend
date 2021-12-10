@@ -47,7 +47,8 @@ class Graficador extends Component {
                 tmpNombre: '',
                 tmpDescripcion: '',
                 wells_id: 0,
-                pkuser: 0
+                pkuser: 0,
+                id: 0
             },
             alert_algoritmo: {
                 tipo: '',
@@ -73,6 +74,10 @@ class Graficador extends Component {
                 nombre: '',
                 descripcion: ''
             },
+
+            curvasPrincipal: [],
+            curvasTraksHorizontal: [],
+
             dataWitsDetalle: [],
             dataFields: [],
             dataWells: [],
@@ -109,7 +114,7 @@ class Graficador extends Component {
             plotTrackVH: '0vh',
             plotDeptCol: 'col-md-12',
             colVertical:    'col-md-12',
-            colVerticalFEL: 'col-md-12',
+            colVerticalFEL: 'col-md-3',
 
             modalConfig: false,
             profundidadFinal: 0,
@@ -168,7 +173,6 @@ class Graficador extends Component {
 
             layoutFEL: {},
             dataFEL: [],
-            registroFEL: { id: '', inicio: '', fin: '', paso: '', checked_fel: true}
         }
     }
     
@@ -883,34 +887,40 @@ class Graficador extends Component {
             console.log(error.message);
         })
     }
-    getArchivos = async (id) => {
-        this.setState({ dataArchivosCurvas: [] });
+    getArchivos = (id) => {
+        return new Promise((resolve, reject) =>  {
 
-        axios.get(URL + 'archivo_encabezado/well/' + id).then(response => {
-            const data   = response.data;
-            const archivos_caving = data.filter(tipo => tipo.tipo_archivo_id === 2)
-            const archivos_las    = data.filter(tipo => tipo.tipo_archivo_id === 3)
+            this.setState({ dataArchivosCurvas: [] });
 
-            //Para cada archivo
-            //  Para cada curva homologada
-            // Crear el check 
-            archivos_las.forEach( row => {
-                row.homologacion = JSON.parse(row.homologacion)
-                row.homologacion.forEach( h => {
-                    const [curva] = this.GetDetalle(h.codigo)
-                    h.descripcion = curva.descripcion
-                    h.short_mnemonico = curva.short_mnemonico
+            axios.get(URL + 'archivo_encabezado/well/' + id).then(response => {
+                const data   = response.data;
+                const archivos_caving = data.filter(tipo => tipo.tipo_archivo_id === 2)
+                const archivos_las    = data.filter(tipo => tipo.tipo_archivo_id === 3)
+
+                //Para cada archivo
+                // Para cada curva homologada
+                // Crear el check 
+                archivos_las.forEach( row => {
+                    //row.homologacion = JSON.parse(row.homologacion)
+                    row.homologacion.forEach( h => {
+                        const [curva] = this.GetDetalle(h.codigo)
+                        h.descripcion = curva.descripcion
+                        h.short_mnemonico = curva.short_mnemonico
+                    })
+   
+                    this.setState( prev => ({  dataArchivosCurvas: [...prev.dataArchivosCurvas,  {id: row.id, datos: row.datos}] }));
+                    //this.getDataArchivos(row.id, Number(row.es_tiempo)).then ( resp => {
+                    //    this.setState( prev => ({  dataArchivosCurvas: [...prev.dataArchivosCurvas,  resp] }));
+                    //})
                 })
-
-                this.getDataArchivos(row.id, Number(row.es_tiempo)).then ( resp => {
-                    this.setState( prev => ({  dataArchivosCurvas: [...prev.dataArchivosCurvas,  resp] }));
-                })
+                console.log('Archivos LAS cargados')
+                this.setState({ archivos_las: archivos_las });
+                resolve(true)
+            }).catch(error => {
+                console.log(error.message);
+                reject(error)
             })
-            
-            this.setState({ archivos_las: archivos_las });
-        }).catch(error => {
-            console.log(error.message);
-        })
+        }) 
     }
     getDataArchivos = (id, tipo) => {
         return new Promise((resolve, reject) =>  {
@@ -946,8 +956,8 @@ class Graficador extends Component {
                         paper_bgcolor: 'white',
                         font: { family: 'verdana', size: 11 },
                         showlegend: false,
-                        xaxis: { fixedrange: false, autorange: false, range: [0, 1], nticks: 1 },   title: fel.id + '_FEL', titlefont: { size: 10, color: 'brown' }, side: 'top', textposition: 'top center',
-                        yaxis: { fixedrange: false, autorange: false, range: [this.state.profundidadFinal, -20], nticks: 15, side: 'right', gridcolor: '#eee', gridwidth: 1  },
+                        xaxis: { fixedrange: false, autorange: false, range: [0, fel.inicio_recorte], nticks: 1 },   title: fel.id + '_FEL', titlefont: { size: 10, color: 'brown' }, side: 'top', textposition: 'top center',
+                        yaxis: { fixedrange: false, autorange: false, range: [this.state.profundidadFinal, -20], nticks: 15, side: 'right', gridcolor: '#eee', gridwidth: 1 },
                         datarevision: 1,
                         images: [
                             {
@@ -960,7 +970,7 @@ class Graficador extends Component {
                             "sizey": fel.fin_recorte,
                             "xanchor": "left",
                             "yanchor": "top",
-                            "sizing": "contain"
+                            "sizing": "stretch"
                             }
                         ]
                     };
@@ -978,6 +988,7 @@ class Graficador extends Component {
                         y, y,
                         name: fel.id + '_FEL',
                         type: 'scatter',
+                        hovertemplate: '%{y}'
                     }
                     const data = [serie] 
                     this.setState ({ layoutFEL: layout_FEL, dataFEL: data, isLoadedVerticalFEL: true,
@@ -987,7 +998,9 @@ class Graficador extends Component {
                             fin: fel.fin_recorte,
                             paso: fel.paso_recorte,
                             checked_fel: true
-                        }
+                        },
+                        colVertical: this.state.isLoadedVertical > 0 ?  'col-md-9 col-lg-9' : null ,
+                        colVerticalFEL: this.state.isLoadedVertical > 0 ? 'col-md-3 col-lg-3' : 'col-md-3 col-lg-3'
                     })
                     
                 }
@@ -999,7 +1012,8 @@ class Graficador extends Component {
             }
             else
                 this.setState ( {layoutFEL :  {}, dataFEL: [], isLoadedVerticalFEL: false })
-                       
+            
+            console.log('FEL finalizado')
         }).catch(error => {
             console.log(error.message);
             message.error('Ocurrió un error consultando el archivo FEL, intente nuevamente ')
@@ -1051,7 +1065,7 @@ class Graficador extends Component {
     }
 
     AbrirTemplate = (id) => {
-        
+        console.log(this.now())
         let profundidadFinal_temporal = 1000
         let layout_Principal = {
             autosize: true,
@@ -1132,7 +1146,13 @@ class Graficador extends Component {
             layoutTV:   layout_Vertical,
             isLoadedVertical: false,
                        
-            profundidadFinal: profundidadFinal_temporal
+            profundidadFinal: profundidadFinal_temporal,
+
+            form_template: {
+                ...this.state.form_template,
+                id: id,
+            }
+            
         });
 
         const requestTemplatesWells         = axios.get(URL + "templates_wells/" + id);
@@ -1142,58 +1162,81 @@ class Graficador extends Component {
         axios.all([requestTemplatesWells, requestTemplatesWellTipoCurva]).then(axios.spread((...response) => {
             const [template] = response[0].data;
             const curvas     = response[1].data;
-            
+           
             //Obtener Datos y Graficar
             if (this.state.template.wells_id == template.wells_id)
             {
                 if (this.state.dataWits.length === 0)
-                {                      
-                    axios.get(URL + "datos_wits/wells/" + template.wells_id + '/0').then(response => {
-                        const data_Wits       = response.data;
-                        const datosToSimplyfy = data_Wits.map( e => ({x: e['id'], y: Number(e['_0108'])}) );
-                        const dataSimplyfy    = Simplify(datosToSimplyfy, 0.9075).map( prop => prop.x ); 
-                        
-                        const dataFilter_Wits = data_Wits.filter( item => dataSimplyfy.includes( item.id ) )
+                {    
+                    //Archivos LAS, CAVING
+                    this.getArchivos(template.wells_id).then( rta => {
+                   
+                        if (rta)
+                        {
+                            axios.get(URL + "datos_wits/wells/" + template.wells_id + '/0').then(response => {
+                                if (response.status === 200)
+                                {
+                                    const data_Wits       = response.data;
+                                    const datosToSimplyfy = data_Wits.map( e => ({x: e['id'], y: Number(e['_0108'])}) );
+                                    const dataSimplyfy    = Simplify(datosToSimplyfy, 0.9075).map( prop => prop.x ); 
+                                    
+                                    const dataFilter_Wits = data_Wits.filter( item => dataSimplyfy.includes( item.id ) )
 
-                        this.setState({dataWits: dataFilter_Wits})
-                    
-                       
+                                    this.setState({dataWits: dataFilter_Wits})
+                                
+                                    console.log('datos wits inicial')
 
-                        //Gráfica principal
-                        let curvasPrincipal = curvas.filter(c=>c.mostrar === true && c.grupo === null)
-                        this.SetSerieGraficaPrincipal(curvasPrincipal)
-                        //
+                                    //Gráfica principal
+                                    let curvasPrincipal = curvas.filter(c=>c.mostrar === true && c.grupo === null)
+                                    this.SetSerieGraficaPrincipal(curvasPrincipal)
+                                    //
 
-                        //Track Horizontal
-                        let traksHorizontales = curvas.filter(c=>c.mostrar === true && c.grupo !== null).sort(c=>c.grupo)
-                        this.SetSerieTrackHorizontal(traksHorizontales)
-                        //                       
+                                    //Track Horizontal
+                                    let curvasTraksHorizontal = curvas.filter(c=>c.mostrar === true && c.grupo !== null).sort(c=>c.grupo)
+                                    this.SetSerieTrackHorizontal(curvasTraksHorizontal)
+                                    //
 
-                        
-                        this.getFEL(template.wells_id)
+                                    //Track Vertical
+                                    this.SetSerieTrackVertical()
 
-                        this.setState({
-                            template:   {...template},
-                            dataCurvas: [...curvas],
-                            modalStart: false,
-                            loadingStart: false,
-                            toggleHorizontales: 0
-                        })
-                        
-                        this.ToggleDivHorizontales()
-                        //this.CollapseVerticalPlots()
-                    }).catch(errors => {
-                        console.log(errors.message);
+                                    //Archivo FEL
+                                    this.getFEL(template.wells_id)
+
+                                    this.setState({
+                                        template:   {...template},
+                                        dataCurvas: [...curvas],
+                                        modalStart: false,
+                                        loadingStart: false,
+                                        toggleHorizontales: 0
+                                    })
+                                    
+                                    this.ToggleDivHorizontales()
+                                    console.log(this.now())
+                                }
+                                else
+                                {
+                                    console.log(response.data);
+                                    message.error('Ocurrió un error consultando los datos de telemetría, recargue la página por favor')
+                                }
+                            }).catch(errors => {
+                                console.log(errors.message);
+                                message.error('Ocurrió un error consultando los datos de telemetría, recargue la página por favor')
+                            })
+                        }
                     })
-
-                    this.getArchivos(template.wells_id)
+                    .catch(err => {
+                        message.error('Ocurrió un error consultando los archivos LAS, recargue la página por favor')
+                        console.log(err.message);
+                    })
+                  
                     this.getEventos(template.wells_id)
                     this.getOperaciones(template.wells_id)
                 }
                 else
                 {
+                    console.log('datos wits existentes')
                     this.getArchivos(template.wells_id)
-                    this.getFEL(template.wells_id)
+                   
 
                     //Gráfica principal
                     let curvasPrincipal = curvas.filter(c=>c.mostrar === true && c.grupo === null)
@@ -1205,9 +1248,13 @@ class Graficador extends Component {
                     this.SetSerieTrackHorizontal(traksHorizontales)
                     //
             
+                    //Track Vertical
+                    this.SetSerieTrackVertical()
+
                     this.getEventos(template.wells_id)
                     this.getOperaciones(template.wells_id)
-                   
+                    this.getFEL(template.wells_id)
+                    
                     this.setState({
                         template:   {...template},
                         dataCurvas: [...curvas],
@@ -1216,11 +1263,13 @@ class Graficador extends Component {
                         toggleHorizontales: 0
                     })
                     this.ToggleDivHorizontales()
-                    //this.CollapseVerticalPlots()
+                    
                 }
             }
             else
             {
+                console.log('otro pozo')
+                this.getArchivos(template.wells_id)
 
                 //Gráfica principal
                 let curvasPrincipal = curvas.filter(c=>c.mostrar === true && c.grupo === null)
@@ -1232,8 +1281,13 @@ class Graficador extends Component {
                 this.SetSerieTrackHorizontal(traksHorizontales)
                 //
 
+                //Track Vertical
+                this.SetSerieTrackVertical()
+
                 this.getEventos(template.wells_id)
                 this.getOperaciones(template.wells_id)
+                this.getFEL(template.wells_id)
+
                 
                 this.setState({
                     template:   {...template},
@@ -1338,6 +1392,7 @@ class Graficador extends Component {
             layoutGP: layout,
             profundidadFinal: profundidadFinal_temporal
         });
+        console.log('SetSerieGraficaPrincipal')
 
     } 
 
@@ -1354,97 +1409,106 @@ class Graficador extends Component {
             
             if (c.mostrar)
             {
-                const datos = this.state.dataWits.map( f => ({ x: f['DATETIME'], y: f['_'+c.codigo]}) );  
-                const x = datos.map(d=>d.x);
-                const y = datos.map(d=>d.y);
-                let traza = {
-                    name : c.descripcion,
-                    x: x,
-                    y: y,
-                    xaxis: 'x',
-                    yaxis: 'y' + ((i > 1) ? String(i) : ''),
-                    text: '[' + c.codigo + '] ' + c.short_mnemonico + ' - ' + c.descripcion
-                }
+                const datos = this.state.dataWits.map( f => ({ x: f['DATETIME'], y: f['_'+c.codigo]}) );
+                if (datos.length > 0)
+                { 
+                    const x = datos.map(d=>d.x);
+                    const y = datos.map(d=>d.y);
+                    let traza = {
+                        name : c.descripcion,
+                        x: x,
+                        y: y,
+                        xaxis: 'x',
+                        yaxis: 'y' + ((i > 1) ? String(i) : ''),
+                        text: '[' + c.codigo + '] ' + c.short_mnemonico + ' - ' + c.descripcion
+                    }
 
-                let propertyAxi = "yaxis" + ((i > 1) ? String(i) : '')
-                if (c.grupo == grupo_anterior)
-                    layout_Horizontal[propertyAxi] = { title: c.short_mnemonico, titlefont: { size: 10, color: '#3c5cf9', }, tickfont: { size: 8.0 }, overlaying: 'y' + ((i > 1) ? String(i - 1) : ''), side: 'right', gridcolor: '#eee' }
-                else
-                {
-                    layout_Horizontal[propertyAxi] = { title: c.short_mnemonico, titlefont: { size: 10, color: '#3c5cf9', }, tickfont: { size: 8.0 }, gridcolor: '#eee' }
-                
-                    let subplot = ['xy' + ((i > 1) ? String(i) : '') ]
-                    layout_Horizontal.grid.subplots.push(subplot);
-                    j++;
+                    let propertyAxi = "yaxis" + ((i > 1) ? String(i) : '')
+                    if (c.grupo == grupo_anterior)
+                        layout_Horizontal[propertyAxi] = { title: c.short_mnemonico, titlefont: { size: 10, color: '#3c5cf9', }, tickfont: { size: 8.0 }, overlaying: 'y' + ((i > 1) ? String(i - 1) : ''), side: 'right', gridcolor: '#eee' }
+                    else
+                    {
+                        layout_Horizontal[propertyAxi] = { title: c.short_mnemonico, titlefont: { size: 10, color: '#3c5cf9', }, tickfont: { size: 8.0 }, gridcolor: '#eee' }
+                    
+                        let subplot = ['xy' + ((i > 1) ? String(i) : '') ]
+                        layout_Horizontal.grid.subplots.push(subplot);
+                        j++;
+                    }
+                    i++
+                    grupo_anterior = c.grupo
+                    datosGraficasHorizontales.push(traza);
                 }
-                i++
-                grupo_anterior = c.grupo
-                datosGraficasHorizontales.push(traza);
             }
            
         })
+        console.log('Tracks dataWits')
 
         //Para DBTM o DMEA de un LAS en tiempo Homologado
-        
         let data   = [...this.state.dataGP]
         let layout = {...this.state.layoutGP}
         let profundidadFinal_temporal = layout.yaxis.range ? layout.yaxis.range[0] : 1000
         let refreshPrincipal = false
         this.state.archivos_las.forEach ( ar => {
+            
             if (ar.es_tiempo === true)
             {
                 ar.homologacion.forEach( hm => {
                     if (hm.mostrar)
                     {
+                            
                         const [curvas] = this.state.dataArchivosCurvas.filter( c => c.id === ar.id ).map( d => ({ datos: d.datos }))
                         const datos  = curvas.datos.map( f => ({ x: f['DATETIME'], y: f['_'+hm.codigo]}) )
-                        const x = datos.map(d=>d.x);
-                        const y = datos.map(d=>d.y);
-                        
-                        //Si son DBTM o DMEA, van para gráfica principal
-                        if (hm.codigo === '0108' || hm.codigo === '0110' )
+                        if (datos.length > 0)
                         {
-                            const serie = {
-                                x: x,
-                                y: y,
-                                name: ar.id + '_' + hm.descripcion,
-                                type: 'scatter',
-                                text: '[' + hm.codigo + '] ' + hm.short_mnemonico + ' - ' + hm.descripcion
-                            }
-                            data.push(serie)
-
-                            let prof = Math.max(...y) + 500
-                            profundidadFinal_temporal =  (prof > profundidadFinal_temporal) ? prof : profundidadFinal_temporal
-                            layout.yaxis.range = [profundidadFinal_temporal, -20]
-
-                            refreshPrincipal = true
-                        }
-                        else
-                        {
-                            let traza = {
-                                name : ar.id+'_'+hm.short_mnemonico,
-                                x: x,
-                                y: y,
-                                xaxis: 'x',
-                                yaxis: 'y' + ((i > 1) ? String(i) : ''),
-                                text: '[' + hm.codigo + '] ' + hm.short_mnemonico + ' - ' + hm.descripcion
-                            }
-            
-                            let propertyAxi = "yaxis" + ((i > 1) ? String(i) : '')
-                            //if (0 == grupo_anterior)
-                            //    layout_Horizontal[propertyAxi] = { title: ar.id+'_'+hm.short_mnemonico, titlefont: { size: 10, color: '#3c5cf9', }, tickfont: { size: 8.0 }, overlaying: 'y' + ((i > 1) ? String(i - 1) : ''), side: 'right', gridcolor: '#eee' }
-                            //else
-                            //{
-                                layout_Horizontal[propertyAxi] = { title: ar.id+'_'+hm.short_mnemonico, titlefont: { size: 10, color: '#3c5cf9', }, tickfont: { size: 8.0 }, gridcolor: '#eee' }
+                            const x = datos.map(d=>d.x);
+                            const y = datos.map(d=>d.y);
                             
-                                let subplot = ['xy' + ((i > 1) ? String(i) : '') ]
-                                layout_Horizontal.grid.subplots.push(subplot);
-                                j++;
-                            //}
-                            i++
-                            //grupo_anterior = 0
-                            datosGraficasHorizontales.push(traza);
+                            //Si son DBTM o DMEA, van para gráfica principal
+                            if (hm.codigo === '0108' || hm.codigo === '0110' )
+                            {
+                                const serie = {
+                                    x: x,
+                                    y: y,
+                                    name: ar.id + '_' + hm.descripcion,
+                                    type: 'scatter',
+                                    text: '[' + hm.codigo + '] ' + hm.short_mnemonico + ' - ' + hm.descripcion
+                                }
+                                data.push(serie)
+
+                                let prof = Math.max(...y) + 500
+                                profundidadFinal_temporal =  (prof > profundidadFinal_temporal) ? prof : profundidadFinal_temporal
+                                layout.yaxis.range = [profundidadFinal_temporal, -20]
+
+                                refreshPrincipal = true
+                            }
+                            else
+                            {
+                                let traza = {
+                                    name : ar.id+'_'+hm.short_mnemonico,
+                                    x: x,
+                                    y: y,
+                                    xaxis: 'x',
+                                    yaxis: 'y' + ((i > 1) ? String(i) : ''),
+                                    text: '[' + hm.codigo + '] ' + hm.short_mnemonico + ' - ' + hm.descripcion
+                                }
+                
+                                let propertyAxi = "yaxis" + ((i > 1) ? String(i) : '')
+                                //if (0 == grupo_anterior)
+                                //    layout_Horizontal[propertyAxi] = { title: ar.id+'_'+hm.short_mnemonico, titlefont: { size: 10, color: '#3c5cf9', }, tickfont: { size: 8.0 }, overlaying: 'y' + ((i > 1) ? String(i - 1) : ''), side: 'right', gridcolor: '#eee' }
+                                //else
+                                //{
+                                    layout_Horizontal[propertyAxi] = { title: ar.id+'_'+hm.short_mnemonico, titlefont: { size: 10, color: '#3c5cf9', }, tickfont: { size: 8.0 }, gridcolor: '#eee' }
+                                
+                                    let subplot = ['xy' + ((i > 1) ? String(i) : '') ]
+                                    layout_Horizontal.grid.subplots.push(subplot);
+                                    j++;
+                                //}
+                                i++
+                                //grupo_anterior = 0
+                                datosGraficasHorizontales.push(traza);
+                            }
                         }
+                        
                     }
                     else
                     {
@@ -1479,7 +1543,11 @@ class Graficador extends Component {
                 profundidadFinal: profundidadFinal_temporal
             });
         }
+        console.log('SetSerieTrackHorizontal')
+
     }
+
+   
     
     //Actualizar las curvas de los tracks verticales
     SetSerieTrackVertical = () => {
@@ -1562,9 +1630,10 @@ class Graficador extends Component {
             layoutTV:   layout_Vertical,
             layoutFEL:   layout_fel,
             isLoadedVertical: datosGraficasVerticales.length > 0 ? true : false,
-            colVertical: datosGraficasVerticales.length > 0 ?   (this.state.isLoadedVerticalFEL ?   'col-md-9' : 'col-md-12' ) : null,
-            colVerticalFEL: datosGraficasVerticales.length > 0 ? 'col-md-3' : 'col-md-12'
+            colVertical: datosGraficasVerticales.length > 0 ?   (this.state.isLoadedVerticalFEL ?   'col-md-9 col-lg-9' : 'col-md-12 col-lg-9' ) : null,
+            colVerticalFEL: datosGraficasVerticales.length > 0 ? 'col-md-3 col-lg-4' : 'col-md-3 col-lg-3'
         });
+        console.log('SetSerieTrackVertical')
        
     }
 
@@ -1766,7 +1835,7 @@ class Graficador extends Component {
                 range: [ newMax, eventdata['yaxis.range[1]'] ], autorange: false, fixedrange: false
             }
             layout_fel.yaxis = {
-                range: [ newMax, eventdata['yaxis.range[1]'] ], autorange: false, fixedrange: false
+                range: [ newMax, eventdata['yaxis.range[1]'] ], autorange: false, fixedrange: false, side: 'right', gridcolor: '#eee', gridwidth: 1
             }
             
         }
@@ -1894,7 +1963,8 @@ class Graficador extends Component {
         this.setState({
             form_template: {
                 ...this.state.form_template,
-                [e.target.name]: e.target.value
+                [e.target.name]: e.target.value,
+                pkuser: this.state.userStorage.id_usuario_sesion
             }
         });
     }
@@ -1985,6 +2055,7 @@ class Graficador extends Component {
                     message.success('Template actualizado')
                 }).catch(error => {
                     console.log(error.message);
+                    message.success('Ocurrió un error actualizado el Template')
                 })
             }
             else
@@ -2365,13 +2436,15 @@ class Graficador extends Component {
     componentDidMount() {      
         this.Start();
         this.getFields(); 
-        this.getTipoEventos();
-        this.getConvencion();
-        this.getWitsDetalle();
+
         this.setState({userStorage: JSON.parse(sessionStorage.getItem('user'))})
         
-    }     
-
+        this.setState({dataTipoEvento: JSON.parse(sessionStorage.getItem('dataTipoEvento'))})
+        this.setState({dataConvencion: JSON.parse(sessionStorage.getItem('dataConvencion'))})
+        this.setState({dataWitsDetalle: JSON.parse(sessionStorage.getItem('dataWitsDetalle'))})
+    }   
+    
+    
     render() { 
         const { template, fel }      = this.state; 
         
@@ -2413,7 +2486,7 @@ class Graficador extends Component {
                             {
                                 this.state.togglePrincipal ?
                                 <div id="divGraficaPrincipal" className="row">
-                                    <div className="col-md-12">
+                                    <div className="col-md-12 col-lg-12">
                                         {
                                             this.state.isLoadedPrincipal ? 
                                             <Plot
@@ -2442,7 +2515,7 @@ class Graficador extends Component {
                             {
                                 this.state.toggleTrackHorizontal ?
                                 <div id="divTrackHorizontal" className="row">
-                                    <div className="col-md-12">
+                                    <div className="col-md-12 col-lg-12">
                                         <Plot
                                             divId="plotTracksHorizontal"
                                             data={this.state.dataTH}

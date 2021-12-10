@@ -20,7 +20,7 @@ import FilterList from '@material-ui/icons/FilterList';
 import FirstPage from '@material-ui/icons/FirstPage';
 import LastPage from '@material-ui/icons/LastPage';
 import Remove from '@material-ui/icons/Remove';
-import Save from '@material-ui/icons/Save';
+
 import SaveAlt from '@material-ui/icons/SaveAlt';
 import Search from '@material-ui/icons/Search';
 import ViewColumn from '@material-ui/icons/ViewColumn';
@@ -40,8 +40,8 @@ const URL = process.env.REACT_APP_API_HOST;
 const columns = [
     { title: 'Level', field: 'level' },
     { title: 'Codigo Wits', field: 'codigo' },
-    { title: 'tag', field: 'short_mnemonico' },
-    { title: 'descripcion', field: 'descripcion' }
+    { title: 'Mnemonico', field: 'short_mnemonico' },
+    { title: 'Descripción', field: 'descripcion' }
 ];
 
 const tableIcons = {
@@ -69,12 +69,6 @@ class viewWits extends Component {
 
     state = {
         data: [],
-        dataTipoCurva: [], 
-        dataWitsDetalle :[], 
-        modalInsertar: false,
-        form: { 
-                 id: '', wits_detalle_id: '', tipo_curva_id: '', tag: '', tipo_curva_nombre: '', referencia_nombre: '', nombre: '', wits_padre_nombre: '', wits_detalle_nombre: '', pkuser: ''  
-        }
     }
        
     peticionGet = async () => {
@@ -90,42 +84,7 @@ class viewWits extends Component {
         this.peticionGet();
     };
      
-  
-    modalInsertar = () => {
-        this.setState({ modalInsertar: !this.state.modalInsertar });
-    }
-
-    seleccionarRegistro = (wits_homologacion) => {
-        this.setState({
-            tipoModal: 'actualizar',
-            form: {
-                id: wits_homologacion.id, 
-                tipo_curva_id: wits_homologacion.tipo_curva_id, 
-                wits_detalle_id: wits_homologacion.wits_detalle_id, 
-                nombre: wits_homologacion.nombre,
-                tag: wits_homologacion.tag,
-                tipo_curva_nombre: wits_homologacion.tipo_curva_nombre,
-                referencia_nombre: wits_homologacion.referencia_nombre, 
-                wits_padre_nombre: wits_homologacion.wits_padre_nombre,
-                wits_detalle_nombre: wits_homologacion.wits_detalle_nombre
-            } ,
-            cod1: wits_homologacion.tipo_curva_id,
-            cod2: wits_homologacion.wits_detalle_id
-        }) 
-    }
-
-
-    handleChange = async e => {
-        e.persist();
-        await this.setState({
-            form: {
-                ...this.state.form,
-                [e.target.name]: e.target.value
-            }
-        });
-        //this.state.form.pkuser = cookies.get('pk_usuario_sesion');          
-    }
-
+   
     componentDidMount() {
         this.peticionGet();
     }
@@ -136,8 +95,7 @@ class viewWits extends Component {
     
 
     render() {
-        const { form } = this.state;     
-         
+                
         return (
             <div className="App">                
                 <Cabecera />
@@ -150,15 +108,7 @@ class viewWits extends Component {
                         columns={columns}
                         data={this.state.data}
                         icons={tableIcons}
-                        actions={[ 
-                            {
-                                icon: tableIcons.Search,
-                                tooltip: 'Detalle',
-                                onClick: (event, rowData) => { this.seleccionarRegistro(rowData); this.modalInsertar() },
-                               
-                            }
-                        ]
-                        }
+                        actions={[]}
                         options={{
                             actionsColumnIndex: -1,
                             pageSize: 10,
@@ -167,52 +117,13 @@ class viewWits extends Component {
                         localization={{
                             header: { actions: 'Acciones' }
                         }}
-                        onChangePage={() => this.NoAction}
-                        onChangeRowsPerPage= {() => this.NoAction}
+                        onPageChange={() => this.NoAction()}
+                        onChangeRowsPerPage= {() => this.NoAction()}
+                        forwardRef={()=>this.NoAction()}
                     />
                     </div>
                 </div>
-                <Modal isOpen={this.state.modalInsertar}>
-                    <ModalHeader style={{ display: 'block' }}>
-                        <span style={{ float: 'right' }} onClick={() => this.modalInsertar()}><CancelIcon icon={tableIcons.CancelIcon} /> </span>
-                        <label>Wits 0</label>                        
-                    </ModalHeader>
-                    <ModalBody>
-                        <div className="form-group">
-                            <input className="form-control" type="hidden" name="id" id="id" readOnly onChange={this.handleChange} value={form ? form.id : this.state.data.length + 1} />
-                            <br />
-                            <label >Referencia General Wits</label>
-                           
-                            <Autocomplete
-                                id="wits_detalle_id"
-                                options={this.state.dataWitsDetalle}
-                                onChange={(e,v) => this.state.cod2 = v.id}
-                                defaultValue={ this.state.dataWitsDetalle.find(v => v.id == this.state.cod2)}
-                                getOptionLabel={(option) => option.codigo +"  "+option.nombre}
-                                style={{ width: 470 }}                                
-                                renderInput={(params) => <TextField name="wits_detalle_id" {...params} variant="outlined"  />}
-                            />
-
-                            <br />
-                            <label  >Tipo de Curva</label>
-
-                            <Autocomplete
-                                id="tipo_curva_id"
-                                options={this.state.dataTipoCurva}
-                                onChange={(e,v) => this.state.cod1 = v.id}
-                                defaultValue={ this.state.dataTipoCurva.find(v => v.id == this.state.cod1)}
-                                getOptionLabel={(option) => "[" + option.tag + "]  " + option.nombre}
-                                style={{ width: 470 }}
-                                renderInput={(params) => <TextField name="tipo_curva_id" {...params} variant="outlined" />}
-                            />
-
-                         </div>
-                    </ModalBody>
-
-                    <ModalFooter>
-                        <button className="btn btn-secondary" onClick={() => this.modalInsertar()}> <CancelIcon /> Cancelar</button>
-                    </ModalFooter>
-                </Modal>
+                
             </div>
         );
     }

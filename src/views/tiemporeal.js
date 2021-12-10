@@ -11,7 +11,8 @@ import SideBar from '../componentes/sidebar';
 import { message } from 'antd';
 import {AlgoritmoOperaciones} from '../util/utilities';
 import { Modal, ModalBody,  ModalHeader, Spinner } from 'reactstrap';
-
+import OndemandVideoIcon from '@material-ui/icons/OndemandVideo';
+import TimerOffIcon from '@material-ui/icons/TimerOff';
 
 const URL = process.env.REACT_APP_API_HOST; 
 const config_general = {
@@ -42,13 +43,20 @@ const TiempoReal = () => {
     const [dataFields, setField] = useState([]);
     const [dataWells,  setWell] = useState([]);
     const [dataTemplates,  setTemplate] = useState([]);
-    const [dataWits, setDataWits] = useState([]);
+    
     const [dataRegistro,  setRegistro] = useState({
         Inicio: '', Fin: '', Total: '', id: ''
     });
     const [form, setState] = useState ({
         field_id: 0, wells_id: 0, id: 0
     });
+    const [formPrev, setPrevState] = useState ({
+        field_id: 0, wells_id: 0, id: 0
+    });
+    const [registroFEL,  setRegistroFEL] = useState({
+        id: '', inicio: '', fin: '', paso: '', checked_fel: true
+    });
+
     const [curvasTemplate, setCurvas] = useState([]);
 
     const [profundidadFinal, setProfundidad] = useState(1000)
@@ -102,7 +110,7 @@ const TiempoReal = () => {
     const [layoutTV, setLayoutTV] = useState({
         autosize: true,
         uirevision: 'true',
-        margin: { l: 5, r: 40, t: 80, b: 5 },
+        margin: { l: 5, r: 0, t: 80, b: 5 },
         dragmode: 'zoom',
         hovermode: 'closest',
         plot_bgcolor: 'white',
@@ -114,13 +122,37 @@ const TiempoReal = () => {
         gridwidth: 1  },
         datarevision: 1
     })
+    const [layoutFEL, setLayoutFEL] = useState({
+        autosize: true,
+        uirevision: 'true',
+        margin: { l: 0, r: 40, t: 80, b: 5 },
+        dragmode: 'zoom',
+        hovermode: 'closest',
+        plot_bgcolor: 'white',
+        paper_bgcolor: 'white',
+        font: { family: 'verdana', size: 11 },
+        showlegend: false,
+        xaxis: { fixedrange: false, autorange: false, nticks: 1 , titlefont: { size: 10, color: 'brown' }, side: 'top', textposition: 'top center' },
+        yaxis: { fixedrange: false, autorange: false, nticks: 15, side: 'right', gridcolor: '#eee', gridwidth: 1 },
+        datarevision: 1,
+    })
+
     const [dataGP, setDataGP] = useState([])
     const [dataTH, setDataTH] = useState([])
     const [dataTV, setDataTV] = useState([])
+    const [dataFEL, setDataFEL] = useState([])
+    const [dataLAS, setDataLAS] = useState([])
+    const [dataArchivosCurvas, setDataArchivosCurvas] = useState([])
+
 
     const [isLoadedPrincipal,  setIsLoadedGP] = useState(false)
     const [isLoadedHorizontal, setIsLoadedTH] = useState(false)
     const [isLoadedVertical,   setIsLoadedTV] = useState(false)
+    const [isLoadedFEL,   setIsLoadedFEL] = useState(false)
+
+    const [colVertical,   setColVertical] = useState('col-md-9')
+    const [colVerticalFEL,   setColVerticalFEL] = useState('col-md-3')
+
    
     const [isToggled, toggle] = useState(0)
     const [isRunning,  setIsRunning] = useState(false)
@@ -129,25 +161,14 @@ const TiempoReal = () => {
     const [procesarAlgoritmo, setProcesarAlgoritmo] = useState(false)
     const [_DBTM, setDBTM] = useState(0)
 
+    const [dataConvencion, setDataConvencion] = useState([])
+    const [dataWitsDetalle, setDataWitsDetalle] = useState([])
 
-    const [operacion, setOperacion] = useState({
-        DATETIME   : [],
-        operacion_0: [],
-        operacion_2: [],
-        operacion_3: [],
-        operacion_4: [],
-        operacion_7: [],
-        operacion_8: [],
-        operacion_9: [],
-        operacion_35: [],
-        operacion_36: [],
-        operacion_37: [],
-        operacion_38: [],
-        operacion_39: [],
-        operacion_40: [],
-        operacion_41: []
-    })
-    const [dataConvencion, setDataConvencion] = useState({})
+    const [disabled, setDisabled] = useState(false)
+
+    const [show, setShow] = useState(true);
+    const handleClose = () => setShow(false);
+    const handleShow = () => setShow(true);
 
     function getWells(id) {
     
@@ -191,28 +212,140 @@ const TiempoReal = () => {
             return []
     }
 
+    const getFEL = (id, layout_Vertical, numGraVert) => {
+        if (id != 0)
+        {
+            //return new Promise((resolve, reject) =>  {
+                axios.get(URL + 'archivo_encabezado_fel/well/' + id).then(response => {
+                    
+                    const [fel]   = response.data;
+            
+                    if (fel !== undefined)
+                    {
+                        if (fel.archivo_imagen_recorte !== null)
+                        {
+                            let newMax = MaxTrackVertical(-20, profundidadFinal)
+                            const imagen = 'data:image/png;base64,' + fel.archivo_imagen_recorte;
+
+                            let layout_fel = {...layoutFEL}
+                            layout_fel.xaxis.range = [0, fel.inicio_recorte]
+                            layout_fel.xaxis.title = fel.id + '_FEL'
+                            layout_fel.yaxis.range = [newMax, -20]
+                            layout_fel.images = [
+                                    {
+                                    "source": imagen,
+                                    "xref": "x",
+                                    "yref": "y",
+                                    "x": 0,
+                                    "y": fel.inicio_recorte,
+                                    "sizex": fel.inicio_recorte,
+                                    "sizey": fel.fin_recorte,
+                                    "xanchor": "left",
+                                    "yanchor": "top",
+                                    "sizing": "stretch"
+                                    }
+                            ]
+                        
+                            let _y = []
+                            let _x = []
+
+                            for (let i=fel.inicio_recorte; i<= fel.fin_recorte; i = i + fel.paso_recorte)
+                            {
+                                _y.push(i)
+                                _x.push(0)
+                            }
+                            
+                            const serie = {
+                                x: _x,
+                                y: _y,
+                                name: fel.id + '_FEL',
+                                type: 'scatter',
+                                hovertemplate: '%{y}'
+                            }
+                            const data = [serie]
+                            layout_fel.datarevision++
+
+
+                            setColVertical( numGraVert === 0 ? '' : 'col-md-9 col-lg-9' )
+                            setIsLoadedTV(numGraVert === 0 ? false : true)
+                            layout_Vertical.datarevision++
+                            setLayoutTV(layout_Vertical)
+
+                            setColVerticalFEL('col-md-3 col-lg-3')
+                            setDataFEL(data)
+                            setIsLoadedFEL(true)
+                            setIsLoadedFEL(true)
+
+                            setLayoutFEL(layout_fel)
+
+                            setRegistroFEL({
+                                id: fel.id,
+                                inicio: fel.inicio_recorte,
+                                fin: fel.fin_recorte,
+                                paso: fel.paso_recorte,
+                                checked_fel: true
+                            })
+                            console.log('Archivo FEL cargado')
+                            
+                        }
+                        else
+                        {
+                            
+                            setColVertical( numGraVert === 0 ? ''  : 'col-md-12 col-lg-12' )
+                            setIsLoadedTV( numGraVert === 0 ? false: true )
+                            
+                            setColVerticalFEL('')
+                            setDataFEL([])
+                            setIsLoadedFEL(false)
+                            setLayoutFEL({})
+                            
+                            message.info('Aún no se ha recortado el área del archivo FEL')
+                        }
+                    }
+                    else
+                    {
+                        setColVerticalFEL('')
+                        setDataFEL([])
+                        setIsLoadedFEL(false)
+                        setLayoutFEL({})
+                    }
+                    //resolve( response.data )
+                }).catch(error => {
+                    //reject (error)
+                    message.error('Ocurrió un error consultando el archivo FEL, intente nuevamente ')
+                    console.log(error)
+                })
+            //})
+        }
+    }
+
     const handleChangeForm = e => {
         const { name, value } = e.target;
         
         if (e.target.name === 'field_id')
         {
-            getWells(e.target.value).then ( res =>{
-                setWell(res) 
-                setRegistro( {
-                    Inicio: null,
-                    Fin: null,
-                    Total: null,
-                    id: null
-                }) 
-                setState(prevState => ({
-                    ...prevState,
-                    wells_id: 0, 
-                    id: 0
-                }));
-                setTemplate([])
-            })
-            .catch(err => console.log(err.response))
-                  
+            if (e.target.value !== '0')
+            {
+                getWells(e.target.value).then ( res =>{
+                    setWell(res) 
+                    setRegistro( {
+                        Inicio: null,
+                        Fin: null,
+                        Total: null,
+                        id: null
+                    }) 
+                    setState(prevState => ({
+                        ...prevState,
+                        wells_id: 0, 
+                        id: 0
+                    }));
+                    setTemplate([])
+                })
+                .catch(err => console.log(err.response))
+            }
+            else
+                Reset()
+            
         }
         if (e.target.name === 'wells_id')
         {
@@ -224,33 +357,42 @@ const TiempoReal = () => {
                 .catch(err => console.log(err.response))
                 
                 getRegistro(e.target.value).then ( res =>{
-                    const [regs] = res
+                    
+                    if (res.length > 0)
+                    {
+                        const [regs] = res
+                        setRegistro( {
+                            Inicio: regs.Inicio,
+                            Fin: regs.Fin,
+                            Total: regs.Total,
+                            id: regs.id
+                        }) 
+                    }
+                    else
+                        setRegistro( {
+                            Inicio: '',
+                            Fin:    '',
+                            Total:  0,
+                            id: 0
+                        })
 
-                    setRegistro( {
-                        Inicio: regs.Inicio,
-                        Fin: regs.Fin,
-                        Total: regs.Total,
-                        id: regs.id
-                    }) 
                     setState(prevState => ({
                         ...prevState,
                         id: 0
                     }));
-                    
                 })
-                .catch(err => console.log(err.response))
+                .catch(err => console.log(err))
             }
             else
-            {
-                setRegistro( {
-                    Inicio: null,
-                    Fin: null,
-                    Total: null,
-                    id: null
-                })
-            }
+                Reset()
+            
         }
 
+        setPrevState({
+            field_id: form.field_id,
+            wells_id: form.wells_id,
+            id: form.id
+        });
         setState(prevState => ({
             ...prevState,
             [name]: value
@@ -276,6 +418,7 @@ const TiempoReal = () => {
     }
 
     const handleClick = () => {
+        
         if (form.id > 0)
         {
             if (intervalId) {
@@ -283,6 +426,7 @@ const TiempoReal = () => {
                 setIntervalId(0)
                 setCount(0)
                 toggle(-1)
+                setDisabled(false)
                 console.log('DETENIDO')
                 return;
             }
@@ -295,6 +439,7 @@ const TiempoReal = () => {
             else
             {
                 console.log('RE INICIA')
+                setDisabled(true)
                 setCount( prev => prev + 1)
                 const newIntervalId = setInterval(() => {
                     toggle(prev => prev + 2)
@@ -308,6 +453,21 @@ const TiempoReal = () => {
         }
     }
 
+    const Reset = () => {
+        setIsLoadedGP(false)
+        setIsLoadedTH(false)
+        setShowGrafica(false)
+        setIsLoadedFEL(false)
+        setCount(0)
+        toggle(0)
+        setRegistro( {
+            Inicio: null,
+            Fin: null,
+            Total: 0,
+            id: 0
+        })
+    }
+
     const getData = () => {
        
         if (isRunning)
@@ -316,164 +476,170 @@ const TiempoReal = () => {
             setIsRunning(false)
            
             axios.get(URL + `datos_wits/wells/${form.wells_id}/${dataRegistro.id}`).then(response => {
-
-                if (response.data.length > 0 )
+                if (response.status === 200)
                 {
-                    let profundidadFinal_temporal = profundidadFinal
-
-                    //Agregar datos en gráfica principal
-                    let newData = [...dataGP]
-                    let curvasPrincipal  = curvasTemplate.filter(c=>c.mostrar === true && c.grupo === null)
-                    curvasPrincipal.map( (c) => {    
-                                    
-                        if (c.mostrar)
-                        {
-                            let index = newData.findIndex((item) => item.name === c.descripcion);      
-                            const datos = response.data.map( f => ({ x: f['DATETIME'], y: f['_'+c.codigo]}) );  
-                            const x = datos.map(d=>d.x)
-                            const y = datos.map(d=>d.y)
-                            
-                            newData[index].x.push(...x)
-                            newData[index].y.push(...y)        
-                            
-                            let prof = Math.max(...newData[index].y) + 500
-                            profundidadFinal_temporal =  (prof > profundidadFinal_temporal) ? prof : profundidadFinal_temporal
-                            
-                        }
-                    })
-
-                    if (procesarAlgoritmo)
+                    if (response.data.length > 0 )
                     {
-                        // Ejecutar algoritmo
-                        let operacion_0  = {x:[], y:[]}, operacion_2  = {x:[], y:[]}, operacion_3  = {x:[], y:[]}, operacion_4  = {x:[], y:[]}, operacion_7  = {x:[], y:[]}, operacion_8 = {x:[], y:[]}, operacion_9 = {x:[], y:[]};
-                        let operacion_35 = {x:[], y:[]}, operacion_36 = {x:[], y:[]}, operacion_37 = {x:[], y:[]}, operacion_38 = {x:[], y:[]}, operacion_39 = {x:[], y:[]};
-                        let operacion_40 = {x:[], y:[]}, operacion_41 = {x:[], y:[]};
+                        let profundidadFinal_temporal = profundidadFinal
 
-                        let algoritmo = {
-                            _0108: 0,
-                            _0110: 0,
-                            _0113: 0,
-                            _0116: 0,
-                            _0118: 0,
-                            _0120: 0,
-                            _0130: 0
-                        }
-                        
-                        let DBTM_0  = 0
-                        let DBTM    = _DBTM
-                    
-                        // Ejecutar y seleccionar la operación
-                        response.data.forEach(wits => {
-                            algoritmo[0] = ( wits.hasOwnProperty('_0108') ? wits['_0108'] : -999.25 )
-                            algoritmo[1] = ( wits.hasOwnProperty('_0110') ? wits['_0110'] : -999.25 )
-                            algoritmo[2] = ( wits.hasOwnProperty('_0113') ? wits['_0113'] : -999.25 )
-                            algoritmo[3] = ( wits.hasOwnProperty('_0116') ? wits['_0116'] : -999.25 )
-                            algoritmo[4] = ( wits.hasOwnProperty('_0118') ? wits['_0118'] : -999.25 )
-                            algoritmo[5] = ( wits.hasOwnProperty('_0120') ? wits['_0120'] : -999.25 )
-                            algoritmo[6] = ( wits.hasOwnProperty('_0130') ? wits['_0130'] : -999.25 )
-                            //AlgoritmoOperaciones(DBTM_0, DMEA, DBTM, RPMA, ROPA, MFIA, TQA, WOBA)
-                            let operacion = AlgoritmoOperaciones(DBTM_0, algoritmo[1], algoritmo[0], algoritmo[5], algoritmo[2], algoritmo[6], algoritmo[4], algoritmo[3]).Operacion;
-                            DBTM = algoritmo[1]
-
-                            switch (operacion)
+                        //Agregar datos en gráfica principal
+                        let newData = [...dataGP]
+                        let curvasPrincipal  = curvasTemplate.filter(c=>c.mostrar === true && c.grupo === null)
+                        curvasPrincipal.forEach( (c) =>  {  
+                                        
+                            if (c.mostrar)
                             {
-                                case 0:  operacion_0.x.push(wits.DATETIME); operacion_0.y.push(DBTM); break;
-                                case 2:  operacion_2.x.push(wits.DATETIME); operacion_2.y.push(DBTM); break;
-                                case 3:  operacion_3.x.push(wits.DATETIME); operacion_3.y.push(DBTM); break;
-                                case 4:  operacion_4.x.push(wits.DATETIME); operacion_4.y.push(DBTM); break;
-                                case 7:  operacion_7.x.push(wits.DATETIME); operacion_7.y.push(DBTM); break;
-                                case 8:  operacion_8.x.push(wits.DATETIME); operacion_8.y.push(DBTM); break;
-                                case 9:  operacion_9.x.push(wits.DATETIME); operacion_9.y.push(DBTM); break;
-                                case 35: operacion_35.x.push(wits.DATETIME); operacion_35.y.push(DBTM); break;
-                                case 36: operacion_36.x.push(wits.DATETIME); operacion_36.y.push(DBTM); break;
-                                case 37: operacion_37.x.push(wits.DATETIME); operacion_37.y.push(DBTM); break;
-                                case 38: operacion_38.x.push(wits.DATETIME); operacion_38.y.push(DBTM); break;
-                                case 39: operacion_39.x.push(wits.DATETIME); operacion_39.y.push(DBTM); break;
-                                case 40: operacion_40.x.push(wits.DATETIME); operacion_40.y.push(DBTM); break;
-                                case 41: operacion_41.x.push(wits.DATETIME); operacion_41.y.push(DBTM); break;
-                                default: break;
+                                let index = newData.findIndex((item) => item.name === c.descripcion);      
+                                const datos = response.data.map( f => ({ x: f['DATETIME'], y: f['_'+c.codigo]}) );  
+                                const x = datos.map(d=>d.x)
+                                const y = datos.map(d=>d.y)
+                                
+                                newData[index].x.push(...x)
+                                newData[index].y.push(...y)        
+                                
+                                let prof = Math.max(...newData[index].y) + 500
+                                profundidadFinal_temporal =  (prof > profundidadFinal_temporal) ? prof : profundidadFinal_temporal
+                                
+                            }
+                        })
+
+                        if (procesarAlgoritmo)
+                        {
+                            // Ejecutar algoritmo
+                            let operacion_0  = {x:[], y:[]}, operacion_2  = {x:[], y:[]}, operacion_3  = {x:[], y:[]}, operacion_4  = {x:[], y:[]}, operacion_7  = {x:[], y:[]}, operacion_8 = {x:[], y:[]}, operacion_9 = {x:[], y:[]};
+                            let operacion_35 = {x:[], y:[]}, operacion_36 = {x:[], y:[]}, operacion_37 = {x:[], y:[]}, operacion_38 = {x:[], y:[]}, operacion_39 = {x:[], y:[]};
+                            let operacion_40 = {x:[], y:[]}, operacion_41 = {x:[], y:[]};
+
+                            let algoritmo = {
+                                _0108: 0,
+                                _0110: 0,
+                                _0113: 0,
+                                _0116: 0,
+                                _0118: 0,
+                                _0120: 0,
+                                _0130: 0
                             }
                             
-                            DBTM_0 = DBTM;
-                        });
-
-                        setDBTM( DBTM )
-                    
-                        newData.push( { x: operacion_0.x,  y: operacion_0.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_0.nombre , marker : {color: hexRgb(dataConvencion.Op_0.color,  {format: 'css'}) , symbol: '100' }} );
-                        newData.push( { x: operacion_2.x,  y: operacion_2.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_2.nombre , marker : {color: hexRgb(dataConvencion.Op_2.color,  {format: 'css'}) , symbol: '100' }} );
-                        newData.push( { x: operacion_3.x,  y: operacion_3.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_3.nombre , marker : {color: hexRgb(dataConvencion.Op_3.color,  {format: 'css'}) , symbol: '100' }} );
-                        newData.push( { x: operacion_4.x,  y: operacion_4.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_4.nombre , marker : {color: hexRgb(dataConvencion.Op_4.color,  {format: 'css'}) , symbol: '100' }} );
-                        newData.push( { x: operacion_7.x,  y: operacion_7.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_7.nombre , marker : {color: hexRgb(dataConvencion.Op_7.color,  {format: 'css'}) , symbol: '100' }} );
-                        newData.push( { x: operacion_8.x,  y: operacion_8.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_8.nombre , marker : {color: hexRgb(dataConvencion.Op_8.color,  {format: 'css'}) , symbol: '100' }} );
-                        newData.push( { x: operacion_9.x,  y: operacion_9.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_9.nombre , marker : {color: hexRgb(dataConvencion.Op_9.color,  {format: 'css'}) , symbol: '100' }} );
-                        newData.push( { x: operacion_35.x, y: operacion_35.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_35.nombre, marker : {color: hexRgb(dataConvencion.Op_35.color, {format: 'css'}) , symbol: '100' }} );
-                        newData.push( { x: operacion_36.x, y: operacion_36.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_36.nombre, marker : {color: hexRgb(dataConvencion.Op_36.color, {format: 'css'}) , symbol: '100' }} );
-                        newData.push( { x: operacion_37.x, y: operacion_37.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_37.nombre, marker : {color: hexRgb(dataConvencion.Op_37.color, {format: 'css'}) , symbol: '100' }} );
-                        newData.push( { x: operacion_38.x, y: operacion_38.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_38.nombre, marker : {color: hexRgb(dataConvencion.Op_38.color, {format: 'css'}) , symbol: '100' }} );
-                        newData.push( { x: operacion_39.x, y: operacion_39.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_39.nombre, marker : {color: hexRgb(dataConvencion.Op_39.color, {format: 'css'}) , symbol: '100' }} );
-                        newData.push( { x: operacion_40.x, y: operacion_40.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_40.nombre, marker : {color: hexRgb(dataConvencion.Op_40.color, {format: 'css'}) , symbol: '100' }} );
-                        newData.push( { x: operacion_41.x, y: operacion_41.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_41.nombre, marker : {color: hexRgb(dataConvencion.Op_41.color, {format: 'css'}) , symbol: '100' }} );
+                            let DBTM_0  = 0
+                            let DBTM    = _DBTM
                         
-                    }
+                            // Ejecutar y seleccionar la operación
+                            response.data.forEach(wits => {
+                                algoritmo[0] = ( wits.hasOwnProperty('_0108') ? wits['_0108'] : -999.25 )
+                                algoritmo[1] = ( wits.hasOwnProperty('_0110') ? wits['_0110'] : -999.25 )
+                                algoritmo[2] = ( wits.hasOwnProperty('_0113') ? wits['_0113'] : -999.25 )
+                                algoritmo[3] = ( wits.hasOwnProperty('_0116') ? wits['_0116'] : -999.25 )
+                                algoritmo[4] = ( wits.hasOwnProperty('_0118') ? wits['_0118'] : -999.25 )
+                                algoritmo[5] = ( wits.hasOwnProperty('_0120') ? wits['_0120'] : -999.25 )
+                                algoritmo[6] = ( wits.hasOwnProperty('_0130') ? wits['_0130'] : -999.25 )
+                                //AlgoritmoOperaciones(DBTM_0, DMEA, DBTM, RPMA, ROPA, MFIA, TQA, WOBA)
+                                let operacion = AlgoritmoOperaciones(DBTM_0, algoritmo[1], algoritmo[0], algoritmo[5], algoritmo[2], algoritmo[6], algoritmo[4], algoritmo[3]).Operacion;
+                                DBTM = algoritmo[1]
 
-                    setDataGP( newData )
-                    let layout_Principal = {...layoutGP}
-                    layout_Principal.datarevision++
-                    layout_Principal.yaxis.range = [profundidadFinal_temporal, -20]
-                    setLayoutGP( layout_Principal )
-                    setProfundidad ( profundidadFinal_temporal )
+                                switch (operacion)
+                                {
+                                    case 0:  operacion_0.x.push(wits.DATETIME); operacion_0.y.push(DBTM); break;
+                                    case 2:  operacion_2.x.push(wits.DATETIME); operacion_2.y.push(DBTM); break;
+                                    case 3:  operacion_3.x.push(wits.DATETIME); operacion_3.y.push(DBTM); break;
+                                    case 4:  operacion_4.x.push(wits.DATETIME); operacion_4.y.push(DBTM); break;
+                                    case 7:  operacion_7.x.push(wits.DATETIME); operacion_7.y.push(DBTM); break;
+                                    case 8:  operacion_8.x.push(wits.DATETIME); operacion_8.y.push(DBTM); break;
+                                    case 9:  operacion_9.x.push(wits.DATETIME); operacion_9.y.push(DBTM); break;
+                                    case 35: operacion_35.x.push(wits.DATETIME); operacion_35.y.push(DBTM); break;
+                                    case 36: operacion_36.x.push(wits.DATETIME); operacion_36.y.push(DBTM); break;
+                                    case 37: operacion_37.x.push(wits.DATETIME); operacion_37.y.push(DBTM); break;
+                                    case 38: operacion_38.x.push(wits.DATETIME); operacion_38.y.push(DBTM); break;
+                                    case 39: operacion_39.x.push(wits.DATETIME); operacion_39.y.push(DBTM); break;
+                                    case 40: operacion_40.x.push(wits.DATETIME); operacion_40.y.push(DBTM); break;
+                                    case 41: operacion_41.x.push(wits.DATETIME); operacion_41.y.push(DBTM); break;
+                                    default: break;
+                                }
+                                
+                                DBTM_0 = DBTM;
+                            });
 
-                    //Agregar datos en track horizontales
-                    let newData_TH = [...dataTH]
-                    let layout_Horizontal = {...layoutTH}
-                                        
-                    let nro_y = 1
-                    let yaxis = ''
-                    let curvasHorizontales = curvasTemplate.filter(c=>c.mostrar === true && c.grupo !== null).sort(c=>c.grupo)
-                    curvasHorizontales.map(c => {
+                            setDBTM( DBTM )
                         
-                        if (c.mostrar)
-                        {
-                            let index = newData_TH.findIndex((item) => item.name === c.descripcion); 
-                            const datos = response.data.map( f => ({ x: f['DATETIME'], y: f['_'+c.codigo]}) );  
-                            const x = datos.map(d=>d.x)
-                            const y = datos.map(d=>d.y)
-                           
-                            newData_TH[index].x.push(...x)
-                            newData_TH[index].y.push(...y)
+                            newData.push( { x: operacion_0.x,  y: operacion_0.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_0.nombre , marker : {color: hexRgb(dataConvencion.Op_0.color,  {format: 'css'}) , symbol: '100' }} );
+                            newData.push( { x: operacion_2.x,  y: operacion_2.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_2.nombre , marker : {color: hexRgb(dataConvencion.Op_2.color,  {format: 'css'}) , symbol: '100' }} );
+                            newData.push( { x: operacion_3.x,  y: operacion_3.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_3.nombre , marker : {color: hexRgb(dataConvencion.Op_3.color,  {format: 'css'}) , symbol: '100' }} );
+                            newData.push( { x: operacion_4.x,  y: operacion_4.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_4.nombre , marker : {color: hexRgb(dataConvencion.Op_4.color,  {format: 'css'}) , symbol: '100' }} );
+                            newData.push( { x: operacion_7.x,  y: operacion_7.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_7.nombre , marker : {color: hexRgb(dataConvencion.Op_7.color,  {format: 'css'}) , symbol: '100' }} );
+                            newData.push( { x: operacion_8.x,  y: operacion_8.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_8.nombre , marker : {color: hexRgb(dataConvencion.Op_8.color,  {format: 'css'}) , symbol: '100' }} );
+                            newData.push( { x: operacion_9.x,  y: operacion_9.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_9.nombre , marker : {color: hexRgb(dataConvencion.Op_9.color,  {format: 'css'}) , symbol: '100' }} );
+                            newData.push( { x: operacion_35.x, y: operacion_35.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_35.nombre, marker : {color: hexRgb(dataConvencion.Op_35.color, {format: 'css'}) , symbol: '100' }} );
+                            newData.push( { x: operacion_36.x, y: operacion_36.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_36.nombre, marker : {color: hexRgb(dataConvencion.Op_36.color, {format: 'css'}) , symbol: '100' }} );
+                            newData.push( { x: operacion_37.x, y: operacion_37.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_37.nombre, marker : {color: hexRgb(dataConvencion.Op_37.color, {format: 'css'}) , symbol: '100' }} );
+                            newData.push( { x: operacion_38.x, y: operacion_38.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_38.nombre, marker : {color: hexRgb(dataConvencion.Op_38.color, {format: 'css'}) , symbol: '100' }} );
+                            newData.push( { x: operacion_39.x, y: operacion_39.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_39.nombre, marker : {color: hexRgb(dataConvencion.Op_39.color, {format: 'css'}) , symbol: '100' }} );
+                            newData.push( { x: operacion_40.x, y: operacion_40.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_40.nombre, marker : {color: hexRgb(dataConvencion.Op_40.color, {format: 'css'}) , symbol: '100' }} );
+                            newData.push( { x: operacion_41.x, y: operacion_41.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_41.nombre, marker : {color: hexRgb(dataConvencion.Op_41.color, {format: 'css'}) , symbol: '100' }} );
                             
-                            yaxis = 'yaxis' + (nro_y === 1 ? '' : nro_y)
-                            layout_Horizontal[yaxis].range = [y[0] , y[y.length - 1]]                         
-
-                            nro_y++
                         }
-                    
-                    })
-                    layout_Horizontal.xaxis.range = layout_Principal.xaxis.range
-                     
-                    layout_Horizontal.datarevision++
-                    setDataTH( newData_TH )
-                    setLayoutTH( layout_Horizontal )
+
+                        setDataGP( newData )
+                        let layout_Principal = {...layoutGP}
+                        layout_Principal.datarevision++
+                        layout_Principal.yaxis.range = [profundidadFinal_temporal, -20]
+                        setLayoutGP( layout_Principal )
+                        setProfundidad ( profundidadFinal_temporal )
+
+                        //Agregar datos en track horizontales
+                        let newData_TH = [...dataTH]
+                        let layout_Horizontal = {...layoutTH}
+                                            
+                        let nro_y = 1
+                        let yaxis = ''
+                        let curvasHorizontales = curvasTemplate.filter(c=>c.mostrar === true && c.grupo !== null).sort(c=>c.grupo)
+                        curvasHorizontales.forEach(c => {
+                            
+                            if (c.mostrar)
+                            {
+                                let index = newData_TH.findIndex((item) => item.name === c.descripcion); 
+                                const datos = response.data.map( f => ({ x: f['DATETIME'], y: f['_'+c.codigo]}) );  
+                                const x = datos.map(d=>d.x)
+                                const y = datos.map(d=>d.y)
+                            
+                                newData_TH[index].x.push(...x)
+                                newData_TH[index].y.push(...y)
+                                
+                                yaxis = 'yaxis' + (nro_y === 1 ? '' : nro_y)
+                                layout_Horizontal[yaxis].range = [y[0] , y[y.length - 1]]                         
+
+                                nro_y++
+                            }
+                        
+                        })
+                        layout_Horizontal.xaxis.range = layout_Principal.xaxis.range
+                        
+                        layout_Horizontal.datarevision++
+                        setDataTH( newData_TH )
+                        setLayoutTH( layout_Horizontal )
 
 
-                    //Actualizar fecha, profundidad, registro
-                    const ultimo  = response.data[response.data.length - 1]
-                    let fecha = ultimo['DATETIME'].split(' ');
-                    let fechaTiempo = fecha[0].split('-');
-                    fechaTiempo = fechaTiempo[2] +'/' + fechaTiempo[1] +'/' + fechaTiempo[0] +'/ ' + fecha[1]
-                    
-                    const registro = {...dataRegistro}
-                    const total = Number(registro.Total) + response.data.length 
-                    setRegistro({ 
-                        Inicio: registro.Inicio,
-                        Fin:    fechaTiempo,
-                        Total:  total,
-                        id:     ultimo['id']
-                    })
+                        //Actualizar fecha, profundidad, registro
+                        const ultimo  = response.data[response.data.length - 1]
+                        let fecha = ultimo['DATETIME'].split(' ');
+                        let fechaTiempo = fecha[0].split('-');
+                        fechaTiempo = fechaTiempo[2] +'/' + fechaTiempo[1] +'/' + fechaTiempo[0] +'/ ' + fecha[1]
+                        
+                        const registro = {...dataRegistro}
+                        const total = Number(registro.Total) + response.data.length 
+                        setRegistro({ 
+                            Inicio: registro.Inicio,
+                            Fin:    fechaTiempo,
+                            Total:  total,
+                            id:     ultimo['id']
+                        })
+                    }
+                    else
+                        message.info("No hay más datos provenientes de telemetría")
                 }
                 else
-                    message.info("No hay más datos provenientes de telemetría")
-
+                {
+                    message.error("Ocurrió un error consultando los datos wits del pozo. Detener e Iniciar nuevamente.")
+                    console.log(response.data);
+                }
                 toggle(prev => prev + 1)
 
             }).catch(errors => {
@@ -586,129 +752,412 @@ const TiempoReal = () => {
         }, intervalo );
         setIntervalId(newIntervalId);
     }
- 
+
+    const GetDetalle = (codigo) => {
+        const curva = dataWitsDetalle.filter( f => f.codigo === codigo)
+        return curva
+    }
+    const getArchivos = (id) => {
+        return new Promise((resolve, reject) =>  {
+
+            setDataLAS([])
+
+            axios.get(URL + 'archivo_encabezado/well/' + id).then(response => {
+                const data   = response.data;
+                const archivos_caving = data.filter(tipo => tipo.tipo_archivo_id === 2)
+                const archivos_las    = data.filter(tipo => tipo.tipo_archivo_id === 3)
+
+                //Para cada archivo
+                // Para cada curva homologada
+                // Crear el check 
+                let dataArchivos = []
+                archivos_las.forEach( row => {
+                    //row.homologacion = JSON.parse(row.homologacion)
+                    row.homologacion.forEach( h => {
+                        const [curva] = GetDetalle(h.codigo)
+                        h.descripcion = curva.descripcion
+                        h.short_mnemonico = curva.short_mnemonico
+                    })
+   
+                    dataArchivos.push( { id: row.id, datos: row.datos } );
+                    
+                })
+                console.log('Archivos LAS cargados')
+                setDataArchivosCurvas( dataArchivos )
+                setDataLAS( archivos_las );
+                
+                resolve({ dataLas: archivos_las, dataArchivos: dataArchivos})
+            }).catch(error => {
+                console.log(error.message);
+                reject(error)
+            })
+        }) 
+    }
+    
+    const MaxTrackVertical = (P1Y1, P2Y1) => {
+        let P1X1 = 0;
+        let P2X1 = 51.7;
+    
+        let punto = 99.5;
+    
+        let pendiente = (P2Y1 - P1Y1) / (P2X1 - P1X1);
+        let corte = P1Y1 - pendiente * P1X1;
+    
+        let newMax = pendiente * punto + corte;
+        return newMax;
+    };
+   
     const getInit = () => {
      
-            setCount(prevCount => prevCount + 1)
-            setUltimaConsulta(now())
-           
-            const requestTemplatesWells         = axios.get(URL + "templates_wells/" + form.id);
-            const requestTemplatesWellTipoCurva = axios.get(URL + "templates_wells_wits_detalle_secciones/template_well/" + form.id);
+        setCount(prevCount => prevCount + 1)
+        setUltimaConsulta(now())
+        setDisabled(true)
+        const requestTemplatesWells         = axios.get(URL + "templates_wells/" + form.id);
+        const requestTemplatesWellTipoCurva = axios.get(URL + "templates_wells_wits_detalle_secciones/template_well/" + form.id);
 
-            //Obtener template y sus curvas
-            axios.all([requestTemplatesWells, requestTemplatesWellTipoCurva]).then(axios.spread((...response) => {
-                const [template] = response[0].data;
-                const curvas     = response[1].data;
-                setCurvas(curvas)
-                axios.get(URL + `datos_wits/wells/${template.wells_id}/0`).then(response => {
 
-                    //setDataWits(response.data)
-                    sessionStorage.setItem('datosWits',    JSON.stringify(response.data) )
-                    
-                    let profundidadFinal_temporal = 1000
-                    let data = []
-                    let curvasPrincipal  = curvas.filter(c=>c.mostrar === true && c.grupo === null)
-                    curvasPrincipal.map( (c) => {                      
-                        if (c.mostrar)
+        //Obtener template y sus curvas
+        axios.all([requestTemplatesWells, requestTemplatesWellTipoCurva]).then(axios.spread((...response) => {
+            const [template] = response[0].data;
+            const curvas     = response[1].data;
+            setCurvas(curvas)
+
+
+            getArchivos(template.wells_id).then( result => {
+                    let datoslas = result.dataLas
+                    let dataArchivosCurvas = result.dataArchivos
+
+                    axios.get(URL + `datos_wits/wells/${template.wells_id}/0`).then(response => {
+                        if (response.status === 200)
                         {
-                            const datos = response.data.map( f => ({ x: f['DATETIME'], y: f['_'+c.codigo]}) );  
-                            const x = datos.map(d=>d.x);
-                            const y = datos.map(d=>d.y);
-                            const serie = {
-                                x: x,
-                                y: y,
-                                name: c.descripcion,
-                                type: 'scatter',
-                                text: '[' + c.codigo + '] ' + c.short_mnemonico + ' - ' + c.descripcion
-                            }
-                            data.push(serie)
-        
-                            let prof = Math.max(...y) + 500
-                            profundidadFinal_temporal =  (prof > profundidadFinal_temporal) ? prof : profundidadFinal_temporal                                                    
-                        }
-                    })
-                  
-
-                    // Guardar el estado                   
-                    setDataGP( data )
-                    let layout_Principal = {...layoutGP}
-                    layout_Principal.datarevision++
-                    layout_Principal.yaxis.range = [profundidadFinal_temporal, -20]
-                    setLayoutGP( layout_Principal )
-                    setProfundidad( profundidadFinal_temporal )
-
-                    let layout_Horizontal = {...layoutTH}
-                    layout_Horizontal.grid.subplots = []
-                    let data_TracksHorizontal = []
-                    let i = 1
-                    let j = 0
-                    let grupo_anterior = 0  
-                    let curvasHorizontales = curvas.filter(c=>c.mostrar === true && c.grupo !== null).sort(c=>c.grupo)
-                    curvasHorizontales.map(c => {
                         
-                        if (c.mostrar)
-                        {
-                            const datos = response.data.map( f => ({ x: f['DATETIME'], y: f['_'+c.codigo]}) );  
-                            const x = datos.map(d=>d.x);
-                            const y = datos.map(d=>d.y);
-                            let traza = {
-                                name : c.descripcion,
-                                x: x,
-                                y: y,
-                                xaxis: 'x',
-                                yaxis: 'y' + ((i > 1) ? String(i) : ''),
-                                text: '[' + c.codigo + '] ' + c.short_mnemonico + ' - ' + c.descripcion
-                            }
+                            sessionStorage.setItem('datosWits',    JSON.stringify(response.data) )
+                            let layout_Principal = {...layoutGP}
+                            let profundidadFinal_temporal = 1000
+                            let data = []
+                            let curvasPrincipal  = curvas.filter(c=>c.mostrar === true && c.grupo === null)
+                            curvasPrincipal.forEach( (c) => {                      
+                                if (c.mostrar)
+                                {
+                                    const datos = response.data.map( f => ({ x: f['DATETIME'], y: f['_'+c.codigo]}) );  
+                                    const x = datos.map(d=>d.x);
+                                    const y = datos.map(d=>d.y);
+                                    const serie = {
+                                        x: x,
+                                        y: y,
+                                        name: c.descripcion,
+                                        type: 'scatter',
+                                        text: '[' + c.codigo + '] ' + c.short_mnemonico + ' - ' + c.descripcion
+                                    }
+                                    data.push(serie)
+                
+                                    let prof = Math.max(...y) + 500
+                                    profundidadFinal_temporal =  (prof > profundidadFinal_temporal) ? prof : profundidadFinal_temporal                                                    
+                                }
+                            })
+                                                
+                        
+                            let layout_Horizontal = {...layoutTH}
+                            layout_Horizontal.grid.subplots = []
+                            let data_TracksHorizontal = []
+                            let i = 1
+                            let j = 0
+                            let grupo_anterior = 0  
+                            let curvasHorizontales = curvas.filter(c=>c.mostrar === true && c.grupo !== null).sort(c=>c.grupo)
+                            curvasHorizontales.map(c => {
+                                
+                                if (c.mostrar)
+                                {
+                                    const datos = response.data.map( f => ({ x: f['DATETIME'], y: f['_'+c.codigo]}) );  
+                                    const x = datos.map(d=>d.x);
+                                    const y = datos.map(d=>d.y);
+                                    let traza = {
+                                        name : c.descripcion,
+                                        x: x,
+                                        y: y,
+                                        xaxis: 'x',
+                                        yaxis: 'y' + ((i > 1) ? String(i) : ''),
+                                        text: '[' + c.codigo + '] ' + c.short_mnemonico + ' - ' + c.descripcion
+                                    }
 
-                            let propertyAxi = "yaxis" + ((i > 1) ? String(i) : '')
-                            if (c.grupo == grupo_anterior)
-                                layout_Horizontal[propertyAxi] = { title: c.short_mnemonico, titlefont: { size: 10, color: '#3c5cf9', }, tickfont: { size: 8.0 }, overlaying: 'y' + ((i > 1) ? String(i - 1) : ''), side: 'right', gridcolor: '#eee' }
+                                    let propertyAxi = "yaxis" + ((i > 1) ? String(i) : '')
+                                    if (c.grupo == grupo_anterior)
+                                        layout_Horizontal[propertyAxi] = { title: c.short_mnemonico, titlefont: { size: 10, color: '#3c5cf9', }, tickfont: { size: 8.0 }, overlaying: 'y' + ((i > 1) ? String(i - 1) : ''), side: 'right', gridcolor: '#eee' }
+                                    else
+                                    {
+                                        layout_Horizontal[propertyAxi] = { title: c.short_mnemonico, titlefont: { size: 10, color: '#3c5cf9', }, tickfont: { size: 8.0 }, gridcolor: '#eee' }
+                                    
+                                        let subplot = ['xy' + ((i > 1) ? String(i) : '') ]
+                                        layout_Horizontal.grid.subplots.push(subplot);
+                                        j++;
+                                    }
+                                    i++
+                                    grupo_anterior = c.grupo
+                                    data_TracksHorizontal.push(traza);
+                                }
+                            
+                            })
+                            layout_Horizontal.grid.rows = j 
+                            layout_Horizontal.datarevision++
+                            
+
+                            //Para DBTM o DMEA de un LAS en tiempo Homologado                       
+                            profundidadFinal_temporal = layout_Principal.yaxis.range ? layout_Principal.yaxis.range[0] : 1000
+                            
+                            datoslas.forEach ( ar => {
+                                
+                                if (ar.es_tiempo === true)
+                                {
+                                    ar.homologacion.forEach( hm => {
+                                        if (hm.mostrar)
+                                        {
+                                                
+                                            const [curvas] = dataArchivosCurvas.filter( c => c.id === ar.id ).map( d => ({ datos: d.datos }))
+                                            const datos    = curvas.datos.map( f => ({ x: f['DATETIME'], y: f['_'+hm.codigo]}) )
+                                            if (datos.length > 0)
+                                            {
+                                                const x = datos.map(d=>d.x);
+                                                const y = datos.map(d=>d.y);
+                                                
+                                                //Si son DBTM o DMEA, van para gráfica principal
+                                                if (hm.codigo === '0108' || hm.codigo === '0110' )
+                                                {
+                                                    const serie = {
+                                                        x: x,
+                                                        y: y,
+                                                        name: ar.id + '_' + hm.descripcion,
+                                                        type: 'scatter',
+                                                        text: '[' + hm.codigo + '] ' + hm.short_mnemonico + ' - ' + hm.descripcion
+                                                    }
+                                                    data.push(serie)
+
+                                                    let prof = Math.max(...y) + 500
+                                                    profundidadFinal_temporal =  (prof > profundidadFinal_temporal) ? prof : profundidadFinal_temporal
+                                                    layout_Principal.yaxis.range = [profundidadFinal_temporal, -20]
+                                                }
+                                                else
+                                                {
+                                                    let traza = {
+                                                        name : ar.id+'_'+hm.short_mnemonico,
+                                                        x: x,
+                                                        y: y,
+                                                        xaxis: 'x',
+                                                        yaxis: 'y' + ((i > 1) ? String(i) : ''),
+                                                        text: '[' + hm.codigo + '] ' + hm.short_mnemonico + ' - ' + hm.descripcion
+                                                    }
+                                    
+                                                    let propertyAxi = "yaxis" + ((i > 1) ? String(i) : '')
+                                                    //if (0 == grupo_anterior)
+                                                    //    layout_Horizontal[propertyAxi] = { title: ar.id+'_'+hm.short_mnemonico, titlefont: { size: 10, color: '#3c5cf9', }, tickfont: { size: 8.0 }, overlaying: 'y' + ((i > 1) ? String(i - 1) : ''), side: 'right', gridcolor: '#eee' }
+                                                    //else
+                                                    //{
+                                                        layout_Horizontal[propertyAxi] = { title: ar.id+'_'+hm.short_mnemonico, titlefont: { size: 10, color: '#3c5cf9', }, tickfont: { size: 8.0 }, gridcolor: '#eee' }
+                                                    
+                                                        let subplot = ['xy' + ((i > 1) ? String(i) : '') ]
+                                                        layout_Horizontal.grid.subplots.push(subplot);
+                                                        j++;
+                                                    //}
+                                                    i++
+                                                    //grupo_anterior = 0
+                                                    data_TracksHorizontal.push(traza);
+                                                }
+                                            }
+                                            
+                                        }
+                                        else
+                                        {
+                                            //Remover curva si es de un LAS DBTM o DMEA
+                                            if (hm.codigo === '0108' || hm.codigo === '0110' )
+                                            {
+                                                let index = data.findIndex((item) => item.name ===  ar.id + '_' + hm.descripcion);
+                                                if (index >= 0)
+                                                {
+                                                    data.splice(index, 1)
+                                                }
+                                            }
+                                        }
+                                    })
+                                }
+                            })
+
+                            layout_Horizontal.grid.rows = j 
+                            
+                            setDataTH( data_TracksHorizontal )
+                            setLayoutTH( layout_Horizontal )
+                            setIsLoadedTH ( data_TracksHorizontal.length > 0 ? true : false )
+
+                            setDataGP( data )
+                            layout_Principal.datarevision++
+                            layout_Principal.yaxis.range = [profundidadFinal_temporal, -20]
+
+                            setLayoutGP( layout_Principal )
+                            setProfundidad( profundidadFinal_temporal )
+                            console.log('SetSerieTrackHorizontal')
+                            //
+
+                            // Track Vertical
+                            let newMax = MaxTrackVertical(-20, profundidadFinal)
+                            let layout_Vertical = {...layoutTV}
+                    
+                            let subplots = [];
+                            layout_Vertical.grid.subplots = []
+                            layout_Vertical.yaxis.range = [newMax, -20]
+                            let datosGraficasVerticales = []
+                            
+                            i = 1
+                        
+                            datoslas.forEach ( ar => {
+                                if (ar.es_tiempo === false)
+                                {
+                                    ar.homologacion.forEach( hm => {
+                                        if (hm.mostrar)
+                                        {
+                                            const [curvas] = dataArchivosCurvas.filter( c => c.id === ar.id ).map( d => ({ datos: d.datos }))
+                                            const datos  = curvas.datos.filter(x => x['_'+hm.codigo] !== "-999.25").map( f => ({ y: f['DEPTH'], x: f['_'+hm.codigo]}) )
+                                            const x = datos.map(d=>d.x);
+                                            const y = datos.map(d=>d.y);
+                                            
+                                            let traza = {
+                                                name : ar.id+'_'+hm.short_mnemonico,
+                                                x: x,
+                                                y: y,
+                                                yaxis: 'y',
+                                                xaxis: 'x' + (i > 1 ? String(i) : ''),
+                                                text: '[' + hm.codigo + '] ' + hm.short_mnemonico + ' - ' + hm.descripcion
+                                            }
+                            
+                                            let propertyAxi = 'xaxis' + (i > 1 ? String(i) : '');
+                                            layout_Vertical[propertyAxi] = {
+                                                title: ar.id+'_'+hm.short_mnemonico,
+                                                
+                                                titlefont: { size: 10, color: 'red' },
+                                                tickfont:  { size: 8.0 },
+                                                fixedrange: false,
+                                                showspikes: true,
+                                                side: 'top',
+                                                showticklabels: true,
+                                                textposition: 'top center',
+                                            };
+                                            let subplot = 'x' + (i > 1 ? String(i) : '') + 'y';
+                                            subplots.push(subplot);
+                                                    
+                                            i++;
+                        
+                                            datosGraficasVerticales.push(traza);
+                                        }
+                                    })
+                                    layout_Vertical.grid.columns = subplots.length
+                                    layout_Vertical.grid.subplots.push(subplots);
+                                }
+                            })
+                    
+                            layout_Vertical.datarevision++
+                            setDataTV(datosGraficasVerticales)
+                            //setLayoutTV(layout_Vertical)
+                        
+                            getFEL(template.wells_id, layout_Vertical, datosGraficasVerticales.length)
+
+                            console.log('SetSerieTrackVertical')
+                            //
+
+                            const ultimo  = response.data[response.data.length - 1]
+                            const registro  = {...dataRegistro}
+                                            
+                            setRegistro({
+                                Inicio: registro.Inicio,
+                                Fin:    registro.Fin,
+                                Total:  registro.Total,
+                                id:     ultimo !== undefined ? ultimo['id'] : 0
+                            })
+
+                            setIsLoadedGP(true)
+                            setIsLoadedTH(true)
+                            setShowGrafica(true)
+                            handleClose(false)
+
+                            if (data.length > 0)
+                                setToggleAlgoritmo(true)
                             else
                             {
-                                layout_Horizontal[propertyAxi] = { title: c.short_mnemonico, titlefont: { size: 10, color: '#3c5cf9', }, tickfont: { size: 8.0 }, gridcolor: '#eee' }
-                            
-                                let subplot = ['xy' + ((i > 1) ? String(i) : '') ]
-                                layout_Horizontal.grid.subplots.push(subplot);
-                                j++;
+                                ContinuarData()
                             }
-                            i++
-                            grupo_anterior = c.grupo
-                            data_TracksHorizontal.push(traza);
+                            
+                            message.success('Cargue inicial de datos finalizado')
                         }
-                    
+                        else
+                        {
+                            message.error("Ocurrió un error consultando los datos wits del pozo. Detener e Iniciar nuevamente.")
+                            console.log( response.data );
+                        }
+                    }).catch(errors => {
+                        message.error("Ocurrió un error consultando los datos wits del pozo. Detener e Iniciar nuevamente.")
+                        console.log(errors.message);
+                        setDisabled(false)
                     })
-                    layout_Horizontal.grid.rows = j 
-                    layout_Horizontal.datarevision++
-                    setDataTH(data_TracksHorizontal)
-                    setLayoutTH( layout_Horizontal )
+                
+            }).catch(err => {
+                message.error('Ocurrió un error consultando los archivos LAS, recargue la página por favor')
+                console.log(err)
+            })
 
-                    const ultimo  = response.data[response.data.length - 1]
-                    const registro  = {...dataRegistro}
-                                   
-                    setRegistro({
-                        Inicio: registro.Inicio,
-                        Fin:    registro.Fin,
-                        Total:  registro.Total,
-                        id: ultimo['id']
-                    })
+            
 
-                    setIsLoadedGP(true)
-                    setIsLoadedTH(true)
-                    setShowGrafica(true)
-                   
-                    setToggleAlgoritmo(true)
-                    
-                    message.success('Cargue inicial de datos finalizado')
-                }).catch(errors => {
-                    message.error("Ocurrió un error consultando los datos wits del pozo. Detener e Iniciar nuevamente.")
-                    console.log(errors.message);
-                })
 
-            })).catch(error => {
-                message.error("Ocurrió un error consultando el template del pozo. Detener e Iniciar nuevamente.")
-                console.log(error.message);
-            })     
+        })).catch(error => {
+            message.error("Ocurrió un error consultando el template del pozo. Detener e Iniciar nuevamente.")
+            console.log(error.message);
+            setDisabled(false)
+        })     
     } 
+
+    const PlotOnHover = (e) => {
+                 
+        var points = e.points[0], pointNum = points.pointNumber;
+        if (isLoadedHorizontal)
+        {   
+           
+            let nt_h = dataTH.length;           
+            let curves_h = []
+            let coords_h = []
+
+            for(let i=0; i<nt_h; i++) {
+                curves_h.push({curveNumber: i, pointNumber: pointNum}) 
+                coords_h.push('xy' + ((i>0)? String(i+1) : ''))            
+            }
+            Plotly.Fx.hover('plotTracksHorizontal', curves_h, coords_h);
+        }
+
+        if (isLoadedVertical)
+        {
+            let nt_v = dataTV.length;
+            let coords_v = []
+            let curves_v = []
+            for(let i=0; i<nt_v; i++) {
+                curves_v.push({curveNumber: i, yval: e.yvals[0]})
+                coords_v.push('x' + ((i>0)? String(i+1) : '') + 'y')
+            }
+            Plotly.Fx.hover('plotTracksVertical', curves_v, coords_v);
+        } console.log('3ntra fel hover ' + isLoadedFEL)
+        if (isLoadedFEL)
+        {   
+            let nt_f = dataFEL.length;
+            let coords_f = []
+            let curves_f = []
+            for(let i=0; i<nt_f; i++) {
+                curves_f.push({curveNumber: i, yval: e.yvals[0]})
+                coords_f.push('x' + ((i>0)? String(i+1) : '') + 'y')
+            }
+            Plotly.Fx.hover('plotFel', curves_f, coords_f);
+        }
+    }
+    const PlotOnUnHover = () => {
+        if (isLoadedHorizontal)
+            Plotly.Fx.unhover('plotTracksHorizontal')
+        if (isLoadedVertical)
+            Plotly.Fx.unhover('plotTracksVertical')
+        if (isLoadedFEL )
+            Plotly.Fx.unhover('plotFel')
+    }
   
     useEffect(() => {
 
@@ -724,49 +1173,13 @@ const TiempoReal = () => {
     },[isToggled]);
 
     useEffect(() => {
-        setUserStorage(JSON.parse(sessionStorage.getItem('user')));
+        setUserStorage(JSON.parse(sessionStorage.getItem('user')))
+        setDataConvencion(JSON.parse(sessionStorage.getItem('dataConvencion')))
+        setDataWitsDetalle(JSON.parse(sessionStorage.getItem('dataWitsDetalle')))
 
+        
         axios.get(URL + 'fields').then(response => {
             setField(  response.data );
-        }).catch(error => {
-            console.log(error.message);
-        })
-
-        axios.get(URL + 'convencion_datos_operacion').then(response => {
-            
-            
-             // Agregar las curvas a la gráfica
-            let [Op_0]  = response.data.filter( c => c.id === 0  ).map( p => ({ nombre: p.nombre, color: p.color }) );
-            let [Op_2]  = response.data.filter( c => c.id === 2  ).map( p => ({ nombre: p.nombre, color: p.color }) );
-            let [Op_3]  = response.data.filter( c => c.id === 3  ).map( p => ({ nombre: p.nombre, color: p.color }) );
-            let [Op_4]  = response.data.filter( c => c.id === 4  ).map( p => ({ nombre: p.nombre, color: p.color }) );
-            let [Op_7]  = response.data.filter( c => c.id === 7  ).map( p => ({ nombre: p.nombre, color: p.color }) );
-            let [Op_8]  = response.data.filter( c => c.id === 8  ).map( p => ({ nombre: p.nombre, color: p.color }) );
-            let [Op_9]  = response.data.filter( c => c.id === 9  ).map( p => ({ nombre: p.nombre, color: p.color }) );
-            let [Op_35] = response.data.filter( c => c.id === 35 ).map( p => ({ nombre: p.nombre, color: p.color }) );
-            let [Op_36] = response.data.filter( c => c.id === 36 ).map( p => ({ nombre: p.nombre, color: p.color }) );
-            let [Op_37] = response.data.filter( c => c.id === 37 ).map( p => ({ nombre: p.nombre, color: p.color }) );
-            let [Op_38] = response.data.filter( c => c.id === 38 ).map( p => ({ nombre: p.nombre, color: p.color }) );
-            let [Op_39] = response.data.filter( c => c.id === 39 ).map( p => ({ nombre: p.nombre, color: p.color }) );
-            let [Op_40] = response.data.filter( c => c.id === 40 ).map( p => ({ nombre: p.nombre, color: p.color }) );
-            let [Op_41] = response.data.filter( c => c.id === 41 ).map( p => ({ nombre: p.nombre, color: p.color }) );
-
-            setDataConvencion( {
-                Op_0  : Op_0,
-                Op_2  : Op_2,
-                Op_3  : Op_3,
-                Op_4  : Op_4,
-                Op_7  : Op_7,
-                Op_8  : Op_8,
-                Op_9  : Op_9,
-                Op_35 : Op_35,
-                Op_36 : Op_36,
-                Op_37 : Op_37,
-                Op_38 : Op_38,
-                Op_39 : Op_39,
-                Op_40 : Op_40,
-                Op_41 : Op_41
-            });
         }).catch(error => {
             console.log(error.message);
         })
@@ -787,104 +1200,42 @@ const TiempoReal = () => {
             <div className="container-fluid ">
                 
                 <div className="row border-bottom bg-verdeoscuro">
-                    <div className="col-md-3 col-lg-2 small text-left mt-2 mb-2">
+                    <div className="col-md-4 col-lg-3 small text-left mt-2">
                         <ProgressBar animated now={intervalId ? 100: 0} />
                     </div>
-                    <div className="col-md-6 col-lg-7 text-left  mt-1">
+                    <div className="col-md-2 col-lg-2 text-left  mt-1">
                         Última consulta: {ultimaConsulta}
                     </div>
-                    <div className="col-md-3 col-lg-3 text-right  mt-1">
+                    <div className="col-md-2 col-lg-4 text-left  mt-1">
+                        
+                        <label>Inicio: {dataRegistro.Inicio} </label>
+                        &nbsp;&nbsp;
+                        <label>Fin: {dataRegistro.Fin} </label>
+                        &nbsp;&nbsp;
+                        <label>Total registros: {dataRegistro.Total} </label>
+                      
+                    </div>
+                    <div className="col-md-2 col-lg-1 text-left  mt-1 mb-1 ">
+                        {
+                            show ?
+                            <button onClick={handleClose} className="btn btn-sm btn-circle btn-danger"> <TimerOffIcon fontSize="small" /> </button>
+                            :
+                            <button onClick={handleShow} className="btn btn-sm btn-circle btn-success"> <OndemandVideoIcon fontSize="small" /> </button>
+                        }
+                    </div>
+                    <div className="col-md-2 col-lg-2 text-right  mt-1">
                         <small> {userStorage.nombre_usuario_sesion} </small>
                     </div>
                 </div>
 
                 <div className="row">
-                    <div className="col-md-3 col-lg-2 col-xl-2">
-                        <div className="card mt-2" >
-                            
-                            <div className="card-body">
-
-                                <div className="form-group">
-                                    <label><b>Campo: </b></label>
-                                    <select name="field_id" id="field_id" className="form-control form-control-sm" onChange={handleChangeForm} defaultValue={form ? form.field_id : 0}>
-                                        <option key="0" value="0">Seleccionar</option>
-                                        {
-                                        dataFields ?
-                                        dataFields.map(elemento => (<option key={elemento.id} value={elemento.id}>{elemento.nombre}</option>))
-                                        :null
-                                        }
-                                    </select>
-                                </div>                                
-
-                                <div className="form-group">
-                                    <label><b>Pozo: </b></label>
-                                    <select name="wells_id" id="wells_id" className="form-control form-control-sm" onChange={handleChangeForm} defaultValue={form ? form.wells_id : 0}>
-                                        <option key="0" value="0">Seleccionar</option>
-                                        {
-                                            dataWells ?
-                                            dataWells.map(elemento => (<option key={elemento.id} value={elemento.id}>{elemento.nombre}</option>))
-                                            :null
-                                        }
-                                    </select>
-                                </div>
-                        
-                                
-
-                                <hr/>
-                                
-                                <div className="form-group">
-                                    <label>Primera Fecha</label>
-                                    <input type="text" className="form-control form-control-sm" readOnly={true} defaultValue={dataRegistro.Inicio} />
-                                </div>
-                                <div className="form-group">
-                                    <label>Última Fecha</label>
-                                    <input type="text" className="form-control form-control-sm" readOnly={true} defaultValue={dataRegistro.Fin} />
-                                </div> 
-                                <div className="form-group">
-                                    <label>Total registros</label>
-                                    <input type="text" className="form-control form-control-sm" readOnly={true} defaultValue={dataRegistro.Total} />
-                                </div>
-                                
-                                <hr/>
-                                
-                                <div className="form-group">
-                                    <label><b>Template: </b></label>
-                                    <select name="id" id="id" className="form-control form-control-sm" onChange={handleChangeForm} defaultValue={form ? form.id : 0}>
-                                        <option key="0" value="0">Seleccionar</option>
-                                        {
-                                            dataTemplates ?
-                                            dataTemplates.map(elemento => (<option key={elemento.id} value={elemento.id}>{elemento.nombre}</option>))
-                                            :null
-                                        }
-                                    </select>
-                                </div>
-                                
-                            </div>
-                            <div className="card-footer">
-                                <div className="row">
-                                    <div className="col-sm-7">
-                                        <label className="small">Intervalo de consulta [Sg]</label>
-                                        <select className="form-control form-control-sm" onChange={handleChange}>
-                                            <option value="10">10</option>
-                                            <option value="20">20</option>
-                                            <option value="30">30</option>
-                                            <option value="60">60</option>
-                                        </select>
-                                    </div>
-                                    <div className="col-sm-5 mt-3">
-                                        <button className="btn btn-sm btn-primary btn-block" onClick={handleClick}> {count === 0 ? "Iniciar" : (count === 1) ? "Cargando": "Detener"}</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                    </div>
-                    <div className="col-md-9 col-lg-10 col-xl-10">
+                    
+                    <div className="col-md-12 col-lg-12 col-xl-12">
                         { showgrafica ? 
                                                  
                                 
                                 <div className="row" >
-                                    <div id="divPrincipal" className="col-md-12">
+                                    <div id="divPrincipal" className="col-md-8">
                                         {
                                             
                                             <div id="divGraficaPrincipal" className="row">
@@ -898,7 +1249,8 @@ const TiempoReal = () => {
                                                             config={config_general}
                                                             useResizeHandler={true}
                                                             style={{width:"100%", height:"55vh"}}
-                                                            
+                                                            onHover={(e) => PlotOnHover(e)}
+                                                            onUnhover={(e) => PlotOnUnHover(e)}
                                                         />
                                                         :
                                                         null
@@ -926,6 +1278,36 @@ const TiempoReal = () => {
                                         }
                                     </div>
                                     
+                                    
+                                    <div id="divTrackVertical" className="col-md-4">
+                                        <div className="row">
+                                            { isLoadedVertical ?
+                                            <div className={colVertical}>
+                                                <Plot
+                                                    divId="plotTracksVertical"
+                                                    style={{width:"100%", height:"95vh"}}
+                                                    data={dataTV}
+                                                    layout={layoutTV}
+                                                    config={config_general}
+                                                    useResizeHandler={true}
+                                                />
+                                            </div>
+                                            : null }
+                                            { isLoadedFEL ?
+                                            <div className={colVerticalFEL}>
+                                                <Plot
+                                                    divId="plotFel"
+                                                    style={{width:"100%", height:"95vh"}}
+                                                    data={dataFEL}
+                                                    layout={layoutFEL}
+                                                    config={null}
+                                                    useResizeHandler={true}
+                                                />
+                                            </div>
+                                            : null}
+                                        </div>           
+                                    </div>
+                                   
                                 </div>
                             
                         
@@ -965,6 +1347,89 @@ const TiempoReal = () => {
                             </div>
                         </div>
                     }
+                </ModalBody>
+            </Modal>
+
+            <Modal isOpen={show} aria-labelledby="contained-modal-title-vcenter" centered>
+                <ModalBody>
+                    <div className="card mt-2" >
+                        <div className="card-body">
+
+                            <div className="form-group">
+                                <div className="row">
+                                    <div className="col-md-6">
+                                        <label><b>Campo: </b></label>
+                                        <select name="field_id" id="field_id" className="form-control form-control-sm" disabled={disabled ? 'disabled': null} onChange={handleChangeForm} defaultValue={form ? form.field_id : 0}>
+                                            <option key="0" value="0">Seleccionar</option>
+                                            {
+                                            dataFields ?
+                                            dataFields.map(elemento => (<option key={elemento.id} value={elemento.id}>{elemento.nombre}</option>))
+                                            :null
+                                            }
+                                        </select>
+                                    </div>
+                                    <div className="col-md-6">
+                                         <label><b>Pozo: </b></label>
+                                        <select name="wells_id" id="wells_id" className="form-control form-control-sm" disabled={disabled ? 'disabled': null} onChange={handleChangeForm} defaultValue={form ? form.wells_id : 0}>
+                                            <option key="0" value="0">Seleccionar</option>
+                                            {
+                                                dataWells ?
+                                                dataWells.map(elemento => (<option key={elemento.id} value={elemento.id}>{elemento.nombre}</option>))
+                                                :null
+                                            }
+                                        </select>   
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr/>
+                            
+                            <div className="form-group">
+                                <label>Primera Fecha</label>
+                                <input type="text" className="form-control form-control-sm" readOnly={true} defaultValue={dataRegistro.Inicio} />
+                            </div>
+                            <div className="form-group">
+                                <label>Última Fecha</label>
+                                <input type="text" className="form-control form-control-sm" readOnly={true} defaultValue={dataRegistro.Fin} />
+                            </div> 
+                            <div className="form-group">
+                                <label>Total registros</label>
+                                <input type="text" className="form-control form-control-sm" readOnly={true} defaultValue={dataRegistro.Total} />
+                            </div>
+                            
+                            <hr/>
+                            
+                            <div className="form-group">
+                                <label><b>Template: </b></label>
+                                <select name="id" id="id" className="form-control form-control-sm" disabled={disabled ? 'disabled': null} onChange={handleChangeForm} defaultValue={form ? form.id : 0}>
+                                    <option key="0" value="0">Seleccionar</option>
+                                    {
+                                        dataTemplates ?
+                                        dataTemplates.map(elemento => (<option key={elemento.id} value={elemento.id}>{elemento.nombre}</option>))
+                                        :null
+                                    }
+                                </select>
+                            </div>
+                            
+                        </div>
+                        <div className="card-footer">
+                            <div className="row">
+                                <div className="col-sm-7">
+                                    <label className="small">Intervalo de consulta [Sg]</label>
+                                    <select className="form-control form-control-sm" onChange={handleChange}>
+                                        <option value="10">10</option>
+                                        <option value="20">20</option>
+                                        <option value="30">30</option>
+                                        <option value="60">60</option>
+                                    </select>
+                                </div>
+                                <div className="col-sm-5 mt-3">
+                                    <button className={count === 0 ? "btn btn-sm btn-success btn-block" : (count === 1) ? "btn btn-sm btn-info btn-block": "btn btn-sm btn-danger btn-block"} onClick={handleClick}> {count === 0 ? "Iniciar" : (count === 1) ? "Cargando": "Detener"}</button>
+                                    <button className="btn btn-sm btn-secondary btn-block" onClick={handleClose} >Ocultar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </ModalBody>
             </Modal>
         </div>

@@ -4,8 +4,6 @@ import { Link } from 'react-router-dom';
 
 import { makeStyles } from '@material-ui/core/styles';
 import AttachmentIcon from '@material-ui/icons/Attachment';
-import AccountTreeIcon from '@material-ui/icons/AccountTree';
-import BarChartIcon from '@material-ui/icons/BarChart';
 import BlurLinearIcon from '@material-ui/icons/BlurLinear';
 import FormatListNumberedRtlIcon from '@material-ui/icons/FormatListNumberedRtl';
 import Collapse from '@material-ui/core/Collapse';
@@ -14,7 +12,6 @@ import ExpandLess from '@material-ui/icons/ExpandLess';
 import SettingsSystemDaydreamIcon from '@material-ui/icons/SettingsSystemDaydream';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import FormatUnderlinedIcon from '@material-ui/icons/FormatUnderlined';
-import FilterTiltShiftIcon from '@material-ui/icons/FilterTiltShift';
 import GradientIcon from '@material-ui/icons/Gradient';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
