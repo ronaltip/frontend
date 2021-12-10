@@ -134,10 +134,12 @@ const ModalHomologation = ({
           <Row gutter={[16, 16]} style={{ marginTop: '10px' }}>
             <Col span={24}>
               <label htmlFor="title-wells">Wells</label>
-              <Select style={{ width: '100%' }} defaultValue={wellId}>
-                <Option onChange={e => (wellId = e)} value="">
-                  Seleccionar
-                </Option>
+              <Select
+                style={{ width: '100%' }}
+                onChange={e => (wellId = e)}
+                defaultValue={wellId}
+              >
+                <Option value="">Seleccionar</Option>
                 {listWells &&
                   listWells.map((well, idKey) => (
                     <Option
@@ -166,7 +168,7 @@ const ModalHomologation = ({
                       >
                         <Option value="">Seleccionar</Option>
                         {listCurves &&
-                          listCurves.length > 0 &&
+                          listCurves.length >= 1 &&
                           listCurves.map((curve, idKey) => (
                             <Option
                               key={idKey}

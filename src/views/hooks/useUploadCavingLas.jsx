@@ -1,34 +1,39 @@
-import React, { Fragment, useEffect, useState } from 'react';
-import HeaderSection from '../libs/headerSection/headerSection';
-import HttpServices from '../services/HttpServices';
-import ModalUpload from '../libs/modalUpload/modalUpload';
-import ModalHomologation from '../libs/modalHomologation/modalHomologation';
-import { Col, message, Row, Tooltip, Table, Input } from 'antd';
+import React, { useEffect, useState } from 'react';
 import { DeleteOutlined, FileSearchOutlined } from '@ant-design/icons';
-const { Search } = Input;
+import { Col, message, Row } from 'antd';
+import { Tooltip } from '@material-ui/core';
+import onSearch from '../../util/onSearch';
+import HttpServices from '../../services/HttpServices';
+import { TYPE_OF_FILES } from '../../util/constants/enums';
 
-const Cavings = () => {
-  const [listRegistersCAVING, setListRegistersCAVING] = useState([]);
-  const [listRegistersFilter, setListRegistersFilter] = useState([]);
+const useUploadCavingLas = typeFile => {
+  const [listTotalRegisters, setListTotalRegisters] = useState([]);
   const [listWells, setListWells] = useState([]);
-  const [isActiveHom, setIsActiveHom] = useState(false);
-  const [isActive, setIsActive] = useState(false);
+  const [isActiveHomologation, setIsActiveHomologation] = useState(false);
+  const [isActiveUpload, setIsActiveUpload] = useState(false);
   const [listCurves, setListCurves] = useState([]);
   const [userStorage, setUserStorage] = useState({});
-  const [isRowData, setIsRowData] = useState({});
-  const [infoByColumn, setInfoByColumn] = useState({
+  const [listRegistersFilter, setListRegistersFilter] = useState([]);
+  const [homologationRow, setHomologationRow] = useState({
     resultArray: [],
     wellId: '',
     definitionTime: null,
     definitionDate: null,
     definitionHour: null,
   });
+
   const columns = [
+    {
+      title: 'Id',
+      dataIndex: 'id',
+      key: 'id',
+      width: '5%',
+    },
     {
       title: 'Pozo',
       dataIndex: 'nombre_wells',
       key: 'nombre_wells',
-      width: '20%',
+      width: '10%',
     },
     {
       title: 'Encabezados',
@@ -40,7 +45,13 @@ const Cavings = () => {
       title: 'Fecha de Cargue',
       dataIndex: 'fecha_creacion',
       key: 'fecha_creacion',
-      width: '15%',
+      width: '10%',
+    },
+    {
+      title: 'Tipo de Cargue',
+      dataIndex: 'TipoCargue',
+      key: 'TipoCargue',
+      width: '10%',
     },
     {
       title: 'Acción',
@@ -67,22 +78,23 @@ const Cavings = () => {
   ];
 
   useEffect(() => {
-    getListByCAVING();
+    getRecordList();
     getWellList();
     getListCurves();
     setUserStorage(JSON.parse(sessionStorage.getItem('user')));
   }, []);
 
-  const getListByCAVING = () => {
+  const getRecordList = () => {
     HttpServices()
-      .get('archivo_encabezado/tipocargue/2')
+      .get(`archivo_encabezado/tipocargue/${TYPE_OF_FILES[typeFile]}`)
       .then(response => {
         if (response) {
-          setListRegistersCAVING(response);
+          setListTotalRegisters(response);
           setListRegistersFilter(response);
         }
       });
   };
+
   const getWellList = () => {
     HttpServices()
       .get('wells')
@@ -92,14 +104,17 @@ const Cavings = () => {
         }
       });
   };
+
   const getListCurves = () => {
     HttpServices()
       .get('tipo_curvas')
-      .then(responseList => setListCurves(responseList))
+      .then(responseList =>
+        responseList ? setListCurves(responseList) : setListCurves([])
+      )
       .catch(error => console.log(error));
   };
   const clickOpenFileUpload = () => {
-    setIsActive(true);
+    setIsActiveUpload(true);
   };
 
   const commandDeteteRegister = value => {
@@ -110,16 +125,11 @@ const Cavings = () => {
           ? userStorage.id_usuario_sesion
           : '',
     };
-
     HttpServices()
       .commandDelete('archivo_encabezado', { params: payload })
       .then(response => {
-        // if (response && response[0].id) {
         message.success('El registro se ha eliminado correctamente.');
-        // } else {
-        //   message.error('Algo ha salido mal, por favor intente de nuevo.');
-        // }
-        getListByCAVING();
+        getRecordList();
         onClickCancel();
       })
       .catch(error => {
@@ -130,15 +140,15 @@ const Cavings = () => {
   };
 
   const onClickCancel = () => {
-    setInfoByColumn({
+    setHomologationRow({
       resultArray: [],
       wellId: '',
       definitionTime: null,
       definitionDate: null,
       definitionHour: null,
     });
-    setIsActive(false);
-    setIsActiveHom(false);
+    setIsActiveUpload(false);
+    setIsActiveHomologation(false);
   };
 
   const onClickSave = (homoPayload, wells_id, datePayload) => {
@@ -153,36 +163,41 @@ const Cavings = () => {
           message.success(
             'El archivo de homologacion se ha actualizado correctamente.'
           );
-
-          HttpServices()
-            .commandPut('archivo_encabezado', {
-              ...datePayload,
-              id: homoPayload[0].register_id,
-            })
-            .then(response => {
-              if (response && response[0].id) {
-                message.success(
-                  'La asignación en tiempos se ha actualizado correctamente.'
-                );
-              } else {
-                message.error(
-                  'Algo ha salido mal, por favor intente de nuevo.'
-                );
-              }
-            });
+          if (typeFile === 'CAVING') {
+            saveTheApprovealDate(datePayload, homoPayload);
+          }
         } else {
           message.error('Algo ha salido mal, por favor intente de nuevo.');
         }
-        getListByCAVING();
+        getRecordList();
         onClickCancel();
       })
       .catch(error => {
         console.log(error);
         onClickCancel();
+        getRecordList();
         message.error('Algo ha salido mal, por favor intente de nuevo.');
       });
   };
 
+  const saveTheApprovealDate = (datePayload, homoPayload) => {
+    HttpServices()
+      .commandPut('archivo_encabezado', {
+        ...datePayload,
+        id: homoPayload[0].register_id,
+      })
+      .then(responseDate => {
+        // if (responseDate && responseDate[0].id) {
+        message.success(
+          'La asignación en tiempos se ha actualizado correctamente.'
+        );
+        // } else {
+        //   message.error(
+        //     'Algo ha salido mal, por favor intente de nuevo     1.'
+        //   );
+        // }
+      });
+  };
   const onClickInsert = payload => {
     HttpServices()
       .command('archivo_encabezado', payload)
@@ -192,7 +207,7 @@ const Cavings = () => {
         } else {
           message.error('Algo ha salido mal, por favor intente de nuevo.');
         }
-        getListByCAVING();
+        getRecordList();
         onClickCancel();
       })
       .catch(error => {
@@ -210,7 +225,7 @@ const Cavings = () => {
         value !== 'FECHA' &&
         value !== 'HORA'
     );
-    setIsRowData(rowData);
+
     return (
       listColumns &&
       listColumns.map((colValue, key) =>
@@ -219,10 +234,9 @@ const Cavings = () => {
           .then(response => {
             return {
               homologation:
-                response.length >= 1 ? response[0].wits_detalle_id : key,
+                response.length >= 1 ? response[0].wits_detalle_id : 0,
               idColumn: response.length >= 1 ? response[0].id : key,
-              nameColumn:
-                response.length >= 1 ? response[0].nombre_columna : colValue,
+              nameColumn: colValue,
               curveTypeName:
                 response.length >= 1 ? response[0].tipo_curva_nombre : '',
               curveTypeId:
@@ -250,8 +264,8 @@ const Cavings = () => {
     );
     Promise.all(objectHomogolationResponse)
       .then(resultArray => {
-        setIsActiveHom(true);
-        return setInfoByColumn({
+        setIsActiveHomologation(true);
+        return setHomologationRow({
           resultArray: resultArray,
           wellId: rowData.wells_id,
           definitionTime:
@@ -265,96 +279,28 @@ const Cavings = () => {
       .catch(e => console.log(`Error capturado:  ${e}`));
   };
 
-  const onSearch = valueFilter => {
-    const value = valueFilter.target.value;
-    if (value !== '') {
-      const valueSearch = value
-        .normalize('NFD')
-        .replace(/([aeio])\u0301|(u)[\u0301\u0308]/gi, '$1$2')
-        .normalize()
-        .toUpperCase();
-      const valuesFiltered = listRegistersCAVING.filter(
-        search =>
-          search.nombre_wells
-            .normalize('NFD')
-            .replace(/([aeio])\u0301|(u)[\u0301\u0308]/gi, '$1$2')
-            .normalize()
-            .toUpperCase()
-            .includes(valueSearch) ||
-          search.columnas
-            .normalize('NFD')
-            .replace(/([aeio])\u0301|(u)[\u0301\u0308]/gi, '$1$2')
-            .normalize()
-            .toUpperCase()
-            .includes(valueSearch)
-      );
-      setListRegistersFilter(valuesFiltered);
-    } else {
-      setListRegistersFilter(listRegistersCAVING);
-    }
+  const onFilter = value => {
+    const responseSearch = onSearch(value, listTotalRegisters);
+    !responseSearch
+      ? setListRegistersFilter(listTotalRegisters)
+      : setListRegistersFilter(responseSearch);
   };
 
-  return (
-    <Fragment>
-      <HeaderSection
-        onClick={clickOpenFileUpload}
-        titleButton="Archivo CAVING"
-      />
-      <Row justify="space-around">
-        <Col span={22}>
-          <h3>Listado de Archivo CAVING</h3>
-        </Col>
-      </Row>
-      <Row gutter={16} justify="space-around">
-        <Col span={22}>
-          <Search
-            placeholder="Buscar"
-            onChange={onSearch}
-            enterButton={false}
-            style={{
-              width: '30%',
-              marginBottom: '24px',
-            }}
-          />
-        </Col>
-      </Row>
-      <Row justify="center" align="center">
-        <Col span={22}>
-          <Table
-            tableLayout="fixed"
-            pagination={{ pageSize: 10 }}
-            dataSource={listRegistersFilter}
-            rowKey="id"
-            key="id"
-            columns={columns}
-            bordered
-          />
-        </Col>
-      </Row>
-      <ModalUpload
-        isActive={isActive}
-        fileType="CAVING"
-        isRadiusButton={false}
-        listWells={listWells}
-        onClickCancel={onClickCancel}
-        onClickInsert={onClickInsert}
-        userStorage={userStorage}
-      />
-      <ModalHomologation
-        infoByColumn={infoByColumn.resultArray}
-        wellId={infoByColumn.wellId}
-        definitionTime={infoByColumn.definitionTime}
-        definitionDate={infoByColumn.definitionDate}
-        definitionHour={infoByColumn.definitionHour}
-        isActive={isActiveHom && infoByColumn.resultArray.length >= 1}
-        onClickCancel={onClickCancel}
-        onClickSave={onClickSave}
-        fileType="CAVING"
-        listWells={listWells}
-        listCurves={listCurves}
-        selectDate={true}
-      />
-    </Fragment>
-  );
+  return {
+    userStorage,
+    columns,
+    isActiveUpload,
+    homologationRow,
+    isActiveHomologation,
+    listCurves,
+    listWells,
+    listRegistersFilter,
+    clickOpenFileUpload,
+    onFilter,
+    onClickCancel,
+    onClickInsert,
+    onClickSave,
+  };
 };
-export default Cavings;
+
+export default useUploadCavingLas;

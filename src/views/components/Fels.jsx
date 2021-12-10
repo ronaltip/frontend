@@ -1,36 +1,19 @@
-import React, { Fragment } from 'react';
+import React, { Fragment, useState } from 'react';
 import HeaderSection from '../../libs/headerSection/headerSection';
 import ModalUpload from '../../libs/modalUpload/modalUpload';
-import { Col, Row, Table, Modal, Spin } from 'antd';
+import { Col, Row, Table, Modal, Spin, InputNumber, Space } from 'antd';
 import ReactCrop from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 
 import useFels from '../hooks/useFels';
 const Fels = () => {
-  const {
-    userStorage,
-    columns,
-    isLoading,
-    isActive,
-    openModal,
-    upImg,
-    crop,
-    listRegistersFels,
-    listWells,
-    clickOpenFileUpload,
-    onClickCancel,
-    onClickInsert,
-    cancelCrop,
-    onLoad,
-    setCrop,
-    makeClientCrop,
-  } = useFels();
-  console.log('ñllll', isLoading, isActive);
+  const { userStorage, columns, states, listResponse, functions } = useFels();
+
   return (
     <Fragment>
-      <Spin tip="Cargardo..." spinning={isLoading}>
+      <Spin tip="Cargardo..." spinning={states.isLoading}>
         <HeaderSection
-          onClick={clickOpenFileUpload}
+          onClick={functions.clickOpenFileUpload}
           titleButton="Archivo .Fels"
         />
         <Row justify="space-around">
@@ -43,7 +26,7 @@ const Fels = () => {
             <Table
               bordered
               tableLayout="fixed"
-              dataSource={listRegistersFels}
+              dataSource={listResponse.listRegistersFels}
               rowKey="id"
               key="id"
               columns={columns}
@@ -52,42 +35,107 @@ const Fels = () => {
         </Row>
       </Spin>
       <ModalUpload
-        isActive={isActive}
+        isActive={states.isActive}
         fileType="FEL"
         isRadiusButton={false}
-        listWells={listWells}
-        onClickCancel={onClickCancel}
-        onClickInsert={onClickInsert}
+        listWells={listResponse.listWells}
+        onClickCancel={functions.onClickCancel}
+        onClickInsert={functions.onClickInsert}
         userStorage={userStorage}
       />
       <Modal
-        visible={openModal}
-        width="900px"
-        onCancel={cancelCrop}
+        visible={states.openModal || states.openModalCrop}
+        width={states.openModalCrop ? '600px' : '900px'}
+        onCancel={functions.onClickCancel}
         footer=""
         centered
+        maskClosable={false}
+        title={
+          !states.openModalCrop && (
+            <Row justify="space-around" align="middle">
+              <Col span={7}>
+                <Space>
+                  <span>Inicio recorte</span>
+                  <InputNumber
+                    value={states.stepFields.startCut}
+                    min={0}
+                    onChange={e =>
+                      functions.setStepFields({
+                        ...states.stepFields,
+                        startCut: e,
+                      })
+                    }
+                  />
+                </Space>
+              </Col>
+              <Col span={7}>
+                <Space>
+                  <span>Fin recorte</span>
+                  <InputNumber
+                    value={states.stepFields.endCut}
+                    min={0}
+                    onChange={e =>
+                      functions.setStepFields({
+                        ...states.stepFields,
+                        endCut: e,
+                      })
+                    }
+                  />
+                </Space>
+              </Col>
+              <Col span={7}>
+                <Space>
+                  <span>Paso recorte</span>
+                  <InputNumber
+                    value={states.stepFields.stepCut}
+                    min={0}
+                    onChange={e =>
+                      functions.setStepFields({
+                        ...states.stepFields,
+                        stepCut: e,
+                      })
+                    }
+                  />
+                </Space>
+              </Col>
+            </Row>
+          )
+        }
       >
         <Row
           justify="center"
           style={{
-            maxHeight: '500px',
+            maxHeight: '400px',
             overflowY: 'scroll',
             overflowX: 'hidden',
             marginTop: '20px',
           }}
           className="scrollTheme"
         >
-          <Col style={{ maxHeigth: '500px' }}>
-            {upImg && upImg.length >= 1 && (
-              <ReactCrop
-                src={upImg}
-                onImageLoaded={onLoad}
-                crop={crop}
-                onChange={c => setCrop(c)}
-                onComplete={c => makeClientCrop(c)}
-              />
-            )}
-          </Col>
+          {!states.openModalCrop ? (
+            <Col style={{ maxHeigth: '400px' }}>
+              {states.upImg && states.upImg.length >= 1 && (
+                <ReactCrop
+                  src={states.upImg}
+                  onImageLoaded={functions.onLoad}
+                  crop={states.crop}
+                  onChange={c => functions.setCrop(c)}
+                  onComplete={c =>
+                    functions.makeClientCrop(c, states.stepFields)
+                  }
+                />
+              )}
+            </Col>
+          ) : (
+            <Col style={{ maxHeigth: '400px' }}>
+              {states.upImg && states.upImg.length >= 1 && (
+                <img
+                  src={`data:image/png;base64,${states.upImg}`}
+                  alt="croppedImage"
+                />
+              )}
+            </Col>
+          )}
         </Row>
       </Modal>
     </Fragment>

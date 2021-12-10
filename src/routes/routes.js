@@ -3,11 +3,11 @@ import { BrowserRouter, Switch, Route } from 'react-router-dom';
 import Login from '../views/login';
 import Home from '../views/home';
 import viewUsuario from '../views/usuarios';
-import viewCavings from '../views/Cavings';
-import viewArchivoLas from '../views/ArchivoLas';
+import viewCavings from '../views/components/Cavings';
+import viewArchivoLas from '../views/components/ArchivoLas';
 import viewFels from '../views/components/Fels';
 import viewEventos from '../views/eventos';
-//import viewArchivoLase from '../views/archivolase';
+
 import viewGrupoCurvas from '../views/grupo_curvas';
 import viewOperaciones from '../views/operaciones';
 import viewTiposCurvas from '../views/tipo_curvas';
