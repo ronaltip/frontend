@@ -54,7 +54,7 @@ const TiempoReal = () => {
         field_id: 0, wells_id: 0, id: 0
     });
     const [registroFEL,  setRegistroFEL] = useState({
-        id: '', inicio: '', fin: '', paso: '', checked_fel: true
+        id: '', inicio: '', fin: '', paso: '', checked_fel: false
     });
 
     const [curvasTemplate, setCurvas] = useState([]);
@@ -63,7 +63,7 @@ const TiempoReal = () => {
     const [layoutGP, setLayoutGP] = useState({
         autosize: true,
         uirevision: 'true',
-        margin: { l: 80, r: 40, t: 80, b: 5 }, 
+        margin: { l: 50, r: 40, t: 80, b: 5 }, 
         dragmode: 'zoom',
         hovermode: 'closest',
         plot_bgcolor:'white' ,
@@ -96,7 +96,7 @@ const TiempoReal = () => {
     const [layoutTH, setLayoutTH] = useState({
         autosize: true,
         uirevision: 'true',
-        margin: { l: 60, r: 40, t: 30, b: 40 }, 
+        margin: { l: 40, r: 40, t: 30, b: 40 }, 
         dragmode: 'zoom',
         hovermode: 'x',
         plot_bgcolor: 'white',
@@ -148,7 +148,13 @@ const TiempoReal = () => {
     const [isLoadedPrincipal,  setIsLoadedGP] = useState(false)
     const [isLoadedHorizontal, setIsLoadedTH] = useState(false)
     const [isLoadedVertical,   setIsLoadedTV] = useState(false)
-    const [isLoadedFEL,   setIsLoadedFEL] = useState(false)
+    const [isLoadedArchivoFEL, setIsLoadedFEL] = useState(null)
+    function handleIsFEL(){
+        setIsLoadedFEL(true)
+    }
+    function handleNotFEL(){
+        setIsLoadedFEL(false)   
+    }
 
     const [colVertical,   setColVertical] = useState('col-md-9')
     const [colVerticalFEL,   setColVerticalFEL] = useState('col-md-3')
@@ -270,11 +276,14 @@ const TiempoReal = () => {
                             setIsLoadedTV(numGraVert === 0 ? false : true)
                             layout_Vertical.datarevision++
                             setLayoutTV(layout_Vertical)
-
+    
+                            handleIsFEL()
                             setColVerticalFEL('col-md-3 col-lg-3')
                             setDataFEL(data)
-                            setIsLoadedFEL(true)
-                            setIsLoadedFEL(true)
+                            setRegistroFEL({
+                                id: fel.id, inicio: fel.inicio_recorte, fin: fel.fin_recorte, paso: fel.paso_recorte, checked_fel: true
+                            })
+                            sessionStorage.setItem('isLoadedFEL', JSON.stringify(true));
 
                             setLayoutFEL(layout_fel)
 
@@ -296,9 +305,13 @@ const TiempoReal = () => {
                             
                             setColVerticalFEL('')
                             setDataFEL([])
-                            setIsLoadedFEL(false)
+                            handleNotFEL()
                             setLayoutFEL({})
-                            
+                            setRegistroFEL({
+                                id: 0, inicio: '', fin: '', paso: '', checked_fel: false
+                            })
+                            sessionStorage.setItem('isLoadedFEL', JSON.stringify(false));
+
                             message.info('Aún no se ha recortado el área del archivo FEL')
                         }
                     }
@@ -306,8 +319,10 @@ const TiempoReal = () => {
                     {
                         setColVerticalFEL('')
                         setDataFEL([])
-                        setIsLoadedFEL(false)
+                        handleNotFEL()
                         setLayoutFEL({})
+                        sessionStorage.setItem('isLoadedFEL', JSON.stringify(false));
+
                     }
                     //resolve( response.data )
                 }).catch(error => {
@@ -1137,10 +1152,13 @@ const TiempoReal = () => {
                 coords_v.push('x' + ((i>0)? String(i+1) : '') + 'y')
             }
             Plotly.Fx.hover('plotTracksVertical', curves_v, coords_v);
-        } console.log('3ntra fel hover ' + isLoadedFEL)
-        if (isLoadedFEL)
+        }
+        
+        let isFEL = JSON.parse(sessionStorage.getItem('isLoadedFEL'))
+
+        if (isFEL)
         {   
-            let nt_f = dataFEL.length;
+            let nt_f = 1;
             let coords_f = []
             let curves_f = []
             for(let i=0; i<nt_f; i++) {
@@ -1149,13 +1167,15 @@ const TiempoReal = () => {
             }
             Plotly.Fx.hover('plotFel', curves_f, coords_f);
         }
+        
     }
     const PlotOnUnHover = () => {
         if (isLoadedHorizontal)
             Plotly.Fx.unhover('plotTracksHorizontal')
         if (isLoadedVertical)
             Plotly.Fx.unhover('plotTracksVertical')
-        if (isLoadedFEL )
+        let isFEL = JSON.parse(sessionStorage.getItem('isLoadedFEL'))
+        if (isFEL)
             Plotly.Fx.unhover('plotFel')
     }
   
@@ -1177,10 +1197,18 @@ const TiempoReal = () => {
         setDataConvencion(JSON.parse(sessionStorage.getItem('dataConvencion')))
         setDataWitsDetalle(JSON.parse(sessionStorage.getItem('dataWitsDetalle')))
 
-        
+        handleNotFEL()
+
         axios.get(URL + 'fields').then(response => {
-            setField(  response.data );
+            if (response.status === 200)
+                setField(  response.data );
+            else
+            {
+                console.log(response.error)
+                message.error('Ocurrió un error cargando los campos, intente nuevamente')   
+            }            
         }).catch(error => {
+            message.error('Ocurrió un error cargando los campos, intente nuevamente')   
             console.log(error.message);
         })
         
@@ -1200,22 +1228,22 @@ const TiempoReal = () => {
             <div className="container-fluid ">
                 
                 <div className="row border-bottom bg-verdeoscuro">
-                    <div className="col-md-4 col-lg-3 small text-left mt-2">
+                    <div className="col-md-2 col-lg-2 small text-left mt-2">
                         <ProgressBar animated now={intervalId ? 100: 0} />
                     </div>
                     <div className="col-md-2 col-lg-2 text-left  mt-1">
-                        Última consulta: {ultimaConsulta}
+                        <small><div>Última consulta:</div><div> {ultimaConsulta} </div></small>
                     </div>
-                    <div className="col-md-2 col-lg-4 text-left  mt-1">
-                        
-                        <label>Inicio: {dataRegistro.Inicio} </label>
-                        &nbsp;&nbsp;
-                        <label>Fin: {dataRegistro.Fin} </label>
-                        &nbsp;&nbsp;
-                        <label>Total registros: {dataRegistro.Total} </label>
-                      
+                    <div className="col-md-2 col-lg-2 text-left  mt-1">
+                        <small><div>Inicio:</div><div>{dataRegistro.Inicio}</div></small>
                     </div>
-                    <div className="col-md-2 col-lg-1 text-left  mt-1 mb-1 ">
+                    <div className="col-md-2 col-lg-2 text-left  mt-1">
+                        <small><div>Fin:</div><div>{dataRegistro.Fin}</div></small>
+                    </div>
+                    <div className="col-md-2 col-lg-2 text-left  mt-1">
+                        <small><div>Total registros:</div><div>{dataRegistro.Total}</div></small> 
+                    </div>
+                    <div className="col-md-1 col-lg-1 text-left  mt-1 mb-1 ">
                         {
                             show ?
                             <button onClick={handleClose} className="btn btn-sm btn-circle btn-danger"> <TimerOffIcon fontSize="small" /> </button>
@@ -1223,7 +1251,7 @@ const TiempoReal = () => {
                             <button onClick={handleShow} className="btn btn-sm btn-circle btn-success"> <OndemandVideoIcon fontSize="small" /> </button>
                         }
                     </div>
-                    <div className="col-md-2 col-lg-2 text-right  mt-1">
+                    <div className="col-md-1 col-lg-1 text-right  mt-1">
                         <small> {userStorage.nombre_usuario_sesion} </small>
                     </div>
                 </div>
@@ -1293,7 +1321,7 @@ const TiempoReal = () => {
                                                 />
                                             </div>
                                             : null }
-                                            { isLoadedFEL ?
+                                            { isLoadedArchivoFEL ?
                                             <div className={colVerticalFEL}>
                                                 <Plot
                                                     divId="plotFel"
@@ -1362,7 +1390,7 @@ const TiempoReal = () => {
                                         <select name="field_id" id="field_id" className="form-control form-control-sm" disabled={disabled ? 'disabled': null} onChange={handleChangeForm} defaultValue={form ? form.field_id : 0}>
                                             <option key="0" value="0">Seleccionar</option>
                                             {
-                                            dataFields ?
+                                            dataFields.length > 0 ?
                                             dataFields.map(elemento => (<option key={elemento.id} value={elemento.id}>{elemento.nombre}</option>))
                                             :null
                                             }
@@ -1373,7 +1401,7 @@ const TiempoReal = () => {
                                         <select name="wells_id" id="wells_id" className="form-control form-control-sm" disabled={disabled ? 'disabled': null} onChange={handleChangeForm} defaultValue={form ? form.wells_id : 0}>
                                             <option key="0" value="0">Seleccionar</option>
                                             {
-                                                dataWells ?
+                                                dataWells.length > 0 ?
                                                 dataWells.map(elemento => (<option key={elemento.id} value={elemento.id}>{elemento.nombre}</option>))
                                                 :null
                                             }
@@ -1404,7 +1432,7 @@ const TiempoReal = () => {
                                 <select name="id" id="id" className="form-control form-control-sm" disabled={disabled ? 'disabled': null} onChange={handleChangeForm} defaultValue={form ? form.id : 0}>
                                     <option key="0" value="0">Seleccionar</option>
                                     {
-                                        dataTemplates ?
+                                        dataTemplates.length > 0 ?
                                         dataTemplates.map(elemento => (<option key={elemento.id} value={elemento.id}>{elemento.nombre}</option>))
                                         :null
                                     }

@@ -27,7 +27,7 @@ import viewWells from '../views/wells';
 import viewFields from '../views/fields';
 
 import viewWitsHomologacion from '../views/wits_homologacion';
-import viewHomologacionArchivos from '../views/homologacion_archivos';
+//import viewHomologacionArchivos from '../views/homologacion_archivos';
 
 import viewWits from '../views/wits';
 import viewGraficador from '../views/graficador';

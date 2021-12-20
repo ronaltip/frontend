@@ -1,78 +1,33 @@
-import React, { Component, forwardRef } from 'react';
+import React, { Component } from 'react';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
-import Materialtable from 'material-table';
 import { TextField } from '@material-ui/core';
-
-import CalendarTodayIcon from '@material-ui/icons/CalendarToday';
-import AddBox from '@material-ui/icons/AddBox';
-import ArrowDownward from '@material-ui/icons/ArrowDownward';
-import Check from '@material-ui/icons/Check';
-import ChevronLeft from '@material-ui/icons/ChevronLeft';
-import ChevronRight from '@material-ui/icons/ChevronRight';
-import Clear from '@material-ui/icons/Clear';
-import CancelIcon from '@material-ui/icons/Cancel';
-import DeleteOutline from '@material-ui/icons/DeleteOutline';
-import Edit from '@material-ui/icons/Edit';
-import FilterList from '@material-ui/icons/FilterList';
-import FirstPage from '@material-ui/icons/FirstPage';
-import LastPage from '@material-ui/icons/LastPage';
-import Remove from '@material-ui/icons/Remove';
-import Save from '@material-ui/icons/Save';
-import SaveAlt from '@material-ui/icons/SaveAlt';
-import Search from '@material-ui/icons/Search';
-import ViewColumn from '@material-ui/icons/ViewColumn';
+import iconList from '../util/iconList';
+import {CalendarToday} from '@material-ui/icons';
 import SideBar from '../componentes/sidebar';
 import Cabecera from '../componentes/cabecera';
+import Footer  from '../componentes/footer';
+import {
+  Col,
+  message,
+  Row,
+  Table,
+  Tooltip,
+  Input
+} from 'antd';
 import '../css/styles.css';
 
-const URL = process.env.REACT_APP_API_HOST; // "http://localhost:9000/eventos";
-//const urlAuxiliar = "http://localhost:9000/wells";
-//const urlAuxilir2 = "http://localhost:9000/tipo_eventos";
-
-const columns = [
-  { title: 'Pozo', field: 'nombre_pozo' },
-  { title: 'Tipo Evento', field: 'nombre_tipo_eventos' },
-  { title: 'Fecha Inicial', field: 'fecha_inicial' },
-  { title: 'Hora Inicial', field: 'hora_inicial' },
-  { title: 'Profundidad Inicial', field: 'profundidad_inicial' },
-  { title: 'Profundidad Final', field: 'profundidad_final' },
-];
-
-const tableIcons = {
-  Add: forwardRef((props, ref) => <AddBox {...props} ref={ref} />),
-  Check: forwardRef((props, ref) => <Check {...props} ref={ref} />),
-  Clear: forwardRef((props, ref) => <Clear {...props} ref={ref} />),
-  Delete: forwardRef((props, ref) => <DeleteOutline {...props} ref={ref} />),
-  DetailPanel: forwardRef((props, ref) => (
-    <ChevronRight {...props} ref={ref} />
-  )),
-  Edit: forwardRef((props, ref) => <Edit {...props} ref={ref} />),
-  Export: forwardRef((props, ref) => <SaveAlt {...props} ref={ref} />),
-  Filter: forwardRef((props, ref) => <FilterList {...props} ref={ref} />),
-  FirstPage: forwardRef((props, ref) => <FirstPage {...props} ref={ref} />),
-  LastPage: forwardRef((props, ref) => <LastPage {...props} ref={ref} />),
-  NextPage: forwardRef((props, ref) => <ChevronRight {...props} ref={ref} />),
-  PreviousPage: forwardRef((props, ref) => (
-    <ChevronLeft {...props} ref={ref} />
-  )),
-  ResetSearch: forwardRef((props, ref) => <Clear {...props} ref={ref} />),
-  Search: forwardRef((props, ref) => <Search {...props} ref={ref} />),
-  SortArrow: forwardRef((props, ref) => <ArrowDownward {...props} ref={ref} />),
-  ThirdStateCheck: forwardRef((props, ref) => <Remove {...props} ref={ref} />),
-  ViewColumn: forwardRef((props, ref) => <ViewColumn {...props} ref={ref} />),
-  CalendarTodayIcon: forwardRef((props, ref) => (
-    <CalendarTodayIcon {...props} ref={ref} />
-  )),
-};
+const URL = process.env.REACT_APP_API_HOST; 
+const { Search } = Input;
 
 class viewEventos extends Component {
   state = {
-    data: [],
+    data: [], dataSearch: [],
     dataWells: [],
     dataTipoEvento: [],
-    openModalInsertar: false,
+    modalInsertar: false,
+    modalEditar: false,
     modalEliminar: false,
     form: {
       id: '',
@@ -102,10 +57,17 @@ class viewEventos extends Component {
     axios
       .get(URL + 'eventos')
       .then(response => {
-        this.setState({ data: response.data });
+        if (response.status === 200)
+          this.setState({ data: response.data, dataSearch: response.data });
+        else
+        {
+          console.log(response.data);
+          message.error('Ocurrió un error consultando los eventos, intente nuevamente')
+        }
       })
       .catch(error => {
-        console.log(error.message);
+          message.error('Ocurrió un error consultando los eventos, intente nuevamente')
+          console.log(error.message);
       });
   };
 
@@ -113,10 +75,17 @@ class viewEventos extends Component {
     axios
       .get(URL + 'tipo_eventos')
       .then(response => {
-        this.setState({ dataTipoEvento: response.data });
+        if (response.status === 200)
+          this.setState({ dataTipoEvento: response.data });
+        else
+        {
+          console.log(response.data);
+          message.error('Ocurrió un error consultando los campos, intente nuevamente')
+        }
       })
       .catch(error => {
-        console.log(error.message);
+          message.error('Ocurrió un error consultando los tipos de evento, intente nuevamente')
+          console.log(error.message);
       });
   };
 
@@ -124,15 +93,18 @@ class viewEventos extends Component {
     axios
       .get(URL + 'wells')
       .then(response => {
-        this.setState({ dataWells: response.data });
+        if (response.status === 200)
+          this.setState({ dataWells: response.data });
+        else
+        {
+          console.log(response.data);
+          message.error('Ocurrió un error consultando los pozos, intente nuevamente')
+        }
       })
       .catch(error => {
-        console.log(error.message);
+          message.error('Ocurrió un error consultando los pozos, intente nuevamente')
+          console.log(error.message);
       });
-  };
-
-  useEffect = () => {
-    this.peticionGet();
   };
 
   peticionPost = async () => {
@@ -140,18 +112,40 @@ class viewEventos extends Component {
     await axios
       .post(URL + 'eventos', this.state.form)
       .then(response => {
-        this.modalInsertar();
-        this.peticionGet();
+        if (response.status === 200)
+        {
+          this.modalInsertar();
+          this.peticionGet();
+          message.success('Evento creado con éxito')
+        }
+        else
+        {
+          console.log(response.data);
+          message.error('Ocurrió un error creando el evento, intente nuevamente')
+        }
       })
       .catch(error => {
-        console.log(error.message);
+          message.error('Ocurrió un error creando el evento, intente nuevamente')
+          console.log(error.message);
       });
   };
 
   peticionPut = () => {
     axios.put(URL + 'eventos', this.state.form).then(response => {
-      this.modalInsertar();
-      this.peticionGet();
+      if (response.status === 200)
+      {
+        this.modalInsertar();
+        this.peticionGet();
+        message.success('Evento actualizado con éxito')
+      }
+      else
+      {
+        console.log(response.data);
+        message.error('Ocurrió un error actualizando el evento, intente nuevamente')
+      }
+    }).catch(error => {
+      console.log(error.message);
+      message.error('Ocurrió un error actualizando el evento, intente nuevamente')
     });
   };
 
@@ -162,31 +156,69 @@ class viewEventos extends Component {
     };
 
     axios.delete(URL + 'eventos', { data: datos }).then(response => {
-      this.setState({ modalEliminar: false });
-      this.peticionGet();
+      if (response.status === 200)
+      {
+        this.setState({ modalEliminar: false });
+        this.peticionGet();
+        message.success('Evento eliminado con éxito')
+      }
+      else
+      {
+        console.log(response.data);
+        message.error('Ocurrió un error eliminando el evento, intente nuevamente')
+      }
+    }).catch(error => {
+      console.log(error.message);
+      message.error('Ocurrió un error eliminando el evento, intente nuevamente')
     });
   };
 
-  modalInsertar = op => {
-    switch (op) {
-      case 1:
-        this.setState({
-          form: null,
-          tipoModal: 'insertar',
-          openModalInsertar: true,
-          showing: false,
-        });
-        break;
-      case 2:
-        this.setState({ tipoModal: 'actualizar', openModalInsertar: true });
-        break;
-      default:
-        this.setState({ openModalInsertar: false });
-        break;
-    }
+  modalInsertar = () => {
+    let pkuser = JSON.parse(
+      sessionStorage.getItem('user')
+    ).pk_usuario_sesion;
+
+    this.setState({
+      form: {
+        id: '',
+        wells_id: '',
+        tipo_evento_id: '',
+        tipo_tiempo: 1,
+        fecha_inicial: '',
+        hora_inicial: '',
+        fecha_final: '',
+        hora_final: '',
+        profundidad_inicial: '',
+        profundidad_final: '',
+        descripcion: '',
+        causa: '',
+        solucion: '',
+        estado_id: '',
+        nombre_tipo_eventos: '',
+        nombre_pozo: '',
+        pkuser: pkuser
+      },
+      tipoModal: 'insertar',
+      modalInsertar: !this.state.modalInsertar, 
+      showing: false
+    });
+  
+  };
+
+  modalEditar = (info) => {
+    this.seleccionarRegistro(info)
+    this.setState({ modalInsertar: !this.state.modalInsertar });
+  };
+
+  modalEliminar = (info) => {
+    this.seleccionarRegistro(info)
+    this.setState({ modalEliminar: !this.state.modalEliminar });
   };
 
   seleccionarRegistro = eventos => {
+    let pkuser = JSON.parse(
+      sessionStorage.getItem('user')
+    ).pk_usuario_sesion;
     this.setState({
       tipoModal: 'actualizar',
       form: {
@@ -204,36 +236,45 @@ class viewEventos extends Component {
         causa: eventos.causa,
         solucion: eventos.solucion,
         wells_nombre: eventos.wells_nombre,
+        pkuser: pkuser
       },
+      showing: eventos.tipo_tiempo === 1 ? false : true
     });
-
-    this.setState({ showing: eventos.tipo_tiempo === 1 ? false : true });
   };
 
-  handleChange = async e => {
-    e.persist();
-    await this.setState({
+  handleChange = e => {
+    this.setState({
       form: {
         ...this.state.form,
         [e.target.name]: e.target.value,
       },
     });
-    if (this.state.showing === false) {
+    if (this.state.showing === false) 
+    {
       this.state.form.tipo_tiempo = '1';
       this.state.form.fecha_final = this.state.form.fecha_inicial;
       this.state.form.hora_final = this.state.form.hora_inicial;
       this.state.form.profundidad_final = this.state.form.profundidad_inicial;
-    } else {
+    } 
+    else {
       this.state.form.tipo_tiempo = '2';
     }
-    this.state.form.pkuser = JSON.parse(
-      sessionStorage.getItem('user')
-    ).pk_usuario_sesion;
   };
 
   setFechaFinal() {
     this.setState({ showing: !this.state.showing });
   }
+
+  onFilter = search => {
+    let serched = search.target.value.toLowerCase();
+    const responseSearch = this.state.data.filter( ({nombre_pozo, nombre_tipo_eventos, profundidad_inicial, profundidad_final}) => {
+      nombre_pozo = nombre_pozo.toLowerCase();
+      nombre_tipo_eventos = nombre_tipo_eventos.toLowerCase();
+    
+      return nombre_pozo.includes(serched) || nombre_tipo_eventos.includes(serched) || profundidad_inicial.includes(serched) || profundidad_final.includes(serched);
+    });
+    this.setState({dataSearch:  responseSearch});
+  };
 
   componentDidMount() {
     this.peticionGet();
@@ -246,64 +287,117 @@ class viewEventos extends Component {
     const { showing } = this.state;
 
     return (
-      <div className="App">
+      <>
         <Cabecera />
-        <SideBar pageWrapId={'page-wrap'} outerContainerId={'App'} />
+        <SideBar />
 
-        <div className="containerCuatro">
-          <button
-            className="btn btn-success"
-            onClick={() => {
-              this.modalInsertar(1);
-            }}
-          >
-            {' '}
-            <AddBox icon={tableIcons.Add} /> Agregar Eventos
-          </button>
-        </div>
-        <div
-          className="form-group col-11"
-          style={{ float: 'left', padding: '30px 0 0 30px' }}
-        >
-          <Materialtable
-            title={'Listado de Eventos'}
-            columns={columns}
-            data={this.state.data}
-            icons={tableIcons}
-            actions={[
-              {
-                icon: tableIcons.Edit,
-                tooltip: 'Editar',
-                onClick: (event, rowData) => {
-                  this.seleccionarRegistro(rowData);
-                  this.modalInsertar(2);
-                },
-              },
-              {
-                icon: tableIcons.Delete,
-                tooltip: 'Eliminar',
-                onClick: (event, rowData) => {
-                  this.seleccionarRegistro(rowData);
-                  this.setState({ modalEliminar: true });
-                },
-              },
-            ]}
-            options={{
-              actionsColumnIndex: -1,
-            }}
-            localization={{
-              header: { actions: 'Acciones' },
-            }}
-          />
-        </div>
+        <nav aria-label="breadcrumb" className='small'>
+          <ol className="breadcrumb">
+            <li className="breadcrumb-item">Cargue de Datos</li>
+            <li className="breadcrumb-item active" aria-current="page">Eventos</li>
+          </ol>
+        </nav>
 
-        <Modal isOpen={this.state.openModalInsertar}>
+        <div className='container-xl'>
+          <Row >
+            <Col span={24}>
+              <h3>Listado de Eventos</h3>
+            </Col>
+          </Row>
+          <Row >
+            <Col span={12}>
+              <Search
+                placeholder="Buscar"
+                onChange={(value) => this.onFilter(value)}
+                enterButton={false}
+              />
+            </Col>
+            <Col span={12} className='text-right'>
+              <button
+                className="btn btn-success btn-sm"
+                onClick={() => {
+                  this.setState({ form: null, tipoModal: 'insertar' });
+                  this.modalInsertar();
+                }}
+              >
+                <iconList.Add /> Agregar Evento
+              </button>
+            </Col>
+          </Row>
+          <Row >
+            <Col span={24}>
+              <Table
+                tableLayout="fixed"
+                pagination={{ pageSize: 10 }}
+                dataSource={this.state.dataSearch}
+                rowKey="id"
+                key="id"
+                columns={[
+                  {
+                    title: 'Pozo',
+                    dataIndex: 'nombre_pozo',
+                    key: 'nombre_pozo'
+                  },
+                  {
+                    title: 'Tipo de Evento',
+                    dataIndex: 'nombre_tipo_eventos',
+                    key: 'nombre_tipo_eventos'
+                  },
+                  {
+                    title: 'Fecha Inicial',
+                    dataIndex: 'fecha_inicial',
+                    key: 'fecha_inicial'
+                  },
+                  {
+                    title: 'Hora Inicial',
+                    dataIndex: 'hora_inicial',
+                    key: 'hora_inicial'
+                  },
+                  {
+                    title: 'Profundidad Inicial',
+                    dataIndex: 'profundidad_inicial',
+                    key: 'profundidad_inicial'
+                  },
+                  {
+                    title: 'Acción',
+
+                    render: info => {
+                      return (
+                      <Row gutter={8} justify="center">
+                        <Col span={4} style={{ cursor: 'pointer' }}>
+                          <Tooltip title="Editar">
+                            <span onClick={() => this.modalEditar(info)}>
+                              <iconList.Edit />
+                            </span>
+                          </Tooltip>
+                        </Col>
+                        <Col span={4} style={{ cursor: 'pointer' }}>
+                          <Tooltip title="Eliminar">
+                            <span onClick={() => this.modalEliminar(info)}>
+                              <iconList.Delete />
+                            </span>
+                          </Tooltip>
+                        </Col>
+                      </Row>
+                      )
+                    }
+                  }
+                ]}
+                bordered
+              />
+            </Col>
+          </Row>
+        </div> 
+
+        <Footer />
+
+        <Modal isOpen={this.state.modalInsertar}>
           <ModalHeader style={{ display: 'block' }}>
             <span
-              style={{ float: 'right' }}
+              style={{ float: 'right', cursor: 'pointer' }}
               onClick={() => this.modalInsertar()}
             >
-              <CancelIcon icon={tableIcons.CancelIcon} />{' '}
+              <iconList.CancelIcon />{' '}
             </span>
             {this.state.tipoModal === 'insertar' ? (
               <label htmlFor="nombre">Nuevo Evento</label>
@@ -375,7 +469,7 @@ class viewEventos extends Component {
               <label>Hora Inicial</label>
               <input
                 className="form-control"
-                type="text"
+                type="time"
                 name="hora_inicial"
                 id="hora_inicial"
                 onChange={this.handleChange}
@@ -396,8 +490,8 @@ class viewEventos extends Component {
                 style={{ float: 'right' }}
                 onClick={() => this.setFechaFinal()}
               >
-                <CalendarTodayIcon icon={tableIcons.CalendarTodayIcon} /> Click
-                para activar fecha final{' '}
+                <CalendarToday style={{cursor:'pointer'}} /> Click
+                para { showing ? 'desactivar' : 'activar' } fecha final{' '}
               </span>
 
               <div style={{ display: showing ? 'block' : 'none' }}>
@@ -417,7 +511,7 @@ class viewEventos extends Component {
                 <label>Hora Final</label>
                 <input
                   className="form-control"
-                  type="text"
+                  type="time"
                   name="hora_final"
                   id="hora_final"
                   onChange={this.handleChange}
@@ -476,7 +570,7 @@ class viewEventos extends Component {
                 className="btn btn-success"
                 onClick={() => this.peticionPost()}
               >
-                <Save icon={tableIcons.Save} /> Insertar{' '}
+                <iconList.Save /> Insertar{' '}
               </button>
             ) : (
               <button
@@ -484,7 +578,7 @@ class viewEventos extends Component {
                 onClick={() => this.peticionPut()}
               >
                 {' '}
-                <Save icon={tableIcons.Save} /> Actualizar{' '}
+                <iconList.Save /> Actualizar{' '}
               </button>
             )}
             <button
@@ -492,14 +586,14 @@ class viewEventos extends Component {
               onClick={() => this.modalInsertar()}
             >
               {' '}
-              <CancelIcon icon={tableIcons.CancelIcon} /> Cancelar
+              <iconList.CancelIcon /> Cancelar
             </button>
           </ModalFooter>
         </Modal>
 
         <Modal isOpen={this.state.modalEliminar}>
           <ModalBody>
-            <DeleteOutline /> Est&aacute;s seguro que deseas eliminar el
+            <iconList.Delete /> Est&aacute;s seguro que deseas eliminar el
             registro?
             <div className="form-group">
               <br />
@@ -513,12 +607,12 @@ class viewEventos extends Component {
                 value={form ? form.id : this.state.data.length + 1}
               />
               <b>
-                <label htmlFor="nombre">Pozo: &nbsp; </label>
+                <label htmlFor="nombre"><b>Pozo:</b> &nbsp; </label>
               </b>
               {form ? form.wells_nombre : ''}
               <br />
               <b>
-                <label htmlFor="nombre">Descripci&oacute;n: &nbsp; </label>
+                <label htmlFor="nombre"><b>Descripci&oacute;n:</b> &nbsp; </label>
               </b>
               {form ? form.descripcion : ''}
             </div>
@@ -532,14 +626,14 @@ class viewEventos extends Component {
               Si
             </button>
             <button
-              className="btn btn-secundary"
+              className="btn btn-secondary"
               onClick={() => this.setState({ modalEliminar: false })}
             >
               No
             </button>
           </ModalFooter>
         </Modal>
-      </div>
+      </>
     );
   }
 }

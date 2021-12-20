@@ -16,3 +16,7 @@ export const EXTENSIONS_LIST = {
   LAS: ['.las'],
   FEL: ['.pdf'],
 };
+export const CAVING_COLS = {
+    GRUPO_SIZE : ['SMALL', 'LARGE', 'AVERAGE'],
+    GRUPO_MORFO: ['ANGULAR', 'TABULAR','BLOCKY','SPLINTERED','REWORKED','SLICKENSIDE']
+};

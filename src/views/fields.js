@@ -1,41 +1,50 @@
-import React, { Component, forwardRef } from 'react';
+import React, { Component } from 'react';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
-import Materialtable from 'material-table';
 import iconList from '../util/iconList';
-
-import SideBar from '../componentes/sidebar';
-import Cabecera from '../componentes/cabecera';
 import '../css/styles.css';
+import {
+  Col,
+  message,
+  Row,
+  Table,
+  Tooltip,
+  Input
+} from 'antd';
+import Cabecera from '../componentes/cabecera';
+import Sidebar from '../componentes/sidebar';
+import Footer  from '../componentes/footer';
+
 
 const URL = process.env.REACT_APP_API_HOST;
+const { Search } = Input;
 
-const columns = [
-  { title: 'Nombre', field: 'nombre' },
-  { title: 'Descripción', field: 'descripcion' },
-];
-
-class viewTiposCurvas extends Component {
+class viewFields extends Component {
   state = {
-    data: [],
+    data: [], dataSearch: [],
     modalInsertar: false,
     modalEliminar: false,
+    modalEditar: false,
     tipoModal: '',
     form: { id: '', nombre: '', descripcion: '', estado_id: '', pkuser: '' },
   };
 
-  useEffect = () => {
-    this.peticionGet();
-  };
-
+ 
   peticionGet = async () => {
     axios
       .get(URL + 'fields')
       .then(response => {
-        this.setState({ data: response.data });
+        if (response.status === 200)
+          this.setState({ data: response.data, dataSearch: response.data });
+        else
+        {
+          console.log(response.data);
+          message.error('Ocurrió un error consultando los campos, intente nuevamente')
+        }
       })
       .catch(error => {
+        message.error('Ocurrió un error consultando los campos, intente nuevamente')
         console.log(error.message);
       });
   };
@@ -45,18 +54,40 @@ class viewTiposCurvas extends Component {
     await axios
       .post(URL + 'fields', this.state.form)
       .then(response => {
-        this.modalInsertar();
-        this.peticionGet();
+        if (response.status === 200)
+        {
+          this.modalInsertar();
+          this.peticionGet();
+          message.success('Campo creado con éxito')
+        }
+        else
+        {
+          console.log(response.data);
+          message.error('Ocurrió un error creando el campo, intente nuevamente')
+        }
       })
       .catch(error => {
         console.log(error.message);
+        message.error('Ocurrió un error creando el campo, intente nuevamente')
       });
   };
 
   peticionPut = () => {
     axios.put(URL + 'fields', this.state.form).then(response => {
-      this.modalInsertar();
-      this.peticionGet();
+      if (response.status === 200)
+      {
+        this.modalInsertar();
+        this.peticionGet();
+        message.success('Campo actualizado con éxito')
+      }
+      else
+      {
+        console.log(response.data);
+        message.error('Ocurrió un error actualizando el campo, intente nuevamente')
+      }
+    }).catch(error => {
+      console.log(error.message);
+      message.error('Ocurrió un error actualizando el campo, intente nuevamente')
     });
   };
 
@@ -67,16 +98,48 @@ class viewTiposCurvas extends Component {
     };
 
     axios.delete(URL + 'fields', { data: datos }).then(response => {
-      this.setState({ modalEliminar: false });
-      this.peticionGet();
+      if (response.status === 200)
+      {
+        this.setState({ modalEliminar: false });
+        this.peticionGet();
+        message.success('Campo eliminado con éxito')
+      }
+      else
+      {
+        console.log(response.data);
+        message.error('Ocurrió un error eliminando el campo, intente nuevamente')
+      }
+    }).catch(error => {
+      console.log(error.message);
+      message.error('Ocurrió un error eliminando el campo, intente nuevamente')
     });
   };
 
   modalInsertar = () => {
+    let pkuser = JSON.parse(
+      sessionStorage.getItem('user')
+    ).pk_usuario_sesion;
+    this.setState({ 
+        modalInsertar: !this.state.modalInsertar, 
+        tipoModal: 'insertar', 
+        form: { id: 0, nombre: '', descripcion: '', estado_id: '', pkuser: pkuser } 
+    });
+  };
+
+  modalEditar = (info) => {
+    this.seleccionarRegistro(info)
     this.setState({ modalInsertar: !this.state.modalInsertar });
   };
 
+  modalEliminar = (info) => {
+    this.seleccionarRegistro(info)
+    this.setState({ modalEliminar: !this.state.modalEliminar });
+  };
+
   seleccionarRegistro = field => {
+    let pkuser = JSON.parse(
+      sessionStorage.getItem('user')
+    ).pk_usuario_sesion;
     this.setState({
       tipoModal: 'actualizar',
       form: {
@@ -84,21 +147,27 @@ class viewTiposCurvas extends Component {
         nombre: field.nombre,
         descripcion: field.descripcion,
         estado_id: field.estado_id,
-      },
+        pkuser: pkuser
+      }
     });
   };
 
-  handleChange = async e => {
+  handleChange = e => {
     e.persist();
-    await this.setState({
+    this.setState({
       form: {
         ...this.state.form,
         [e.target.name]: e.target.value,
       },
     });
-    this.state.form.pkuser = JSON.parse(
-      sessionStorage.getItem('user')
-    ).pk_usuario_sesion;
+  };
+
+  onFilter = search => {
+    const responseSearch = this.state.data.filter( ({nombre}) => {
+      nombre = nombre.toLowerCase();
+      return nombre.includes(search.target.value.toLowerCase());
+    });
+    this.setState({dataSearch:  responseSearch});
   };
 
   componentDidMount() {
@@ -108,62 +177,101 @@ class viewTiposCurvas extends Component {
   render() {
     const { form } = this.state;
     return (
-      <div className="App">
+      <>
         <Cabecera />
-        <SideBar pageWrapId={'page-wrap'} outerContainerId={'App'} />
-
-        <div className="containerCuatro">
-          <button
-            className="btn btn-success"
-            onClick={() => {
-              this.setState({ form: null, tipoModal: 'insertar' });
-              this.modalInsertar();
-            }}
-          >
-            <iconList.Add /> Agregar Campo
-          </button>
-        </div>
-        <div
-          className="form-group col-11"
-          style={{ float: 'left', padding: '30px 0 0 30px' }}
-        >
-          <Materialtable
-            title={'Listado de Campos'}
-            columns={columns}
-            data={this.state.data}
-            icons={iconList}
-            actions={[
-              {
-                icon: iconList.Edit,
-                tooltip: 'Editar',
-                onClick: (event, rowData) => {
-                  this.seleccionarRegistro(rowData);
+        <Sidebar />
+        <nav aria-label="breadcrumb" className='small'>
+          <ol className="breadcrumb">
+            <li className="breadcrumb-item">Curvas</li>
+            <li className="breadcrumb-item active" aria-current="page">Campos</li>
+          </ol>
+        </nav>
+       
+        <div className='container-xl'>
+          <Row >
+            <Col span={24}>
+              <h3>Listado de Campos</h3>
+            </Col>
+          </Row>
+          <Row >
+            <Col span={12}>
+              <Search
+                placeholder="Buscar"
+                onChange={(value) => this.onFilter(value)}
+                enterButton={false}
+              />
+            </Col>
+            <Col span={12} className='text-right'>
+              <button
+                className="btn btn-success btn-sm"
+                onClick={() => {
+                  this.setState({ form: null, tipoModal: 'insertar' });
                   this.modalInsertar();
-                },
-              },
-              {
-                icon: iconList.Delete,
-                tooltip: 'Eliminar',
-                onClick: (event, rowData) => {
-                  this.seleccionarRegistro(rowData);
-                  this.setState({ modalEliminar: true });
-                },
-              },
-            ]}
-            options={{
-              actionsColumnIndex: -1,
-            }}
-            localization={{
-              header: { actions: 'Acciones' },
-            }}
-          />
-        </div>
+                }}
+              >
+                <iconList.Add /> Agregar Campo
+              </button>
+            </Col>
+          </Row>
+          <Row >
+            <Col span={24}>
+              <Table
+                tableLayout="fixed"
+                pagination={{ pageSize: 10 }}
+                dataSource={this.state.dataSearch}
+                rowKey="id"
+                key="id"
+                columns={[
+                  {
+                    title: 'Nombre',
+                    dataIndex: 'nombre',
+                    key: 'nombre',
+                    width: '30%',
+                  },
+                  {
+                    title: 'Descripción',
+                    dataIndex: 'descripcion',
+                    key: 'descripcion',
+                    width: '55%',
+                  },
+                  {
+                    title: 'Acción',
+                    width: '10%',
+                    render: info => {
+                      return (
+                      <Row gutter={8} justify="center">
+                        <Col span={4} style={{ cursor: 'pointer' }}>
+                          <Tooltip title="Editar">
+                            <span onClick={() => this.modalEditar(info)}>
+                              <iconList.Edit />
+                            </span>
+                          </Tooltip>
+                        </Col>
+                        <Col span={4} style={{ cursor: 'pointer' }}>
+                          <Tooltip title="Eliminar">
+                            <span onClick={() => this.modalEliminar(info)}>
+                              <iconList.Delete />
+                            </span>
+                          </Tooltip>
+                        </Col>
+                      </Row>
+                      )
+                    }
+                  }
+                ]}
+                bordered
+              />
+            </Col>
+          </Row>
+        </div> 
+
+        <Footer />
 
         <Modal isOpen={this.state.modalInsertar}>
           <ModalHeader style={{ display: 'block' }}>
             <span
               style={{ float: 'right' }}
-              onClick={() => this.modalInsertar()}
+              onClick={() => this.modalEditar()}
             >
               <iconList.CancelIcon />
             </span>
@@ -247,7 +355,7 @@ class viewTiposCurvas extends Component {
                 onChange={this.handleChange}
                 value={form ? form.id : this.state.data.length + 1}
               />
-              <label htmlFor="nombre">Nombre</label> &nbsp;
+              <label htmlFor="nombre"><b>Nombre:</b></label> &nbsp;
               {form ? form.nombre : ''}
             </div>
           </ModalBody>
@@ -259,15 +367,15 @@ class viewTiposCurvas extends Component {
               Si
             </button>
             <button
-              className="btn btn-secundary"
+              className="btn btn-secondary"
               onClick={() => this.setState({ modalEliminar: false })}
             >
               No
             </button>
           </ModalFooter>
         </Modal>
-      </div>
+      </>
     );
   }
 }
-export default viewTiposCurvas;
+export default viewFields;

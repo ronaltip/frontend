@@ -1,130 +1,133 @@
-import React, {  Component, forwardRef } from 'react'; 
-import axios from "axios";
-import "bootstrap/dist/css/bootstrap.min.css";
+import React, { Component } from 'react';
+import axios from 'axios';
+import 'bootstrap/dist/css/bootstrap.min.css';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
-import Materialtable from 'material-table';
-
-import TextField from '@material-ui/core/TextField';
-import Autocomplete from '@material-ui/lab/Autocomplete';
-
-import AddBox from '@material-ui/icons/AddBox';
-import ArrowDownward from '@material-ui/icons/ArrowDownward';
-import Check from '@material-ui/icons/Check';
-import ChevronLeft from '@material-ui/icons/ChevronLeft';
-import ChevronRight from '@material-ui/icons/ChevronRight';
-import Clear from '@material-ui/icons/Clear';
-import CancelIcon from '@material-ui/icons/Cancel';
-import DeleteOutline from '@material-ui/icons/DeleteOutline';
-import Edit from '@material-ui/icons/Edit';
-import FilterList from '@material-ui/icons/FilterList';
-import FirstPage from '@material-ui/icons/FirstPage';
-import LastPage from '@material-ui/icons/LastPage';
-import Remove from '@material-ui/icons/Remove';
-
-import SaveAlt from '@material-ui/icons/SaveAlt';
-import Search from '@material-ui/icons/Search';
-import ViewColumn from '@material-ui/icons/ViewColumn';
-
-//import Cookies from 'universal-cookie';
-import SideBar from "../componentes/sidebar";
-import Cabecera from "../componentes/cabecera";
+import iconList from '../util/iconList';
 import '../css/styles.css';
-//const cookies = new Cookies();
+import {
+  Col,
+  message,
+  Row,
+  Table,
+  Tooltip,
+  Input
+} from 'antd';
+import Cabecera from '../componentes/cabecera';
+import Sidebar from '../componentes/sidebar';
+import Footer from '../componentes/footer';
+
 
 const URL = process.env.REACT_APP_API_HOST; 
-//const url = "http://localhost:9000/wits_homologacion";
-//const urlAuxiliar = "http://localhost:9000/tipo_curvas"; 
-//const urlAuxilir2 = "http://localhost:9000/wits_detalle";
- 
-
-const columns = [
-    { title: 'Level', field: 'level' },
-    { title: 'Codigo Wits', field: 'codigo' },
-    { title: 'Mnemonico', field: 'short_mnemonico' },
-    { title: 'Descripción', field: 'descripcion' }
-];
-
-const tableIcons = {
-    Add: forwardRef((props, ref) => <AddBox {...props} ref={ref} />),
-    Check: forwardRef((props, ref) => <Check {...props} ref={ref} />),
-    Clear: forwardRef((props, ref) => <Clear {...props} ref={ref} />),
-    Delete: forwardRef((props, ref) => <DeleteOutline {...props} ref={ref} />),
-    DetailPanel: forwardRef((props, ref) => <ChevronRight {...props} ref={ref} />),
-    Edit: forwardRef((props, ref) => <Edit {...props} ref={ref} />),
-    Export: forwardRef((props, ref) => <SaveAlt {...props} ref={ref} />),
-    Filter: forwardRef((props, ref) => <FilterList {...props} ref={ref} />),
-    FirstPage: forwardRef((props, ref) => <FirstPage {...props} ref={ref} />),
-    LastPage: forwardRef((props, ref) => <LastPage {...props} ref={ref} />),
-    NextPage: forwardRef((props, ref) => <ChevronRight {...props} ref={ref} />),
-    PreviousPage: forwardRef((props, ref) => <ChevronLeft {...props} ref={ref} />),
-    ResetSearch: forwardRef((props, ref) => <Clear {...props} ref={ref} />),
-    Search: forwardRef((props, ref) => <Search {...props} ref={ref} />),
-    SortArrow: forwardRef((props, ref) => <ArrowDownward {...props} ref={ref} />),
-    ThirdStateCheck: forwardRef((props, ref) => <Remove {...props} ref={ref} />),
-    ViewColumn: forwardRef((props, ref) => <ViewColumn {...props} ref={ref} />)
-} 
-
+const { Search } = Input;
 
 class viewWits extends Component {
 
     state = {
-        data: [],
+        data: [],  dataSearch: [],
     }
        
     peticionGet = async () => {
         axios.get(URL + 'wits_detalle').then(response => {
-            this.setState({ data: response.data });
+            if (response.status === 200)
+                this.setState({ data: response.data, dataSearch: response.data });
+            else
+            {
+                console.log(response.data);
+                message.error('Ocurrió un error consultando la tabla wits0, intente nuevamente')
+            }
         }).catch(error => {
+            message.error('Ocurrió un error consultando la tabla wits0, intente nuevamente')
             console.log(error.message);
         })
     };
-
-  
-    useEffect = () => {
-        this.peticionGet();
+    
+    onFilter = search => {
+        let searched = search.target.value.toLowerCase();
+        const responseSearch = this.state.data.filter( ({level, codigo, descripcion, nombre, short_mnemonico }) => {
+          level = level.toLowerCase();
+          codigo = codigo.toLowerCase();
+          descripcion = descripcion.toLowerCase();
+          nombre = nombre.toLowerCase();
+          short_mnemonico = short_mnemonico.toLowerCase();
+        
+          return level.includes(searched) || codigo.includes(searched) || 
+          descripcion.includes(searched) || 
+          nombre.includes(searched) || 
+          short_mnemonico.includes(searched) 
+        });
+        this.setState({dataSearch:  responseSearch});
     };
-     
    
     componentDidMount() {
         this.peticionGet();
     }
 
-    NoAction = () => {
-
-    }
-    
-
     render() {
                 
         return (
-            <div className="App">                
+            <>                
                 <Cabecera />
-                <SideBar pageWrapId={"page-wrap"} outerContainerId={"App"} />
-              
-                <div className="container-fluid" >
-                    <div className="col-md-12">
-                    <Materialtable
-                        title={"Tabla WITS 0"}
-                        columns={columns}
-                        data={this.state.data}
-                        icons={tableIcons}
-                        actions={[]}
-                        options={{
-                            actionsColumnIndex: -1,
-                            pageSize: 10,
-                           
-                        }}
-                        localization={{
-                            header: { actions: 'Acciones' }
-                        }}
-                        onPageChange={() => this.NoAction()}
-                        onChangeRowsPerPage= {() => this.NoAction()}
-                        forwardRef={()=>this.NoAction()}
-                    />
-                    </div>
-                </div>
-                
-            </div>
+                <Sidebar />
+                <nav aria-label="breadcrumb" className='small'>
+                    <ol className="breadcrumb">
+                        <li className="breadcrumb-item">Curvas</li>
+                        <li className="breadcrumb-item active" aria-current="page">Estandar Wits 0</li>
+                    </ol>
+                </nav>
+
+                <div className='container-xl'>
+                    <Row >
+                        <Col span={24}>
+                            <h3>Estandar Wits 0</h3>
+                        </Col>
+                    </Row>
+                    <Row >
+                        <Col span={12}>
+                        <Search
+                            placeholder="Buscar"
+                            onChange={(value) => this.onFilter(value)}
+                            enterButton={false}
+                        />
+                        </Col>
+                    </Row>
+                    <Row >
+                        <Col span={24}>
+                        <Table
+                            tableLayout="fixed"
+                            pagination={{ pageSize: 10 }}
+                            dataSource={this.state.dataSearch}
+                            rowKey="id"
+                            key="id"
+                            columns={[
+                            {
+                                title: 'Level',
+                                dataIndex: 'level',
+                                key: 'level',
+                            },
+                            {
+                                title: 'Codigo Wits',
+                                dataIndex: 'codigo',
+                                key: 'codigo',
+                            },
+                            {
+                                title: 'Mnemonico',
+                                dataIndex: 'short_mnemonico',
+                                key: 'short_mnemonico',
+                            },
+                            {
+                                title: 'Descripción',
+                                dataIndex: 'descripcion',
+                                key: 'descripcion',
+                            }
+                            ]}
+                            bordered
+                        />
+                        </Col>
+                    </Row>
+                </div>   
+
+                <Footer />            
+            </>
         );
     }
      

@@ -236,7 +236,7 @@ export default props => {
                 </ListItemIcon>
                 <ListItemText primary="Fels" />
               </ListItem>
-              <ListItem
+              {/* <ListItem
                 button
                 className={classes.nested}
                 component={Link}
@@ -246,7 +246,7 @@ export default props => {
                   <FormatListNumberedRtlIcon />
                 </ListItemIcon>
                 <ListItemText primary="Configuraci&oacute;n de Archivos" />
-              </ListItem>
+              </ListItem> */}
             </List>
           </Collapse>
           <ListItem button onClick={handleClick4}>

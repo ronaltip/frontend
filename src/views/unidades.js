@@ -1,24 +1,29 @@
-import React, { Component, forwardRef } from 'react';
+import React, { Component } from 'react';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
-import Materialtable from 'material-table';
-import SideBar from '../componentes/sidebar';
-import Cabecera from '../componentes/cabecera';
 import iconList from '../util/iconList';
 import '../css/styles.css';
+import {
+  Col,
+  message,
+  Row,
+  Table,
+  Tooltip,
+  Input
+} from 'antd';
+import Cabecera from '../componentes/cabecera';
+import Sidebar from '../componentes/sidebar';
+import Footer  from '../componentes/footer';
 
 const URL = process.env.REACT_APP_API_HOST;
-//const url = "http://localhost:9000/unidades";
+const { Search } = Input;
 
-const columns = [
-  { title: 'Nombre', field: 'nombre' },
-  { title: 'Tag', field: 'tag' },
-];
 class viewUnidades extends Component {
   state = {
-    data: [],
+    data: [], dataSearch: [],
     modalInsertar: false,
+    modalEditar: false,
     modalEliminar: false,
     tipoModal: '',
     form: { id: '', nombre: '', tag: '', estado_id: '', pkuser: '' },
@@ -28,15 +33,18 @@ class viewUnidades extends Component {
     axios
       .get(URL + 'unidades')
       .then(response => {
-        this.setState({ data: response.data });
+        if (response.status === 200)
+          this.setState({ data: response.data, dataSearch: response.data });
+        else
+        {
+          console.log(response.data);
+          message.error('Ocurrió un error consultando las unidades de medida, intente nuevamente')
+        }
       })
       .catch(error => {
-        console.log(error.message);
+          message.error('Ocurrió un error consultando las unidades de medida, intente nuevamente')
+          console.log(error.message);
       });
-  };
-
-  useEffect = () => {
-    this.peticionGet();
   };
 
   peticionPost = async () => {
@@ -44,18 +52,40 @@ class viewUnidades extends Component {
     await axios
       .post(URL + 'unidades', this.state.form)
       .then(response => {
-        this.modalInsertar();
-        this.peticionGet();
+        if (response.status === 200)
+        {
+          this.modalInsertar();
+          this.peticionGet();
+          message.success('Unidad de medida creada con éxito')
+        }
+        else
+        {
+          console.log(response.data);
+          message.error('Ocurrió un error creando la unidad de medida, intente nuevamente')
+        }
       })
       .catch(error => {
-        console.log(error.message);
+          message.error('Ocurrió un error creando la unidad de medida, intente nuevamente')
+          console.log(error.message);
       });
   };
 
   peticionPut = () => {
     axios.put(URL + 'unidades', this.state.form).then(response => {
-      this.modalInsertar();
-      this.peticionGet();
+      if (response.status === 200)
+      {
+        this.modalInsertar();
+        this.peticionGet();
+        message.success('Unidad de medida actualizado con éxito')
+      }
+      else
+      {
+        console.log(response.data);
+        message.error('Ocurrió un error actualizando la unidad de medida, intente nuevamente')
+      }
+    }).catch(error => {
+      message.error('Ocurrió un error actualizando la unidad de medida, intente nuevamente')
+      console.log(error.message);
     });
   };
 
@@ -66,40 +96,76 @@ class viewUnidades extends Component {
     };
 
     axios.delete(URL + 'unidades', { data: datos }).then(response => {
-      this.setState({ modalEliminar: false });
-      this.peticionGet();
+      if (response.status === 200)
+      {
+        this.setState({ modalEliminar: false });
+        this.peticionGet();
+        message.success('Unidad de medida eliminada con éxito')
+      }
+      else
+      {
+        console.log(response.data);
+        message.error('Ocurrió un error eliminando la unidad de medida, intente nuevamente')
+      }
+    }).catch(error => {
+      console.log(error.message);
+      message.error('Ocurrió un error aliminando la unidad de medida, intente nuevamente')
     });
   };
 
   modalInsertar = () => {
+    let pkuser = JSON.parse(
+      sessionStorage.getItem('user')
+    ).pk_usuario_sesion;
+    this.setState({ modalInsertar: !this.state.modalInsertar,
+      tipoModal: 'insertar', 
+      form: { id: 0, nombre: '', tag: '', estado_id: '', pkuser: pkuser } 
+    });
+  };
+
+  modalEditar = (info) => {
+    this.seleccionarRegistro(info)
     this.setState({ modalInsertar: !this.state.modalInsertar });
   };
 
+  modalEliminar = (info) => {
+    this.seleccionarRegistro(info)
+    this.setState({ modalEliminar: !this.state.modalEliminar });
+  };
+
   seleccionarRegistro = unidades => {
+    let pkuser = JSON.parse(
+      sessionStorage.getItem('user')
+    ).pk_usuario_sesion;
     this.setState({
       tipoModal: 'actualizar',
       form: {
         id: unidades.id,
         nombre: unidades.nombre,
         tag: unidades.tag,
-      },
+        estado_id: unidades.estado_id,
+        pkuser: pkuser
+      }
     });
   };
 
-  handleChange = async e => {
-    e.persist();
-    await this.setState({
+  handleChange = e => {
+    this.setState({
       form: {
         ...this.state.form,
         [e.target.name]: e.target.value,
       },
     });
-    //console.log(this.state.form);
-    this.state.form.pkuser = JSON.parse(
-      sessionStorage.getItem('user')
-    ).pk_usuario_sesion;
   };
 
+  onFilter = search => {
+    const responseSearch = this.state.data.filter( ({nombre}) => {
+      nombre = nombre.toLowerCase();
+      return nombre.includes(search.target.value.toLowerCase());
+    });
+    this.setState({dataSearch:  responseSearch});
+  };
+  
   componentDidMount() {
     this.peticionGet();
   }
@@ -108,56 +174,94 @@ class viewUnidades extends Component {
     const { form } = this.state;
 
     return (
-      <div className="App">
+      <>
         <Cabecera />
-        <SideBar pageWrapId={'page-wrap'} outerContainerId={'App'} />
-
-        <div className="containerCuatro">
-          <button
-            className="btn btn-success"
-            onClick={() => {
-              this.setState({ form: null, tipoModal: 'insertar' });
-              this.modalInsertar();
-            }}
-          >
-            <iconList.Add /> Agregar Unidad
-          </button>
-        </div>
-        <div
-          className="form-group col-11"
-          style={{ float: 'left', padding: '30px 0 0 30px' }}
-        >
-          <Materialtable
-            title={'Listado de Unidades de Medida'}
-            columns={columns}
-            data={this.state.data}
-            icons={iconList}
-            actions={[
-              {
-                icon: iconList.Edit,
-                tooltip: 'Editar',
-                onClick: (event, rowData) => {
-                  this.seleccionarRegistro(rowData);
+        <Sidebar />
+        <nav aria-label="breadcrumb" className='small'>
+          <ol className="breadcrumb">
+            <li className="breadcrumb-item">Configuración</li>
+            <li className="breadcrumb-item active" aria-current="page">Unidades de Medida</li>
+          </ol>
+        </nav>
+       
+        <div className='container-xl'>
+          <Row >
+            <Col span={24}>
+              <h3>Listado de Uniades de Medida</h3>
+            </Col>
+          </Row>
+          <Row >
+            <Col span={12}>
+              <Search
+                placeholder="Buscar"
+                onChange={(value) => this.onFilter(value)}
+                enterButton={false}
+              />
+            </Col>
+            <Col span={12} className='text-right'>
+              <button
+                className="btn btn-success btn-sm"
+                onClick={() => {
+                  this.setState({ form: null, tipoModal: 'insertar' });
                   this.modalInsertar();
-                },
-              },
-              {
-                icon: iconList.Delete,
-                tooltip: 'Eliminar',
-                onClick: (event, rowData) => {
-                  this.seleccionarRegistro(rowData);
-                  this.setState({ modalEliminar: true });
-                },
-              },
-            ]}
-            options={{
-              actionsColumnIndex: -1,
-            }}
-            localization={{
-              header: { actions: 'Acciones' },
-            }}
-          />
-        </div>
+                }}
+              >
+                <iconList.Add /> Agregar Unidad
+              </button>
+            </Col>
+          </Row>
+          <Row >
+            <Col span={24}>
+              <Table
+                tableLayout="fixed"
+                pagination={{ pageSize: 10 }}
+                dataSource={this.state.dataSearch}
+                rowKey="id"
+                key="id"
+                columns={[
+                  {
+                    title: 'Nombre',
+                    dataIndex: 'nombre',
+                    key: 'nombre',
+                    width: '30%',
+                  },
+                  {
+                    title: 'Tag',
+                    dataIndex: 'tag',
+                    key: 'tag',
+                  },
+                  {
+                    title: 'Acción',
+                    width: '10%',
+                    render: info => {
+                      return (
+                      <Row gutter={8} justify="center">
+                        <Col span={4} style={{ cursor: 'pointer' }}>
+                          <Tooltip title="Editar">
+                            <span onClick={() => this.modalEditar(info)}>
+                              <iconList.Edit />
+                            </span>
+                          </Tooltip>
+                        </Col>
+                        <Col span={4} style={{ cursor: 'pointer' }}>
+                          <Tooltip title="Eliminar">
+                            <span onClick={() => this.modalEliminar(info)}>
+                              <iconList.Delete />
+                            </span>
+                          </Tooltip>
+                        </Col>
+                      </Row>
+                      )
+                    }
+                  }
+                ]}
+                bordered
+              />
+            </Col>
+          </Row>
+        </div> 
+
+        <Footer />
 
         <Modal isOpen={this.state.modalInsertar}>
           <ModalHeader style={{ display: 'block' }}>
@@ -247,7 +351,7 @@ class viewUnidades extends Component {
                 onChange={this.handleChange}
                 value={form ? form.id : this.state.data.length + 1}
               />
-              <label htmlFor="nombre">Nombre: &nbsp; </label>
+              <label htmlFor="nombre"><b>Nombre:</b> &nbsp; </label>
               {form ? form.nombre : ''}
             </div>
           </ModalBody>
@@ -260,14 +364,14 @@ class viewUnidades extends Component {
               Si
             </button>
             <button
-              className="btn btn-secundary"
+              className="btn btn-secondary"
               onClick={() => this.setState({ modalEliminar: false })}
             >
               No
             </button>
           </ModalFooter>
         </Modal>
-      </div>
+      </>
     );
   }
 }

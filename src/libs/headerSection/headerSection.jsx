@@ -7,7 +7,7 @@ import './_headerSection.css';
 
 const HeaderSection = ({ onClick, titleButton }) => {
   return (
-    <div>
+    <>
       <Cabecera />
       <SideBar pageWrapId={'page-wrap'} outerContainerId={'App'} />
       <div className="buttonHeader">
@@ -16,7 +16,7 @@ const HeaderSection = ({ onClick, titleButton }) => {
           {titleButton}
         </button>
       </div>
-    </div>
+    </>
   );
 };
 

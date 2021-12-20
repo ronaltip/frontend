@@ -4,7 +4,10 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 import SideBar from '../componentes/sidebar';
 import Cabecera from '../componentes/cabecera';
+import Footer from '../componentes/footer';
 import '../css/styles.css';
+import '../css/button.css';
+
 import { message } from 'antd';
 import axios from "axios";
 import { CheckCircleOutline, Warning, Refresh } from '@material-ui/icons';
@@ -97,26 +100,34 @@ class Home extends Component {
   }
 
   componentDidMount() {
+    this.getWitsDetalle();
     this.getTipoEventos();
     this.getConvencion();
-    this.getWitsDetalle();
   }
 
   render() {
     return (
-      <div id="Home">
+      <>
         <Cabecera />
         <SideBar pageWrapId={'page-wrap'} outerContainerId={'App'} />
+        <nav aria-label="breadcrumb" className='small'>
+          <ol className="breadcrumb">
+            <li className="breadcrumb-item">Inicio</li>
+          </ol>
+        </nav>
         <div className="container">
 
           <div className="row mt-5">
             <div className="col-md-5 col-lg-4"></div>
-              <table className="table table-sm table-striped">
+              <table className="table table-sm table-striped ">
                 <tbody>
+                  <tr className='bg-verdeoscuro'>
+                    <th colSpan={'3'}>CARGUE INICIAL DE INFORMACIÓN</th>
+                  </tr>
                   <tr>
 
                     <td style={{width: '90%'}}>
-                      Convención datos de Operación &nbsp;&nbsp;
+                      Convención Datos de Operación &nbsp;&nbsp;
                       
                     </td>
                     <td>
@@ -189,9 +200,8 @@ class Home extends Component {
                     </td>
                   </tr>
                   <tr>
-
                     <td >
-                      Tipos de Curva &nbsp;&nbsp;
+                      Estandar Wits 0 &nbsp;&nbsp;
                     </td>
                     <td>
                       {
@@ -227,10 +237,12 @@ class Home extends Component {
                   </tr>
                 </tbody>
               </table>
-            </div>
+          </div>
             
         </div>
-      </div>
+        <Footer/>
+      </>
+
     );
   }
 }

@@ -14,9 +14,10 @@ import "../css/button.css";
 
 import SideBar from '../componentes/sidebar';
 
-import {Save, HorizontalSplit, BarChart, Brush, CalendarToday, Delete, EventNote, Close, Home, PlaylistAddCheck, EventAvailable, PlayCircleOutline, MultilineChart, SlowMotionVideo, LayersClear, InvertColorsOff, CreateNewFolderOutlined } from '@material-ui/icons';
+import {Save, HorizontalSplit, BarChart, Brush, CalendarToday, Delete, EventNote, Close, Home, PlaylistAddCheck, EventAvailable, PlayCircleOutline, MultilineChart, SlowMotionVideo, LayersClear, InvertColorsOff, CreateNewFolderOutlined, FormatListNumbered } from '@material-ui/icons';
 import { TextField, Menu, MenuItem } from '@material-ui/core'
 import { message } from 'antd';
+import {CAVING_COLS} from '../util/constants/enums';
 
 const URL = process.env.REACT_APP_API_HOST; 
 
@@ -102,6 +103,7 @@ class Graficador extends Component {
             dataGP:[], configGP: {}, layoutGP: {}, 
             dataTH:[], layoutTH: {},
             dataTV:[], layoutTV: {}, 
+            dataCaving: [],layoutCaving: {}, 
 
             toggleHorizontales: 0,
             togglePrincipal: false,
@@ -112,6 +114,7 @@ class Graficador extends Component {
 
             plotDeptVH:  '95vh',
             plotTrackVH: '0vh',
+            plotCavingVH: '0vh',
             plotDeptCol: 'col-md-12',
             colVertical:    'col-md-12',
             colVerticalFEL: 'col-md-3',
@@ -123,11 +126,13 @@ class Graficador extends Component {
             horizontal: [],
             archivos_las: [],
             fel: {},
+            archivos_caving: [],
+
             isLoadedPrincipal: false,
             isLoadedHorizontal:false,
             isLoadedVertical: false,
             isLoadedVerticalFEL: false,
-
+            isLoadedCaving: false,
 
             openModalOperacion: false,
             openModalEvento: false,
@@ -404,6 +409,7 @@ class Graficador extends Component {
         const h = [...dataCurvas.filter( c =>  c.grupo !== null )]
         const a = [...this.state.archivos_las]
         const f = {...this.state.fel}
+        const c = [...this.state.archivos_caving]
 
         if (open)
         {
@@ -412,18 +418,21 @@ class Graficador extends Component {
             sessionStorage.setItem('horizontal',   JSON.stringify(h) )
             sessionStorage.setItem('archivos_las', JSON.stringify(a) )
             sessionStorage.setItem('fel', JSON.stringify(f) )
+            sessionStorage.setItem('archivos_caving', JSON.stringify(c) )
 
 
             let principal    = JSON.parse( sessionStorage.getItem('principal') )
             let horizontal   = JSON.parse( sessionStorage.getItem('horizontal') )
             let archivos_las = JSON.parse( sessionStorage.getItem('archivos_las') )
             let fel = JSON.parse( sessionStorage.getItem('fel') )
+            let archivos_caving = JSON.parse( sessionStorage.getItem('archivos_caving') )
 
             
             this.setState({ 
                 principal:    principal,
                 horizontal:   horizontal,
                 archivos_las: archivos_las,
+                archivos_caving: archivos_caving,
                 fel:          fel,
                 modalConfig:  open,
                 loadingConfig: false,
@@ -442,7 +451,7 @@ class Graficador extends Component {
                 this.SetSerieGraficaPrincipal( curvas.filter(c=> c.grupo === null ) )
                 this.SetSerieTrackHorizontal ( curvas.filter(c=> c.grupo !== null ) )
                 
-                this.SetSerieTrackVertical()
+                this.SetSerieTrackVertical( curvas.filter(c=> c.grupo !== null && c.mostrar_vertical) )
 
                 this.setState({isLoadedVerticalFEL: this.state.fel.checked_fel})
 
@@ -457,7 +466,6 @@ class Graficador extends Component {
                 this.setState({ 
                     principal:  [],
                     horizontal: [],
-                    fel: {},
                     modalConfig: open,
                     loadingConfig: false
                 });
@@ -465,6 +473,7 @@ class Graficador extends Component {
             sessionStorage.removeItem('principal');
             sessionStorage.removeItem('horizontal');
             sessionStorage.removeItem('archivos_las');
+            sessionStorage.removeItem('archivos_caving');
             sessionStorage.removeItem('fel');
 
         }
@@ -596,7 +605,7 @@ class Graficador extends Component {
         });
     }
 
-    handleConfigChangeHorizontal = (e, esCheck) => {
+    handleConfigChangeHorizontal = (e, esCheck, isTrackVert) => {
         let ids= e.target.id.split('_');
 
         const h = [...this.state.horizontal]
@@ -604,9 +613,20 @@ class Graficador extends Component {
             if (r.id == ids[1])
             {
                 if (esCheck)
-                    r.mostrar = !r.mostrar
+                {
+                    if (isTrackVert)
+                        r.mostrar_vertical = !r.mostrar_vertical
+                    else
+                        r.mostrar = !r.mostrar
+                }
                 else
-                    r.grupo = e.target.value ? e.target.value : 1 
+                {
+                    if (isTrackVert)
+                        r.grupo_vertical = e.target.value ? e.target.value : 1 
+                    else
+                        r.grupo = e.target.value ? e.target.value : 1 
+
+                }
             }
         });
 
@@ -652,7 +672,7 @@ class Graficador extends Component {
 
     }
 
-    handleChangeLas = (e) => {
+    handleChangeLas = (e, esCheck, isTrackVert) => {
         let ids = e.target.id.split('_');
 
         const a = [...this.state.archivos_las]
@@ -661,7 +681,21 @@ class Graficador extends Component {
             {
                 arc.homologacion.forEach( h => {
                     if (h.id == ids[2])
-                        h.mostrar = !h.mostrar
+                    {
+                        if (esCheck)
+                        {
+                            if (isTrackVert)
+                                h.mostrar_vertical = !h.mostrar_vertical
+                            else
+                                h.mostrar = !h.mostrar
+                        }
+                        else
+                        {
+                            if (isTrackVert)
+                                h.grupo_vertical = e.target.value ? e.target.value : 1 
+                            
+                        }   
+                    }
                 })
             }
         });
@@ -678,6 +712,36 @@ class Graficador extends Component {
             checked_fel: e.target.checked
             }
         })
+    }
+
+    handleChangeCaving = (e, isGroup, isSize) => {
+        let ids = e.target.id.split('_');
+
+        const a = [...this.state.archivos_caving]
+        
+        a.forEach((arc) => {
+            if (arc.id == ids[1])
+            {
+                if (isGroup)
+                {
+                    if (isSize)
+                        arc.mostrar_size = e.target.checked
+                    else
+                        arc.mostrar_morfo = e.target.checked
+                }
+                else
+                {
+                    arc.homologacion.forEach( h => {
+                        if (h.id == ids[2])
+                            h.mostrar = !h.mostrar
+                    })
+                }
+            }
+        });
+        this.setState({
+            archivos_caving: a
+        })
+        
     }
 
     getFields = async () => {
@@ -906,6 +970,8 @@ class Graficador extends Component {
                         const [curva] = this.GetDetalle(h.codigo)
                         h.descripcion = curva.descripcion
                         h.short_mnemonico = curva.short_mnemonico
+                        h.mostrar_vertical = false
+                        h.grupo_vertical = null
                     })
    
                     this.setState( prev => ({  dataArchivosCurvas: [...prev.dataArchivosCurvas,  {id: row.id, datos: row.datos}] }));
@@ -915,6 +981,23 @@ class Graficador extends Component {
                 })
                 console.log('Archivos LAS cargados')
                 this.setState({ archivos_las: archivos_las });
+                
+
+                archivos_caving.forEach( row => {
+                    row.homologacion.forEach( h => {
+                        
+                        const [curva] = this.GetDetalle(h.codigo)
+                        h.descripcion = curva ? curva.descripcion : ''
+                        h.short_mnemonico = curva ? curva.short_mnemonico : ''
+                        h.mostrar_vertical = false
+                        h.grupo_vertical = null
+                    })
+                    row.mostrar_size  = true
+                    row.mostrar_morfo = true
+                })
+                this.setState({ archivos_caving: archivos_caving });
+                console.log('Archivos CAVING cargados')
+
                 resolve(true)
             }).catch(error => {
                 console.log(error.message);
@@ -949,7 +1032,7 @@ class Graficador extends Component {
                     const layout_FEL = {
                         autosize: true,
                         uirevision: 'true',
-                        margin: { l: 0, r: 40, t: 80, b: 5 },
+                        margin: { l: 0, r: 40, t: 80, b: 30 },
                         dragmode: 'zoom',
                         hovermode: 'closest',
                         plot_bgcolor: 'white',
@@ -1035,7 +1118,8 @@ class Graficador extends Component {
                     toggleTrackHorizontal: false,
                     plotDeptCol: this.state.toggleTrackVertical ? 'col-md-8' : 'col-md-12',
                     plotDeptVH:  '95vh',
-                    plotTrackVH: '0vh'
+                    plotTrackVH: '0vh',
+                    plotCavingVH: '0vh',
                 })
                 break;
             case 2: 
@@ -1045,7 +1129,8 @@ class Graficador extends Component {
                     toggleTrackHorizontal: true,
                     plotDeptCol: this.state.toggleTrackVertical ? 'col-md-8' : 'col-md-12',
                     plotDeptVH:  '55vh',
-                    plotTrackVH: '40vh'
+                    plotTrackVH: this.state.dataTH.length > 0 ?  (this.state.dataCaving.length > 0 ? '25vh' : '45vh') : '0vh',
+                    plotCavingVH: this.state.dataCaving.length > 0 ? (this.state.dataTH.length > 0 ? '15vh' : '45vh') : '0vh',
                 })
                 break;
             case 3:
@@ -1055,7 +1140,9 @@ class Graficador extends Component {
                     toggleTrackHorizontal: true,
                     plotDeptCol: this.state.toggleTrackVertical ? 'col-md-8' : 'col-md-12',
                     plotDeptVH:  '0vh',
-                    plotTrackVH: '95vh'
+                    plotTrackVH: this.state.dataTH.length > 0 ? (this.state.dataCaving.length > 0 ? '70vh': '95vh') : '0vh',
+                    plotCavingVH: this.state.dataCaving.length > 0 ? (this.state.dataTH.length > 0 ? '25vh' : '95vh') : '0vh',
+
                 })
                 break
             default:
@@ -1070,7 +1157,7 @@ class Graficador extends Component {
         let layout_Principal = {
             autosize: true,
             uirevision: 'true',
-            margin: { l: 80, r: 40, t: 80, b: 5 }, 
+            margin: { l: 50, r: 40, t: 80, b: 5 }, 
             dragmode: 'zoom',
             hovermode: 'closest',
             plot_bgcolor:'white' ,
@@ -1100,10 +1187,11 @@ class Graficador extends Component {
             shapes: [],
             datarevision: 1
         }
+
         let layout_Horizontal = {
             autosize: true,
             uirevision: 'true',
-            margin: { l: 60, r: 40, t: 30, b: 40 }, 
+            margin: { l: 40, r: 40, t: 30, b: 30 }, 
             dragmode: 'zoom',
             hovermode: 'x',
             plot_bgcolor: 'white',
@@ -1118,7 +1206,7 @@ class Graficador extends Component {
         let layout_Vertical = {
             autosize: true,
             uirevision: 'true',
-            margin: { l: 40, r: 40, t: 80, b: 5 },
+            margin: { l: 40, r: 40, t: 80, b: 30 },
             dragmode: 'zoom',
             hovermode: 'closest',
             plot_bgcolor: 'white',
@@ -1128,6 +1216,22 @@ class Graficador extends Component {
             grid:  { columns: 0, rows: 1, pattern: 'independent', subplots: []},
             yaxis: { fixedrange: false, autorange: false, range: [1000, -20], nticks: 15, side: 'right', gridcolor: '#eee',
             gridwidth: 1  },
+            datarevision: 1
+        };
+
+        let layout_Caving = {
+            autosize: true,
+            uirevision: 'true',
+            margin: { l: 60, r: 40, t: 30, b: 40 }, 
+            dragmode: 'zoom',
+            hovermode: 'x',
+            plot_bgcolor: 'white',
+            paper_bgcolor: 'white',
+            font: { family: 'verdana', size: 11, color: 'black'},
+            showlegend: false,
+            grid:  { rows: 0, columns: 1, pattern: 'independent', subplots:[]},
+            barmode: 'stack',
+            xaxis: { fixedrange: false, showspikes: true, spikemode: 'across', type: 'time', tickformat: '%d %b %Y \n %H:%M:%S ', title: 'Tiempo', nticks: 5  },
             datarevision: 1
         };
 
@@ -1145,7 +1249,11 @@ class Graficador extends Component {
 
             layoutTV:   layout_Vertical,
             isLoadedVertical: false,
-                       
+                     
+            dataCaving: [],
+            layoutCaving: layout_Caving,
+            isLoadedCaving: false,
+
             profundidadFinal: profundidadFinal_temporal,
 
             form_template: {
@@ -1197,7 +1305,7 @@ class Graficador extends Component {
                                     //
 
                                     //Track Vertical
-                                    this.SetSerieTrackVertical()
+                                    this.SetSerieTrackVertical([])
 
                                     //Archivo FEL
                                     this.getFEL(template.wells_id)
@@ -1310,33 +1418,38 @@ class Graficador extends Component {
         let layout_h = {...this.state.layoutTH}
         let layout_v = {...this.state.layoutTV}
         let layout_f = {...this.state.layoutFEL}
+        let layout_c = {...this.state.layoutCaving}
 
 
         layout_p.plot_bgcolor  = this.state.darkMode ? 'white' : 'black'
         layout_h.plot_bgcolor  = this.state.darkMode ? 'white' : 'black'
         layout_v.plot_bgcolor  = this.state.darkMode ? 'white' : 'black'
         layout_f.plot_bgcolor  = this.state.darkMode ? 'white' : 'black'
+        layout_c.plot_bgcolor  = this.state.darkMode ? 'white' : 'black'
 
 
         layout_p.paper_bgcolor = this.state.darkMode ? 'white' : 'black'
         layout_h.paper_bgcolor = this.state.darkMode ? 'white' : 'black'
         layout_v.paper_bgcolor = this.state.darkMode ? 'white' : 'black'
         layout_f.paper_bgcolor = this.state.darkMode ? 'white' : 'black'
+        layout_c.paper_bgcolor = this.state.darkMode ? 'white' : 'black'
 
 
         layout_p.font.color = this.state.darkMode ? 'black' : 'white' 
         layout_h.font.color = this.state.darkMode ? 'black' : 'white' 
         layout_v.font.color = this.state.darkMode ? 'black' : 'white' 
         layout_f.font.color = this.state.darkMode ? 'black' : 'white' 
+        layout_c.font.color = this.state.darkMode ? 'black' : 'white' 
 
 
         layout_p.datarevision++
         layout_h.datarevision++
         layout_v.datarevision++
         layout_f.datarevision++
+        layout_c.datarevision++
 
 
-        this.setState({darkMode: !this.state.darkMode, layoutGP: layout_p, layoutTH: layout_h, layoutTV: layout_v, layoutFEL: layout_f})
+        this.setState({ darkMode: !this.state.darkMode, layoutGP: layout_p, layoutTH: layout_h, layoutTV: layout_v, layoutFEL: layout_f, layoutCaving: layout_c })
 
     }
 
@@ -1404,6 +1517,7 @@ class Graficador extends Component {
         let datosGraficasHorizontales = []
         let i = 1
         let j = 0
+        let side = true 
         let grupo_anterior = 0  
         curvas_h.map(c => {
             
@@ -1425,10 +1539,10 @@ class Graficador extends Component {
 
                     let propertyAxi = "yaxis" + ((i > 1) ? String(i) : '')
                     if (c.grupo == grupo_anterior)
-                        layout_Horizontal[propertyAxi] = { title: c.short_mnemonico, titlefont: { size: 10, color: '#3c5cf9', }, tickfont: { size: 8.0 }, overlaying: 'y' + ((i > 1) ? String(i - 1) : ''), side: 'right', gridcolor: '#eee' }
+                        layout_Horizontal[propertyAxi] = { title: c.short_mnemonico, titlefont: { size: 10, color: '#3c5cf9', }, tickfont: { size: 8.0 }, overlaying: 'y' + ((i > 1) ? String(i - 1) : ''), side: side ? 'right' : 'left', gridcolor: '#eee' }
                     else
                     {
-                        layout_Horizontal[propertyAxi] = { title: c.short_mnemonico, titlefont: { size: 10, color: '#3c5cf9', }, tickfont: { size: 8.0 }, gridcolor: '#eee' }
+                        layout_Horizontal[propertyAxi] = { title: c.short_mnemonico, titlefont: { size: 10, color: '#3c5cf9', }, tickfont: { size: 8.0 }, gridcolor: '#eee', side: side ? 'right' : 'left' }
                     
                         let subplot = ['xy' + ((i > 1) ? String(i) : '') ]
                         layout_Horizontal.grid.subplots.push(subplot);
@@ -1437,6 +1551,7 @@ class Graficador extends Component {
                     i++
                     grupo_anterior = c.grupo
                     datosGraficasHorizontales.push(traza);
+                    side = !side
                 }
             }
            
@@ -1497,7 +1612,7 @@ class Graficador extends Component {
                                 //    layout_Horizontal[propertyAxi] = { title: ar.id+'_'+hm.short_mnemonico, titlefont: { size: 10, color: '#3c5cf9', }, tickfont: { size: 8.0 }, overlaying: 'y' + ((i > 1) ? String(i - 1) : ''), side: 'right', gridcolor: '#eee' }
                                 //else
                                 //{
-                                    layout_Horizontal[propertyAxi] = { title: ar.id+'_'+hm.short_mnemonico, titlefont: { size: 10, color: '#3c5cf9', }, tickfont: { size: 8.0 }, gridcolor: '#eee' }
+                                    layout_Horizontal[propertyAxi] = { title: ar.id+'_'+hm.short_mnemonico, titlefont: { size: 10, color: '#3c5cf9', }, tickfont: { size: 8.0 }, gridcolor: '#eee',  side: side ? 'right' : 'left' }
                                 
                                     let subplot = ['xy' + ((i > 1) ? String(i) : '') ]
                                     layout_Horizontal.grid.subplots.push(subplot);
@@ -1506,6 +1621,7 @@ class Graficador extends Component {
                                 i++
                                 //grupo_anterior = 0
                                 datosGraficasHorizontales.push(traza);
+                                side = !side
                             }
                         }
                         
@@ -1534,6 +1650,7 @@ class Graficador extends Component {
             layoutTH:   layout_Horizontal,
             isLoadedHorizontal: datosGraficasHorizontales.length > 0 ? true : false
         });
+        console.log('LAS Horizontales')
 
         if (refreshPrincipal)
         {
@@ -1543,6 +1660,131 @@ class Graficador extends Component {
                 profundidadFinal: profundidadFinal_temporal
             });
         }
+
+        i = 0
+        let dataCaving = []
+        let layout_caving = {...this.state.layoutCaving}
+        layout_caving.grid.subplots = []
+        
+        this.state.archivos_caving.forEach ( ar => {
+            //Pintar las homologadas
+            ar.homologacion.forEach( hm => {
+                if (hm.mostrar)
+                {                    
+                    const [curva] = this.GetDetalle(hm.codigo)
+                    const datos  = ar.datos.map( f => ({ x: f['DATETIME'], y: f['_'+hm.codigo]}) )
+                    if (datos.length > 0)
+                    {
+                        i++;
+                        const x = datos.map(d=>d.x);
+                        const y = datos.map(d=>d.y);
+                        let traza = {
+                            name : hm.nombre,
+                            x: x,
+                            y: y,
+                            xaxis: 'x',
+                            yaxis: 'y' + ((i > 1) ? String(i) : ''),
+                            text: '[' + hm.codigo + '] ' + curva.short_mnemonico + ' - ' + curva.descripcion
+                        }
+
+                        let propertyAxi = "yaxis" + ((i > 1) ? String(i) : '')
+                        layout_caving[propertyAxi] = { title: ar.id +'_' + curva.short_mnemonico, titlefont: { size: 10, color: '#28a745', }, tickfont: { size: 8.0 }, gridcolor: '#eee' }
+                    
+                        let subplot = ['xy' + ((i > 1) ? String(i) : '') ]
+                        layout_caving.grid.subplots.push(subplot);                     
+                        
+                        dataCaving.push(traza)
+                    }
+                }
+            })
+           
+            if (ar.mostrar_morfo || ar.mostrar_size)
+            {
+                //Crear track de SIZE
+                let w = {
+                    SMALL:[],
+                    LARGE: [],
+                    AVERAGE: []
+                }
+
+                //Crear track de MORFO          
+                let z = {
+                    ANGULAR: [],
+                    TABULAR: [],
+                    BLOCKY:  [],
+                    SPLINTERED: [],
+                    REWORKED: [],
+                    SLICKENSIDE: []
+                }
+                
+                let x = []
+                ar.datos.forEach( row => {
+                    x.push(row['DATETIME'])
+
+                    if (ar.mostrar_morfo)
+                    {
+                        CAVING_COLS.GRUPO_MORFO.forEach( col =>{
+                            z[col].push(row[col])
+                        })
+                    }
+                    if (ar.mostrar_size)
+                    {
+                        CAVING_COLS.GRUPO_SIZE.forEach( col =>{
+                            w[col].push(row[col])
+                        })
+                    }
+                })
+
+                if (ar.mostrar_morfo)
+                {
+                    i++;
+                    CAVING_COLS.GRUPO_MORFO.forEach( col =>{
+                        let traza = {
+                            x: x,
+                            y: z[col],
+                            name: col,
+                            type: 'bar',
+                            xaxis: 'x',
+                            yaxis: 'y' + ((i > 1) ? String(i) : '')
+                        }
+                        dataCaving.push(traza)
+                    })
+                
+                    let propertyAxi = "yaxis" + ((i > 1) ? String(i) : '')
+                    layout_caving[propertyAxi] = { title: ar.id+'_MORF', titlefont: { size: 10, color: '#28a745', }, tickfont: { size: 8.0 }, gridcolor: '#eee', side: 'right' }
+                                        
+                    let subplot = ['xy' + ((i > 1) ? String(i) : '') ]
+                    layout_caving.grid.subplots.push(subplot);
+                }
+
+                if (ar.mostrar_size)
+                {
+                    i++
+                    CAVING_COLS.GRUPO_SIZE.forEach( col =>{
+                        let traza = {
+                            x: x,
+                            y: w[col],
+                            name: col,
+                            type: 'linear',
+                            xaxis: 'x',
+                            yaxis: 'y' + ((i > 1) ? String(i) : '')
+                        }
+                        dataCaving.push(traza)
+                    })
+
+                    let propertyAxi = "yaxis" + ((i > 1) ? String(i) : '')
+                    layout_caving[propertyAxi] = { title: ar.id+'_SIZE', titlefont: { size: 10, color: '#28a745', }, tickfont: { size: 8.0 }, gridcolor: '#eee' }
+
+                    let subplot = ['xy' + ((i > 1) ? String(i) : '') ]
+                    layout_caving.grid.subplots.push(subplot);
+                }
+            }
+
+            layout_caving.grid.rows = i
+        })
+        layout_caving.datarevision++
+        
+        this.setState({ dataCaving: dataCaving, layoutCaving: layout_caving, isLoadedCaving: dataCaving.length > 0 ? true : false })
         console.log('SetSerieTrackHorizontal')
 
     }
@@ -1550,7 +1792,7 @@ class Graficador extends Component {
    
     
     //Actualizar las curvas de los tracks verticales
-    SetSerieTrackVertical = () => {
+    SetSerieTrackVertical = (curvasVertical) => {
         let newMax = 0
         if (this.state.toggleHorizontales === 1)
             newMax = this.state.profundidadFinal
@@ -1563,9 +1805,12 @@ class Graficador extends Component {
         layout_Vertical.grid.subplots = []
         layout_Vertical.yaxis.range = [newMax, -20]
         let datosGraficasVerticales = []
-        
+        let grupo_anterior = 0
         let i = 1
-        
+        let j = 0
+        let side = true
+
+        //Archivos LAS en profundidad
         this.state.archivos_las.forEach ( ar => {
             if (ar.es_tiempo === false)
             {
@@ -1585,53 +1830,168 @@ class Graficador extends Component {
                             xaxis: 'x' + (i > 1 ? String(i) : ''),
                             text: '[' + hm.codigo + '] ' + hm.short_mnemonico + ' - ' + hm.descripcion
                         }
-        
-                        let propertyAxi = 'xaxis' + (i > 1 ? String(i) : '');
-                        layout_Vertical[propertyAxi] = {
-                            title: ar.id+'_'+hm.short_mnemonico,
-                            
-                            titlefont: { size: 10, color: 'red' },
-                            tickfont:  { size: 8.0 },
-                            fixedrange: false,
-                            showspikes: true,
-                            side: 'top',
-                            showticklabels: true,
-                            textposition: 'top center',
-                        };
-                        let subplot = 'x' + (i > 1 ? String(i) : '') + 'y';
-                        subplots.push(subplot);
-                                  
-                        i++;
-                        //if (0 == grupo_anterior)
-                        //    layout_Horizontal[propertyAxi] = { title: ar.id+'_'+hm.short_mnemonico, titlefont: { size: 10, color: '#3c5cf9', }, tickfont: { size: 8.0 }, overlaying: 'y' + ((i > 1) ? String(i - 1) : ''), side: 'right', gridcolor: '#eee' }
-                        //else
-                        //{
-                        //    layout_Horizontal[propertyAxi] = { title: ar.id+'_'+hm.short_mnemonico, titlefont: { size: 10, color: '#3c5cf9', }, tickfont: { size: 8.0 }, gridcolor: '#eee' }
-                        
-                        //    let subplot = ['xy' + ((i > 1) ? String(i) : '') ]
-                        //    layout_Horizontal.grid.subplots.push(subplot);
-                        //    j++;
-                        //}
-                        //i++
-                        //grupo_anterior = 0
                         datosGraficasVerticales.push(traza);
+                                  
+                        let propertyAxi = 'xaxis' + (i > 1 ? String(i) : '');
+                        if (hm.grupo_vertical == grupo_anterior)
+                            layout_Vertical[propertyAxi] = { title: '_'+hm.short_mnemonico, titlefont: { size: 10, color: 'red', }, tickfont: { size: 8.0 }, overlaying: 'x' + ((i > 1) ? String(i - 1) : ''), side: side ? 'top': 'bottom', gridcolor: '#eee' }
+                        else
+                        {
+                            layout_Vertical[propertyAxi] = {
+                                title: '_'+hm.short_mnemonico,
+                                titlefont: { size: 10, color: 'red' },
+                                tickfont:  { size: 8.0 },
+                                fixedrange: false,
+                                showspikes: true,
+                                side: side ? 'top': 'bottom',
+                                showticklabels: true,
+                                textposition: 'top center',
+                            }
+                            let subplot = 'x' + (i > 1 ? String(i) : '') + 'y';
+                            subplots.push(subplot);
+                            j++
+                        }
+                        i++
+                        grupo_anterior = hm.grupo_vertical
+                        side = !side
+                    }
+                    //Los Horizontales LAS a Verticales
+                    if (hm.mostrar_vertical)
+                    {
+                        
+                        const DMEA = ar.datos.filter( f => f.codigo === '_0110')
+                        if (DMEA.length > 0)
+                        { 
+                            const datos = ar.datos.map( f => ({ y: f['_0110'], x: f['_'+hm.codigo]}) );
+                            let depthAnterior = 0
+                            let x = []
+                            let y = []
+                            datos.forEach( row => {
+                                let depth = row.y
+                                if (depth > depthAnterior)
+                                {
+                                    x.push(row.x)
+                                    y.push(row.y)
+                                }
+                                depthAnterior = depth
+                            })
+                            let traza = {
+                                name : '__'+hm.short_mnemonico,
+                                x: x,
+                                y: y,
+                                yaxis: 'y',
+                                xaxis: 'x' + (i > 1 ? String(i) : ''),
+                                text: '[' + hm.codigo + '] ' + hm.short_mnemonico + ' - ' + hm.descripcion
+                            }
+                            datosGraficasVerticales.push(traza);
+
+                            let propertyAxi = 'xaxis' + (i > 1 ? String(i) : '');
+                            if (hm.grupo_vertical == grupo_anterior)
+                                layout_Vertical[propertyAxi] = { title: '__'+hm.short_mnemonico, titlefont: { size: 10, color: 'purple', }, tickfont: { size: 8.0 }, overlaying: 'x' + ((i > 1) ? String(i - 1) : ''), side: side ? 'top':'bottom', gridcolor: '#eee' }
+                            else
+                            {
+                                layout_Vertical[propertyAxi] = {
+                                    title: '__'+hm.short_mnemonico,
+                                    titlefont: { size: 10, color: 'purple' },
+                                    tickfont:  { size: 8.0 },
+                                    fixedrange: false,
+                                    showspikes: true,
+                                    side: side ? 'top': 'bottom',
+                                    showticklabels: true,
+                                    textposition: 'top center',
+                                }
+                                let subplot = 'x' + (i > 1 ? String(i) : '') + 'y';
+                                subplots.push(subplot);
+                                j++
+                            }
+                            i++;
+                            grupo_anterior = hm.grupo_vertical
+                            side = !side
+                        }
+                        else
+                        {
+                            message.info('No existe curva homologada con [0110] DMEA - Depth Hole en el archivo LAS ' + ar.id)
+                        }
                     }
                 })
-                layout_Vertical.grid.columns = subplots.length
+                
                 layout_Vertical.grid.subplots.push(subplots);
+                layout_Vertical.grid.columns = j
             }
+           
         })
 
-        let layout_fel = {...this.state.layoutFEL}
-        layout_fel.datarevision++
+
+        //Los Horizontales WITS a Verticales
+        const DMEA = this.state.dataCurvas.filter( f => f.codigo === '0110')
+        if (DMEA.length > 0)
+        {       
+            let subplots = [];
+            grupo_anterior = 0
+            curvasVertical.forEach( c => {
+                
+                const datos = this.state.dataWits.map( f => ({ y: f['_0110'], x: f['_'+c.codigo]}) );
+                let depthAnterior = 0
+                let x = []
+                let y = []
+                datos.forEach( row => {
+                    let depth = row.y
+                    if (depth > depthAnterior)
+                    {
+                        x.push(row.x)
+                        y.push(row.y)
+                    }
+                    depthAnterior = depth
+                })
+                
+                let traza = {
+                    name : '_'+c.short_mnemonico,
+                    x: x,
+                    y: y,
+                    yaxis: 'y',
+                    xaxis: 'x' + (i > 1 ? String(i) : ''),
+                    text: '[' + c.codigo + '] ' + c.short_mnemonico + ' - ' + c.descripcion
+                }
+                datosGraficasVerticales.push(traza);
+
+                let propertyAxi = 'xaxis' + (i > 1 ? String(i) : '');
+                if (c.grupo_vertical == grupo_anterior)
+                    layout_Vertical[propertyAxi] = { title: '_'+c.short_mnemonico, titlefont: { size: 10, color: 'orange', }, tickfont: { size: 8.0 }, overlaying: 'x' + ((i > 1) ? String(i - 1) : ''), side: side ? 'top':'bottom', gridcolor: '#eee' }
+                else
+                {
+                    layout_Vertical[propertyAxi] = {
+                        title: '_'+c.short_mnemonico,
+                        titlefont: { size: 10, color: 'orange' },
+                        tickfont:  { size: 8.0 },
+                        fixedrange: false,
+                        showspikes: true,
+                        side: side ? 'top' : 'bottom',
+                        showticklabels: true,
+                        textposition: 'top center',
+                    }
+                    let subplot = 'x' + (i > 1 ? String(i) : '') + 'y';
+                    subplots.push(subplot);
+                    j++
+                }
+                i++;
+                grupo_anterior = c.grupo_vertical
+                side = !side
+            })
+            layout_Vertical.grid.subplots.push(subplots); 
+            layout_Vertical.grid.columns = j
+        }
+       
+
+        //let layout_fel = {...this.state.layoutFEL}
+        //layout_fel.datarevision++
 
         this.setState({
             dataTV:     datosGraficasVerticales,
             layoutTV:   layout_Vertical,
-            layoutFEL:   layout_fel,
+            //layoutFEL:   layout_fel,
             isLoadedVertical: datosGraficasVerticales.length > 0 ? true : false,
             colVertical: datosGraficasVerticales.length > 0 ?   (this.state.isLoadedVerticalFEL ?   'col-md-9 col-lg-9' : 'col-md-12 col-lg-9' ) : null,
-            colVerticalFEL: datosGraficasVerticales.length > 0 ? 'col-md-3 col-lg-4' : 'col-md-3 col-lg-3'
+            colVerticalFEL: datosGraficasVerticales.length > 0 ? 'col-md-3 col-lg-3' : 'col-md-3 col-lg-3'
         });
         console.log('SetSerieTrackVertical')
        
@@ -1652,9 +2012,9 @@ class Graficador extends Component {
 
     MaxTrackVertical = (P1Y1, P2Y1) => {
         let P1X1 = 0;
-        let P2X1 = 51.7;
+        let P2X1 = 51.5;
     
-        let punto = 99.5;
+        let punto = 93.5;
     
         let pendiente = (P2Y1 - P1Y1) / (P2X1 - P1X1);
         let corte = P1Y1 - pendiente * P1X1;
@@ -1762,7 +2122,6 @@ class Graficador extends Component {
         var points = e.points[0], pointNum = points.pointNumber;
         if (this.state.isLoadedHorizontal && this.state.toggleTrackHorizontal)
         {   
-           
             let nt_h = this.state.dataTH.length;           
             let curves_h = []
             let coords_h = []
@@ -1772,6 +2131,18 @@ class Graficador extends Component {
                 coords_h.push('xy' + ((i>0)? String(i+1) : ''))            
             }
             Plotly.Fx.hover('plotTracksHorizontal', curves_h, coords_h);
+        }
+        if (this.state.isLoadedHorizontal && this.state.toggleTrackHorizontal && this.state.isLoadedCaving)
+        {
+            let nt_h = this.state.dataCaving.length;
+            let curves_h = []
+            let coords_h = []
+
+            for(let i=0; i<nt_h; i++) {
+                curves_h.push({curveNumber: i, pointNumber: pointNum}) 
+                coords_h.push('xy' + ((i>0)? String(i+1) : ''))            
+            }
+            Plotly.Fx.hover('plotCaving', curves_h, coords_h);
         }
 
         if (this.state.isLoadedVertical && this.state.toggleTrackVertical)
@@ -1800,8 +2171,13 @@ class Graficador extends Component {
     PlotOnUnHover = () => {
         if (this.state.isLoadedHorizontal && this.state.toggleTrackHorizontal)
             Plotly.Fx.unhover('plotTracksHorizontal')
+               
+        if (this.state.isLoadedHorizontal && this.state.toggleTrackHorizontal && this.state.isLoadedCaving)
+            Plotly.Fx.unhover('plotCaving')
+        
         if (this.state.isLoadedVertical && this.state.toggleTrackVertical)
             Plotly.Fx.unhover('plotTracksVertical')
+        
         if (this.state.isLoadedVerticalFEL && this.state.toggleTrackVertical)
             Plotly.Fx.unhover('plotFel')
     }
@@ -1810,16 +2186,23 @@ class Graficador extends Component {
         let layout_hor = {...this.state.layoutTH}
         let layout_ver = {...this.state.layoutTV}
         let layout_fel = {...this.state.layoutFEL}
+        let layout_cav = {...this.state.layoutCaving}
         
         if (eventdata['xaxis.range[0]'] !== undefined)
         {
             layout_hor.xaxis = {
                 range: [ eventdata['xaxis.range[0]'], eventdata['xaxis.range[1]'] ], nticks: 5
             }
+            layout_cav.xaxis = {
+                range: [ eventdata['xaxis.range[0]'], eventdata['xaxis.range[1]'] ], nticks: 5
+            }
         }
         else
         {
             layout_hor.xaxis = {
+                autorange: true
+            }
+            layout_cav.xaxis = {
                 autorange: true
             }
         }
@@ -1843,12 +2226,14 @@ class Graficador extends Component {
         layout_hor.datarevision++
         layout_ver.datarevision++
         layout_fel.datarevision++
+        layout_cav.datarevision++
 
 
         this.setState({
             layoutTH: layout_hor,
             layoutTV: layout_ver,
             layoutFEL: layout_fel,
+            layoutCaving: layout_cav
         })
     }
     // Fin Eventos Gráfica
@@ -1864,43 +2249,53 @@ class Graficador extends Component {
         let layout_p = {...this.state.layoutGP}
         let layout_h = {...this.state.layoutTH}
         let layout_v = {...this.state.layoutTV}
-        let layout_f = {...this.state.layoutFEL}
-
+        let layout_c = {...this.state.layoutCaving}
+        
             
         layout_v.yaxis.range = [newMax, -20]
-        layout_f.yaxis.range = [newMax, -20]
-
-
+      
         layout_p.datarevision++
         layout_h.datarevision++
         layout_v.datarevision++
-        layout_f.datarevision++
+        layout_c.datarevision++
 
+        if (this.state.isLoadedVerticalFEL)
+        {
+            let layout_f = {...this.state.layoutFEL}
+            layout_f.yaxis.range = [newMax, -20]
+            layout_f.datarevision++
+            this.setState({
+                layoutFEL: layout_f
+            });
+        }
 
         this.setState({
             layoutGP: layout_p,
             layoutTH: layout_h,
             layoutTV: layout_v,
-            layoutFEL: layout_f
+            layoutCaving: layout_c
         });
     }
+
     CollapseTrackVertical = () => {
         let layout_p = {...this.state.layoutGP}
         let layout_h = {...this.state.layoutTH}
         let layout_f = {...this.state.layoutFEL}
+        let layout_c = {...this.state.layoutCaving}
 
 
         layout_p.datarevision++
         layout_h.datarevision++
         layout_f.datarevision++
-
+        layout_c.datarevision++
 
         this.setState({
             toggleTrackVertical: !this.state.toggleTrackVertical,
             plotDeptCol: this.state.toggleTrackVertical ? 'col-md-12' : 'col-md-8',
             layoutGP: layout_p,
             layoutTH: layout_h,
-            layoutFEL: layout_f
+            layoutFEL: layout_f,
+            layoutCaving: layout_c
         });
     }
    
@@ -2442,6 +2837,8 @@ class Graficador extends Component {
         this.setState({dataTipoEvento: JSON.parse(sessionStorage.getItem('dataTipoEvento'))})
         this.setState({dataConvencion: JSON.parse(sessionStorage.getItem('dataConvencion'))})
         this.setState({dataWitsDetalle: JSON.parse(sessionStorage.getItem('dataWitsDetalle'))})
+
+        sessionStorage.removeItem('isLoadedFEL');
     }   
     
     
@@ -2464,7 +2861,7 @@ class Graficador extends Component {
                             &nbsp;&nbsp;|&nbsp;&nbsp;
                             <button title="Configuración" onClick={() => this.toggleModalTemplate(true, false, null)} className="btn btn-sm btn-primary btn-circle"><Brush fontSize="small" /></button>
                             &nbsp;&nbsp;
-                            <button title="Dark Mode" onClick={() => this.DarkSide() } className="btn btn-sm btn-dark btn-circle"><InvertColorsOff fontSize="small" /></button>
+                            <button title="Modo oscuro" onClick={() => this.DarkSide() } className="btn btn-sm btn-dark btn-circle"><InvertColorsOff fontSize="small" /></button>
                             &nbsp;&nbsp;|&nbsp;&nbsp;
                             <button title="Algoritmo de Operaciones" onClick={() => this.toggleModalAlgoritmo(true)} className="btn btn-sm btn-warning btn-circle"><MultilineChart fontSize="small" /></button>
                             &nbsp;&nbsp;|&nbsp;&nbsp;
@@ -2516,14 +2913,32 @@ class Graficador extends Component {
                                 this.state.toggleTrackHorizontal ?
                                 <div id="divTrackHorizontal" className="row">
                                     <div className="col-md-12 col-lg-12">
+                                        {
+                                        this.state.isLoadedCaving ?
                                         <Plot
-                                            divId="plotTracksHorizontal"
-                                            data={this.state.dataTH}
-                                            layout={this.state.layoutTH}
+                                            divId="plotCaving"
+                                            data={this.state.dataCaving}
+                                            layout={this.state.layoutCaving}
                                             config={this.state.configGP}
                                             useResizeHandler={true}
-                                            style={{width:"100%", height:this.state.plotTrackVH}}
+                                            style={{width:"100%", height:this.state.plotCavingVH}}
                                         />
+                                        :
+                                        null
+                                        }
+                                        {
+                                            this.state.dataTH.length > 0 ?   
+                                            <Plot
+                                                divId="plotTracksHorizontal"
+                                                data={this.state.dataTH}
+                                                layout={this.state.layoutTH}
+                                                config={this.state.configGP}
+                                                useResizeHandler={true}
+                                                style={{width:"100%", height:this.state.plotTrackVH}}
+                                            />
+                                            :
+                                            null
+                                        }
                                     </div>
                                 </div>
                                 :
@@ -2948,10 +3363,10 @@ class Graficador extends Component {
                                                     this.state.dataTemplates.map( (row , index) => 
                                                         <tr key={'row_'+index}>
                                                             <td> {row.nombre} </td><td> {row.descripcion} </td>
-                                                            <td >
+                                                            <td style={{width:'10%'}}>
                                                                 <button id={'btnopen_'+index} className="btn btn-sm btn-success" title="Abrir" onClick={()=> this.AbrirTemplate(row.id)}><PlayCircleOutline fontSize="small" /> </button>
                                                             </td>
-                                                            <td >
+                                                            <td style={{width:'10%'}}>
                                                                 <button id={'btndel_'+index} className="btn btn-sm btn-danger" title="Eliminar" onClick={()=> this.EliminarTemplate(row.template_id)}><Delete fontSize="small" /> </button>
                                                             </td>
                                                         </tr>
@@ -3056,8 +3471,8 @@ class Graficador extends Component {
                                 <Brush fontSize="large" className="btn-circle bg-primary text-white"/>
                             </div>
                             <div className="col-md-11">
-                                <b>Configuración Template: {template.template_nombre}</b>
-                                <h6>{template.template_descripcion}</h6>
+                                <b>&nbsp;Configuración Template: {template.template_nombre}</b>
+                                <h6>&nbsp;{template.template_descripcion}</h6>
                             </div>   
                         </div>
                     </ModalHeader>
@@ -3093,20 +3508,32 @@ class Graficador extends Component {
                                     <Card.Body>
                                         <table className="table table-sm">
                                             <tbody>
-                                            <tr><td></td><td style={{widt: '50px'}}># de Track</td></tr>
+                                            <tr><td></td><td className="text-center" style={{widt: '50px'}}># de Track</td><td>&nbsp;</td><td className="text-center" colSpan={"2"}> A Track Vertical</td></tr>
                                             {
                                                 this.state.horizontal.map((tipo) => (
                                                     <tr key={'gth_'+tipo.id}>
                                                         <td>
                                                             <div className="form-check">
-                                                                <input className="form-check-input" type="checkbox" checked={tipo.mostrar} onChange={(e) => this.handleConfigChangeHorizontal(e, true)} id={`chkth_${tipo.id}`} />
+                                                                <input className="form-check-input" type="checkbox" checked={tipo.mostrar} onChange={(e) => this.handleConfigChangeHorizontal(e, true, false)} id={`chkth_${tipo.id}`} />
                                                                 <label className="form-check-label" htmlFor={`chkth_${tipo.id}`}>
                                                                     {'['+ tipo.codigo + '] ' + tipo.short_mnemonico + ' - ' + tipo.descripcion}
                                                                 </label>   
                                                             </div>
                                                         </td>
                                                         <td >
-                                                            <input type="number" className="form-control form-control-sm" min="1" max="10" value={tipo.grupo} id={`grup_${tipo.id}`} onChange={(e) => this.handleConfigChangeHorizontal(e, false)}/>
+                                                            <input type="number" className="form-control form-control-sm" min="1" max="10" value={tipo.grupo} id={`grup_${tipo.id}`} onChange={(e) => this.handleConfigChangeHorizontal(e, false, false)}/>
+                                                        </td>
+                                                        <td>
+                                                            &nbsp;
+                                                        </td>
+                                                        <td>
+                                                            <div className="form-check text-right">
+                                                                <input className="form-check-input" type="checkbox" checked={tipo.mostrar_vertical} onChange={(e) => this.handleConfigChangeHorizontal(e, true, true)} id={`chkthtv_${tipo.id}`} />
+                                                                <label className="form-check-label"></label>
+                                                            </div>                                                            
+                                                        </td>
+                                                        <td>
+                                                            <input type="number" className="form-control form-control-sm" min="1" max="10" value={tipo.grupo_vertical ? tipo.grupo_vertical : ''} id={`gruptv_${tipo.id}`} onChange={(e) => this.handleConfigChangeHorizontal(e, false, true)}/>
                                                         </td>
                                                     </tr>
                                                 ))
@@ -3119,11 +3546,56 @@ class Graficador extends Component {
 
                             <Card>
                                 <Accordion.Toggle as={Card.Header} eventKey="2" className="bg-verdeoscuro  small cursor-pointer">
-                                    CAVINGS
+                                    CAVINGS ({this.state.archivos_caving.length})
                                 </Accordion.Toggle>
                                 <Accordion.Collapse eventKey="2">
                                     <Card.Body>
-                                        Caving 1 , 2 , 3,
+                                        <table className="table table-sm">
+                                            <tbody>
+                                                <tr><td></td><td style={{widt: '50px'}}></td></tr>
+                                                {
+                                                this.state.archivos_caving.length > 0 ?
+                                                this.state.archivos_caving.map ( ar => (
+                                                    <tr key={'trcv_'+ar.id}>
+                                                        <td><b>ID:</b> {ar.id} <br/><br/><b>NOMBRE:</b><br/> {ar.nombre_archivo +'.'+ ar.extension_archivo} <br/></td>
+                                                        <td><b>HOMOLOGADOS:</b>
+                                                            {
+                                                            ar.homologacion.map( (key) =>  (
+                                                                <div key={'hgcv_'+key.id}  className="form-check">
+                                                                    <input className="form-check-input" type="checkbox" id={`chkcav_${ar.id}_${key.id}`} name={`chkcav_${ar.id}_${key.id}`} checked={key.mostrar} onChange={(e) =>this.handleChangeCaving(e,false,false)} />
+                                                                    <label className="form-check-label" htmlFor={`chk_ltv_${key.id}`}>
+                                                                        {key.nombre} = {'['+ key.codigo + '] ' + key.short_mnemonico +'-'+key.descripcion}
+                                                                    </label>
+                                                                </div> 
+                                                            ))
+                                                            }
+                                                            <div className='row'>
+                                                                <div className='col-md-6'>
+                                                                    <b>GRUPO SIZE</b>
+                                                                    {
+                                                                        <div key={'szcv_'+ar.id}  className="form-check">
+                                                                            <input className="form-check-input" type="checkbox" id={`chkcavsz_${ar.id}`} name={`chkcavsz_${ar.id}`} checked={ar.mostrar_size} onChange={(e) =>this.handleChangeCaving(e,true,true)} />
+                                                                        </div> 
+                                                                    }
+                                                                </div>
+                                                                <div className='col-md-6'>
+                                                                    <b>GRUPO MORFOLOGÍA</b>
+                                                                    {
+                                                                        <div key={'mfcv_'+ar.id}  className="form-check">
+                                                                            <input className="form-check-input" type="checkbox" id={`chkcavmf_${ar.id}`} name={`chkcavmf_${ar.id}`} checked={ar.mostrar_morfo} onChange={(e) =>this.handleChangeCaving(e,true,false)} />
+                                                                        </div> 
+                                                                    }
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                    
+                                                ))
+                                                :
+                                                null
+                                            }
+                                            </tbody>
+                                        </table>
                                     </Card.Body>
                                 </Accordion.Collapse>
                             </Card>
@@ -3137,18 +3609,45 @@ class Graficador extends Component {
                                         <table className="table table-sm">
                                             <tbody>
                                                 { 
-                                                    this.state.archivos_las.map((arc) => (
+                                                    this.state.archivos_las.map((arc) => (                                                       
                                                         <tr key={'tr_'+arc.id}>
                                                             <td><b>ID:</b> {arc.id} <br/><br/><b>NOMBRE:</b><br/> {arc.nombre_archivo} <br/><br/><b>REFERENCIA:</b><br/>{arc.es_tiempo ? 'TIEMPO' :  'PROFUNDIDAD'}</td>
-                                                            <td><b>HOMOLOGADOS:</b>
+                                                            <td>
+                                                                <div className='row'>
+                                                                    <div className='col-md-6 text-left'><b>HOMOLOGADOS:</b></div>
+                                                                    <div className='col-md-6 text-right'><b>A Track Vertical</b></div>
+                                                                </div>
                                                                 {
                                                                 arc.homologacion.map( (key) =>  (
-                                                                        <div key={'hg_'+key.id}  className="form-check">
-                                                                            <input className="form-check-input" type="checkbox" id={`chklas_${arc.id}_${key.id}`} name={`chklas_${arc.id}_${key.id}`} checked={key.mostrar} onChange={(e) =>this.handleChangeLas(e)} />
-                                                                            <label className="form-check-label" htmlFor={`chk_lt_${key.id}`}>
-                                                                                {key.nombre} = {'['+ key.codigo + '] ' + key.short_mnemonico +'-'+key.descripcion}
-                                                                            </label>
-                                                                        </div> 
+                                                                    <div key={'rowlas_'+key.id} className="row">
+                                                                        <div className='col-md-9'>
+                                                                            <div key={'hg_'+key.id}  className="form-check">
+                                                                                <input className="form-check-input" type="checkbox" id={`chklas_${arc.id}_${key.id}`} name={`chklas_${arc.id}_${key.id}`} checked={key.mostrar} onChange={(e) =>this.handleChangeLas(e, true, false)} />
+                                                                                <label className="form-check-label" htmlFor={`chk_lt_${key.id}`}>
+                                                                                    {key.nombre} = {'['+ key.codigo + '] ' + key.short_mnemonico +'-'+key.descripcion}
+                                                                                </label>
+                                                                            </div> 
+                                                                        </div>
+                                                                        <div className='col-md-1'>
+                                                                            {
+                                                                                arc.es_tiempo ? 
+                                                                                <div key={'hgtvlas_'+key.id}  className="form-check">
+                                                                                    <input className="form-check-input" type="checkbox" id={`chktvlas_${arc.id}_${key.id}`} name={`chktvlas_${arc.id}_${key.id}`} checked={key.mostrar_vertical} onChange={(e) =>this.handleChangeLas(e, true, true)} />
+                                                                                    <label className="form-check-label" ></label>
+                                                                                </div> 
+                                                                                :
+                                                                                null
+                                                                            }
+                                                                        </div>
+                                                                        <div className='col-md-2'>
+                                                                            {
+                                                                                arc.es_tiempo ? 
+                                                                                <input type="number" className="form-control form-control-sm" min="1" max="10" value={key.grupo_vertical ? key.grupo_vertical : ''} id={`gruplastv_${arc.id}_${key.id}`} onChange={(e) => this.handleChangeLas(e, false, true)}/>
+                                                                                :
+                                                                                null
+                                                                            }
+                                                                        </div>
+                                                                    </div>
                                                                 ))                                                                  
                                                                 }
                                                             </td>

@@ -1,30 +1,31 @@
-import React, { Component, forwardRef } from 'react';
+import React, { Component } from 'react';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
-import Materialtable from 'material-table';
-import SideBar from '../componentes/sidebar';
-import Cabecera from '../componentes/cabecera';
 import iconList from '../util/iconList';
 import '../css/styles.css';
+import {
+  Col,
+  message,
+  Row,
+  Table,
+  Tooltip,
+  Input
+} from 'antd';
+import Cabecera from '../componentes/cabecera';
+import Sidebar from '../componentes/sidebar';
+import Footer from '../componentes/footer';
 
 const URL = process.env.REACT_APP_API_HOST;
-//const url = "http://localhost:9000/wells";
-//const urlAuxiliar = "http://localhost:9000/estructuras";
+const { Search } = Input;
 
-const columns = [
-  { title: 'Campo', field: 'campo' },
-  { title: 'Nombre', field: 'nombre' },
-  { title: 'Tag', field: 'tag' },
-  { title: 'IP', field: 'ip' },
-  { title: 'Puerto', field: 'puerto' },
-  { title: 'Url', field: 'url' },
-];
+
 class viewWells extends Component {
   state = {
-    data: [],
+    data: [], dataSearch: [],
     dataFields: [],
     modalInsertar: false,
+    modalEditar: false,
     modalEliminar: false,
     tipoModal: '',
     form: {
@@ -39,6 +40,7 @@ class viewWells extends Component {
       estado_id: '',
       pkuser: '',
       field_id: '',
+      pkuser: 0
     },
   };
 
@@ -46,24 +48,34 @@ class viewWells extends Component {
     axios
       .get(URL + 'wells')
       .then(response => {
-        this.setState({ data: response.data });
+        if (response.status === 200)
+          this.setState({ data: response.data, dataSearch: response.data });
+        else
+        {
+          console.log(response.data);
+          message.error('Ocurrió un error consultando los pozos, intente nuevamente')
+        }
       })
       .catch(error => {
+        message.error('Ocurrió un error consultando los pozos, intente nuevamente')
         console.log(error.message);
       });
-  };
-
-  useEffect = () => {
-    this.peticionGet();
   };
 
   peticionCamposGet = () => {
     axios
       .get(URL + 'fields')
       .then(response => {
-        this.setState({ dataFields: response.data });
+        if (response.status === 200)
+          this.setState({ dataFields: response.data });
+        else
+        {
+          console.log(response.data);
+          message.error('Ocurrió un error consultando los pozos, intente nuevamente')
+        }
       })
       .catch(error => {
+        message.error('Ocurrió un error consultando los pozos, intente nuevamente')
         console.log(error.message);
       });
   };
@@ -73,18 +85,40 @@ class viewWells extends Component {
     await axios
       .post(URL + 'wells', this.state.form)
       .then(response => {
-        this.modalInsertar();
-        this.peticionGet();
+        if (response.status === 200)
+        {
+          this.modalInsertar();
+          this.peticionGet();
+          message.success('Pozo creado con éxito')
+        }
+        else
+        {
+          console.log(response.data);
+          message.error('Ocurrió un error creando el pozo, intente nuevamente')
+        }
       })
       .catch(error => {
+        message.error('Ocurrió un error creando el pozo, intente nuevamente')
         console.log(error.message);
       });
   };
 
   peticionPut = () => {
     axios.put(URL + 'wells', this.state.form).then(response => {
-      this.modalInsertar();
-      this.peticionGet();
+      if (response.status === 200)
+      {
+        this.modalInsertar();
+        this.peticionGet();
+        message.success('Pozo actualizado con éxito')
+      }
+      else
+      {
+        console.log(response.data);
+        message.error('Ocurrió un error actualizando el pozo, intente nuevamente')
+      }
+    }).catch(error => {
+      message.error('Ocurrió un error actualizando el pozo, intente nuevamente')
+      console.log(error.message);
     });
   };
 
@@ -95,16 +129,60 @@ class viewWells extends Component {
     };
 
     axios.delete(URL + 'wells', { data: datos }).then(response => {
-      this.setState({ modalEliminar: false });
-      this.peticionGet();
+      if (response.status === 200)
+      {
+        this.setState({ modalEliminar: false });
+        this.peticionGet();
+        message.success('Pozo eliminado con éxito')
+      }
+      else
+      {
+        console.log(response.data);
+        message.error('Ocurrió un error eliminando el pozo, intente nuevamente')
+      }
+    }).catch(error => {
+      console.log(error.message);
+      message.error('Ocurrió un error aliminando el pozo, intente nuevamente')
     });
   };
 
   modalInsertar = () => {
+    let pkuser = JSON.parse(
+      sessionStorage.getItem('user')
+    ).pk_usuario_sesion;
+    this.setState({ 
+        modalInsertar: !this.state.modalInsertar, 
+        tipoModal: 'insertar', 
+        form: { id: '',
+          nombre: '',
+          tag: '',
+          ip: '',
+          puerto: '',
+          url: '',
+          usuario: '',
+          clave: '',
+          estado_id: '',
+          pkuser: '',
+          field_id: '',
+          pkuser: pkuser 
+        } 
+    });
+  };
+
+  modalEditar = (info) => {
+    this.seleccionarRegistro(info)
     this.setState({ modalInsertar: !this.state.modalInsertar });
   };
 
+  modalEliminar = (info) => {
+    this.seleccionarRegistro(info)
+    this.setState({ modalEliminar: !this.state.modalEliminar });
+  };
+
   seleccionarRegistro = wells => {
+    let pkuser = JSON.parse(
+      sessionStorage.getItem('user')
+    ).pk_usuario_sesion;
     this.setState({
       tipoModal: 'actualizar',
       form: {
@@ -118,22 +196,28 @@ class viewWells extends Component {
         clave: wells.clave,
         estado_id: wells.estado_id,
         field_id: wells.field_id,
+        pkuser: pkuser
       },
     });
   };
 
-  handleChange = async e => {
-    e.persist();
-    await this.setState({
+  handleChange = e => {
+    this.setState({
       form: {
         ...this.state.form,
         [e.target.name]: e.target.value,
       },
     });
-    //console.log(this.state.form);
-    this.state.form.pkuser = JSON.parse(
-      sessionStorage.getItem('user')
-    ).pk_usuario_sesion;
+  };
+
+  onFilter = search => {
+    let searched = search.target.value.toLowerCase();
+    const responseSearch = this.state.data.filter( ({nombre, campo}) => {
+      nombre = nombre.toLowerCase();
+      campo = campo.toLowerCase();
+      return nombre.includes(searched) || campo.includes(searched);
+    });
+    this.setState({dataSearch:  responseSearch});
   };
 
   componentDidMount() {
@@ -145,58 +229,115 @@ class viewWells extends Component {
     const { form } = this.state;
 
     return (
-      <div className="App">
+      <>
         <Cabecera />
-        <SideBar pageWrapId={'page-wrap'} outerContainerId={'App'} />
+        <Sidebar />
+        <nav aria-label="breadcrumb" className='small'>
+          <ol className="breadcrumb">
+            <li className="breadcrumb-item">Curvas</li>
+            <li className="breadcrumb-item active" aria-current="page">Pozos</li>
+          </ol>
+        </nav>
 
-        <div className="containerCuatro">
-          <button
-            className="btn btn-success"
-            onClick={() => {
-              this.setState({ form: null, tipoModal: 'insertar' });
-              this.modalInsertar();
-            }}
-          >
-            {' '}
-            <iconList.Add /> Agregar Pozo
-          </button>
-        </div>
-        <div
-          className="form-group col-11"
-          style={{ float: 'left', padding: '30px 0 0 30px' }}
-        >
-          <Materialtable
-            title={'Listado de Pozos'}
-            columns={columns}
-            data={this.state.data}
-            icons={iconList}
-            actions={[
-              {
-                icon: iconList.Edit,
-                tooltip: 'Editar',
-                onClick: (event, rowData) => {
-                  this.seleccionarRegistro(rowData);
+        <div className='container-xl'>
+          <Row >
+            <Col span={24}>
+              <h3>Listado de Pozos</h3>
+            </Col>
+          </Row>
+          <Row >
+            <Col span={12}>
+              <Search
+                placeholder="Buscar"
+                onChange={(value) => this.onFilter(value)}
+                enterButton={false}
+              />
+            </Col>
+            <Col span={12} className='text-right'>
+              <button
+                className="btn btn-success btn-sm"
+                onClick={() => {
+                  this.setState({ form: null, tipoModal: 'insertar' });
                   this.modalInsertar();
-                },
-              },
-              {
-                icon: iconList.Delete,
-                tooltip: 'Eliminar',
-                onClick: (event, rowData) => {
-                  this.seleccionarRegistro(rowData);
-                  this.setState({ modalEliminar: true });
-                },
-              },
-            ]}
-            options={{
-              actionsColumnIndex: -1,
-            }}
-            localization={{
-              header: { actions: 'Acciones' },
-            }}
-          />
+                }}
+              >
+                <iconList.Add /> Agregar Pozo
+              </button>
+            </Col>
+          </Row>
+          <Row >
+            <Col span={24}>
+              <Table
+                tableLayout="fixed"
+                pagination={{ pageSize: 10 }}
+                dataSource={this.state.dataSearch}
+                rowKey="id"
+                key="id"
+                columns={[
+                  {
+                    title: 'Campo',
+                    dataIndex: 'campo',
+                    key: 'campo',
+                    width: '30%',
+                  },
+                  {
+                    title: 'Nombre',
+                    dataIndex: 'nombre',
+                    key: 'nombre',
+                    width: '30%',
+                  },
+                  {
+                    title: 'Tag',
+                    dataIndex: 'tag',
+                    key: 'tag',
+                  },
+                  {
+                    title: 'IP',
+                    dataIndex: 'ip',
+                    key: 'ip',
+                  },
+                  {
+                    title: 'Puerto',
+                    dataIndex: 'puerto',
+                    key: 'puerto',
+                  },
+                  {
+                    title: 'Url',
+                    dataIndex: 'url',
+                    key: 'url',
+                  },
+                  {
+                    title: 'Acción',
+                    width: '10%',
+                    render: info => {
+                      return (
+                      <Row gutter={8} justify="center">
+                        <Col span={4} style={{ cursor: 'pointer' }}>
+                          <Tooltip title="Editar">
+                            <span onClick={() => this.modalEditar(info)}>
+                              <iconList.Edit />
+                            </span>
+                          </Tooltip>
+                        </Col>
+                        <Col span={4} style={{ cursor: 'pointer' }}>
+                          <Tooltip title="Eliminar">
+                            <span onClick={() => this.modalEliminar(info)}>
+                              <iconList.Delete />
+                            </span>
+                          </Tooltip>
+                        </Col>
+                      </Row>
+                      )
+                    }
+                  }
+                ]}
+                bordered
+              />
+            </Col>
+          </Row>
         </div>
-
+        <Footer />
+        
         <Modal isOpen={this.state.modalInsertar}>
           <ModalHeader style={{ display: 'block' }}>
             <span
@@ -346,7 +487,7 @@ class viewWells extends Component {
                 onChange={this.handleChange}
                 value={form ? form.id : this.state.data.length + 1}
               />
-              <label htmlFor="nombre">Nombre</label> &nbsp;{' '}
+              <label htmlFor="nombre"><b>Nombre:</b></label> &nbsp;{' '}
               {form ? form.nombre : ''}
             </div>
           </ModalBody>
@@ -358,14 +499,14 @@ class viewWells extends Component {
               Si
             </button>
             <button
-              className="btn btn-secundary"
+              className="btn btn-secondary"
               onClick={() => this.setState({ modalEliminar: false })}
             >
               No
             </button>
           </ModalFooter>
         </Modal>
-      </div>
+      </>
     );
   }
 }
