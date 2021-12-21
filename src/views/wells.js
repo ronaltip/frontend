@@ -10,7 +10,8 @@ import {
   Row,
   Table,
   Tooltip,
-  Input
+  Input,
+  Spin
 } from 'antd';
 import Cabecera from '../componentes/cabecera';
 import Sidebar from '../componentes/sidebar';
@@ -22,7 +23,7 @@ const { Search } = Input;
 
 class viewWells extends Component {
   state = {
-    data: [], dataSearch: [],
+    data: [], dataSearch: [], loading: false,
     dataFields: [],
     modalInsertar: false,
     modalEditar: false,
@@ -44,21 +45,24 @@ class viewWells extends Component {
     },
   };
 
-  peticionGet = async () => {
+  peticionGet = () => {
+    this.setLoading(true)
     axios
       .get(URL + 'wells')
       .then(response => {
         if (response.status === 200)
-          this.setState({ data: response.data, dataSearch: response.data });
+          this.setState({ data: response.data, dataSearch: response.data, loading: false });
         else
         {
           console.log(response.data);
           message.error('Ocurrió un error consultando los pozos, intente nuevamente')
+          this.setLoading(false)
         }
       })
       .catch(error => {
         message.error('Ocurrió un error consultando los pozos, intente nuevamente')
-        console.log(error.message);
+        console.log(error.message)
+        this.setLoading(false)
       });
   };
 
@@ -71,18 +75,18 @@ class viewWells extends Component {
         else
         {
           console.log(response.data);
-          message.error('Ocurrió un error consultando los pozos, intente nuevamente')
+          message.error('Ocurrió un error consultando los campos, intente nuevamente')
         }
       })
       .catch(error => {
-        message.error('Ocurrió un error consultando los pozos, intente nuevamente')
-        console.log(error.message);
+        message.error('Ocurrió un error consultando los campos, intente nuevamente')
+        console.log(error.message)
       });
   };
 
-  peticionPost = async () => {
+  peticionPost = () => {
     delete this.state.form.id;
-    await axios
+    axios
       .post(URL + 'wells', this.state.form)
       .then(response => {
         if (response.status === 200)
@@ -147,9 +151,6 @@ class viewWells extends Component {
   };
 
   modalInsertar = () => {
-    let pkuser = JSON.parse(
-      sessionStorage.getItem('user')
-    ).pk_usuario_sesion;
     this.setState({ 
         modalInsertar: !this.state.modalInsertar, 
         tipoModal: 'insertar', 
@@ -164,7 +165,7 @@ class viewWells extends Component {
           estado_id: '',
           pkuser: '',
           field_id: '',
-          pkuser: pkuser 
+          pkuser: JSON.parse(sessionStorage.getItem('user')).pk_usuario_sesion 
         } 
     });
   };
@@ -210,14 +211,19 @@ class viewWells extends Component {
     });
   };
 
+  setLoading = e => {
+    this.setState({loading: e})
+  }
+
   onFilter = search => {
+    this.setLoading(true)
     let searched = search.target.value.toLowerCase();
     const responseSearch = this.state.data.filter( ({nombre, campo}) => {
       nombre = nombre.toLowerCase();
       campo = campo.toLowerCase();
       return nombre.includes(searched) || campo.includes(searched);
     });
-    this.setState({dataSearch:  responseSearch});
+    this.setState({dataSearch:  responseSearch, loading: false});
   };
 
   componentDidMount() {
@@ -273,18 +279,19 @@ class viewWells extends Component {
                 dataSource={this.state.dataSearch}
                 rowKey="id"
                 key="id"
+                loading={{  indicator: <div><Spin /></div>, spinning: this.state.loading }}
                 columns={[
                   {
                     title: 'Campo',
                     dataIndex: 'campo',
                     key: 'campo',
-                    width: '30%',
+                    width: '20%',
                   },
                   {
                     title: 'Nombre',
                     dataIndex: 'nombre',
                     key: 'nombre',
-                    width: '30%',
+                    width: '20%',
                   },
                   {
                     title: 'Tag',
@@ -308,18 +315,17 @@ class viewWells extends Component {
                   },
                   {
                     title: 'Acción',
-                    width: '10%',
                     render: info => {
                       return (
-                      <Row gutter={8} justify="center">
-                        <Col span={4} style={{ cursor: 'pointer' }}>
+                      <Row gutter={16} justify="center">
+                        <Col span={8} style={{ cursor: 'pointer' }}>
                           <Tooltip title="Editar">
                             <span onClick={() => this.modalEditar(info)}>
                               <iconList.Edit />
                             </span>
                           </Tooltip>
                         </Col>
-                        <Col span={4} style={{ cursor: 'pointer' }}>
+                        <Col span={8} style={{ cursor: 'pointer' }}>
                           <Tooltip title="Eliminar">
                             <span onClick={() => this.modalEliminar(info)}>
                               <iconList.Delete />

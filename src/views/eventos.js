@@ -360,7 +360,6 @@ class viewEventos extends Component {
                   },
                   {
                     title: 'Acción',
-
                     render: info => {
                       return (
                       <Row gutter={8} justify="center">

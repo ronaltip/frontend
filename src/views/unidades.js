@@ -10,7 +10,8 @@ import {
   Row,
   Table,
   Tooltip,
-  Input
+  Input,
+  Spin
 } from 'antd';
 import Cabecera from '../componentes/cabecera';
 import Sidebar from '../componentes/sidebar';
@@ -21,7 +22,7 @@ const { Search } = Input;
 
 class viewUnidades extends Component {
   state = {
-    data: [], dataSearch: [],
+    data: [], dataSearch: [], loading: false,
     modalInsertar: false,
     modalEditar: false,
     modalEliminar: false,
@@ -29,21 +30,24 @@ class viewUnidades extends Component {
     form: { id: '', nombre: '', tag: '', estado_id: '', pkuser: '' },
   };
 
-  peticionGet = async () => {
+  peticionGet = () => {
+    this.setLoading(true)
     axios
       .get(URL + 'unidades')
       .then(response => {
         if (response.status === 200)
-          this.setState({ data: response.data, dataSearch: response.data });
+          this.setState({ data: response.data, dataSearch: response.data, loading: false });
         else
         {
           console.log(response.data);
           message.error('Ocurrió un error consultando las unidades de medida, intente nuevamente')
+          this.setLoading(false)
         }
       })
       .catch(error => {
           message.error('Ocurrió un error consultando las unidades de medida, intente nuevamente')
-          console.log(error.message);
+          console.log(error.message)
+          this.setLoading(false)
       });
   };
 
@@ -166,6 +170,10 @@ class viewUnidades extends Component {
     this.setState({dataSearch:  responseSearch});
   };
   
+  setLoading = e => {
+    this.setState({loading: e})
+  }
+
   componentDidMount() {
     this.peticionGet();
   }
@@ -187,7 +195,7 @@ class viewUnidades extends Component {
         <div className='container-xl'>
           <Row >
             <Col span={24}>
-              <h3>Listado de Uniades de Medida</h3>
+              <h3>Listado de Unidades de Medida</h3>
             </Col>
           </Row>
           <Row >
@@ -218,6 +226,7 @@ class viewUnidades extends Component {
                 dataSource={this.state.dataSearch}
                 rowKey="id"
                 key="id"
+                loading={{  indicator: <div><Spin /></div>, spinning: this.state.loading }}
                 columns={[
                   {
                     title: 'Nombre',
@@ -232,7 +241,6 @@ class viewUnidades extends Component {
                   },
                   {
                     title: 'Acción',
-                    width: '10%',
                     render: info => {
                       return (
                       <Row gutter={8} justify="center">
@@ -272,9 +280,9 @@ class viewUnidades extends Component {
               <iconList.CancelIcon />
             </span>
             {this.state.tipoModal === 'insertar' ? (
-              <label htmlFor="nombre">Nuevo Unidades de Medida</label>
+              <label htmlFor="nombre">Nueva Unidad de Medida</label>
             ) : (
-              <label htmlFor="nombre">Editar Unidades de Medida</label>
+              <label htmlFor="nombre">Editar Unidad de Medida</label>
             )}
           </ModalHeader>
           <ModalBody>

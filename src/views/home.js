@@ -90,10 +90,10 @@ class Home extends Component {
       {
         this.setState({tiposCurva: RESULT.ERROR})
         console.log( response.data );
-        message.error('No se cargaron los tipos de curva en la aplicación')
+        message.error('No se cargaron los tipos de curva del estandar Wits 0 en la aplicación')
       }
     }).catch(error => {
-        message.error('No se cargaron los tipos de curva en la aplicación')
+        message.error('No se cargaron los tipos de curva del estandar Wits 0 en la aplicación')
         console.log( error.message );
         this.setState({tiposCurva: RESULT.ERROR})
     })

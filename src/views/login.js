@@ -73,7 +73,9 @@ class Login extends Component {
         <div className="containerPrincipal">
           <div className="containerSecundario">
             <div className="form-groop">
-              <label className="title"> EcoAge </label> 2.0 <br />
+            <img src="favicon.ico" width="30" height="30" className="d-inline-block align-top" alt="ECOPETROL" />
+          
+              <label className="navbar-brand"> EcoAge </label><br />
               <label>Usuario:</label>
               <br />
               <input

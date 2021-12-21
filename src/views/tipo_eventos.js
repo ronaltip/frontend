@@ -10,7 +10,8 @@ import {
   Row,
   Table,
   Tooltip,
-  Input
+  Input,
+  Spin
 } from 'antd';
 import Cabecera from '../componentes/cabecera';
 import Sidebar from '../componentes/sidebar';
@@ -25,7 +26,7 @@ class viewTipoEventos extends Component {
   constructor() {
     super();
     this.state = {
-      data: [], dataSearch: [],
+      data: [], dataSearch: [], loading: false,
       modalInsertar: false,
       modalEditar: false,
       modalEliminar: false,
@@ -41,21 +42,24 @@ class viewTipoEventos extends Component {
     };
   }
 
-  peticionGet = async () => {
+  peticionGet = () => {
+    this.setLoading(true)
     axios
       .get(URL + 'tipo_eventos')
       .then(response => {
         if (response.status === 200)
-          this.setState({ data: response.data, dataSearch: response.data });
+          this.setState({ data: response.data, dataSearch: response.data, loading: false});
         else
         {
           console.log(response.data);
           message.error('Ocurrió un error consultando los tipos de evento, intente nuevamente')
+          this.setLoading(false)
         }
       })
       .catch(error => {
           message.error('Ocurrió un error consultando los tipos de evento, intente nuevamente')
-          console.log(error.message);
+          console.log(error.message)
+          this.setLoading(false)
       });
   };
 
@@ -189,6 +193,10 @@ class viewTipoEventos extends Component {
     this.setState({dataSearch:  responseSearch});
   };
 
+  setLoading = e => {
+    this.setState({loading: e})
+  }
+
   componentDidMount() {
     this.peticionGet();
   }
@@ -241,6 +249,7 @@ class viewTipoEventos extends Component {
                 dataSource={this.state.dataSearch}
                 rowKey="id"
                 key="id"
+                loading={{  indicator: <div><Spin /></div>, spinning: this.state.loading }}
                 columns={[
                   {
                     title: 'Nombre',
@@ -264,15 +273,15 @@ class viewTipoEventos extends Component {
                     width: '10%',
                     render: info => {
                       return (
-                      <Row gutter={8} justify="center">
-                        <Col span={4}  style={{ cursor: 'pointer' }}>
+                      <Row gutter={16} justify="center">
+                        <Col span={8}  style={{ cursor: 'pointer' }}>
                           <Tooltip title="Editar">
                             <span onClick={() => this.modalEditar(info)}>
                               <iconList.Edit />
                             </span>
                           </Tooltip>
                         </Col>
-                        <Col span={4} style={{ cursor: 'pointer' }}>
+                        <Col span={8} style={{ cursor: 'pointer' }}>
                           <Tooltip title="Eliminar">
                             <span onClick={() => this.modalEliminar(info)}>
                               <iconList.Delete />

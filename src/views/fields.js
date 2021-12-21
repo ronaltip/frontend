@@ -10,7 +10,8 @@ import {
   Row,
   Table,
   Tooltip,
-  Input
+  Input,
+  Spin
 } from 'antd';
 import Cabecera from '../componentes/cabecera';
 import Sidebar from '../componentes/sidebar';
@@ -22,7 +23,7 @@ const { Search } = Input;
 
 class viewFields extends Component {
   state = {
-    data: [], dataSearch: [],
+    data: [], dataSearch: [], loading: false,
     modalInsertar: false,
     modalEliminar: false,
     modalEditar: false,
@@ -31,27 +32,30 @@ class viewFields extends Component {
   };
 
  
-  peticionGet = async () => {
+  peticionGet = () => {
+    this.setLoading(true)
     axios
       .get(URL + 'fields')
       .then(response => {
         if (response.status === 200)
-          this.setState({ data: response.data, dataSearch: response.data });
+          this.setState({ data: response.data, dataSearch: response.data, loading: false });
         else
         {
           console.log(response.data);
           message.error('Ocurrió un error consultando los campos, intente nuevamente')
+          this.setLoading(false)
         }
       })
       .catch(error => {
         message.error('Ocurrió un error consultando los campos, intente nuevamente')
         console.log(error.message);
+        this.setLoading(false)
       });
   };
 
-  peticionPost = async () => {
+  peticionPost = () => {
     delete this.state.form.id;
-    await axios
+    axios
       .post(URL + 'fields', this.state.form)
       .then(response => {
         if (response.status === 200)
@@ -162,12 +166,17 @@ class viewFields extends Component {
     });
   };
 
+  setLoading = e => {
+    this.setState({loading: e})
+  }
+
   onFilter = search => {
+    this.setLoading(true)
     const responseSearch = this.state.data.filter( ({nombre}) => {
       nombre = nombre.toLowerCase();
       return nombre.includes(search.target.value.toLowerCase());
     });
-    this.setState({dataSearch:  responseSearch});
+    this.setState({dataSearch:  responseSearch, loading: false});
   };
 
   componentDidMount() {
@@ -221,6 +230,7 @@ class viewFields extends Component {
                 dataSource={this.state.dataSearch}
                 rowKey="id"
                 key="id"
+                loading={{  indicator: <div><Spin /></div>, spinning: this.state.loading }}
                 columns={[
                   {
                     title: 'Nombre',
@@ -232,22 +242,21 @@ class viewFields extends Component {
                     title: 'Descripción',
                     dataIndex: 'descripcion',
                     key: 'descripcion',
-                    width: '55%',
+                    width: '60%',
                   },
                   {
                     title: 'Acción',
-                    width: '10%',
                     render: info => {
                       return (
-                      <Row gutter={8} justify="center">
-                        <Col span={4} style={{ cursor: 'pointer' }}>
+                      <Row gutter={16} justify="center">
+                        <Col span={8} style={{ cursor: 'pointer' }}>
                           <Tooltip title="Editar">
                             <span onClick={() => this.modalEditar(info)}>
                               <iconList.Edit />
                             </span>
                           </Tooltip>
                         </Col>
-                        <Col span={4} style={{ cursor: 'pointer' }}>
+                        <Col span={8} style={{ cursor: 'pointer' }}>
                           <Tooltip title="Eliminar">
                             <span onClick={() => this.modalEliminar(info)}>
                               <iconList.Delete />

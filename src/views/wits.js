@@ -10,6 +10,7 @@ import {
   Row,
   Table,
   Tooltip,
+  Spin,
   Input
 } from 'antd';
 import Cabecera from '../componentes/cabecera';
@@ -23,21 +24,24 @@ const { Search } = Input;
 class viewWits extends Component {
 
     state = {
-        data: [],  dataSearch: [],
+        data: [],  dataSearch: [], loading: false
     }
        
-    peticionGet = async () => {
+    peticionGet = () => {
+        this.setLoading(true)
         axios.get(URL + 'wits_detalle').then(response => {
             if (response.status === 200)
-                this.setState({ data: response.data, dataSearch: response.data });
+                this.setState({ data: response.data, dataSearch: response.data, loading: false });
             else
             {
                 console.log(response.data);
-                message.error('Ocurrió un error consultando la tabla wits0, intente nuevamente')
+                message.error('Ocurrió un error consultando la tabla wits 0, intente nuevamente')
+                this.setLoading(false)
             }
         }).catch(error => {
-            message.error('Ocurrió un error consultando la tabla wits0, intente nuevamente')
-            console.log(error.message);
+            message.error('Ocurrió un error consultando la tabla wits 0, intente nuevamente')
+            console.log(error.message)
+            this.setLoading(false)
         })
     };
     
@@ -58,6 +62,10 @@ class viewWits extends Component {
         this.setState({dataSearch:  responseSearch});
     };
    
+    setLoading = e => {
+        this.setState({loading: e})
+    }
+
     componentDidMount() {
         this.peticionGet();
     }
@@ -98,6 +106,7 @@ class viewWits extends Component {
                             dataSource={this.state.dataSearch}
                             rowKey="id"
                             key="id"
+                            loading={{  indicator: <div><Spin /></div>, spinning: this.state.loading }}
                             columns={[
                             {
                                 title: 'Level',
@@ -110,7 +119,7 @@ class viewWits extends Component {
                                 key: 'codigo',
                             },
                             {
-                                title: 'Mnemonico',
+                                title: 'Mnemónico',
                                 dataIndex: 'short_mnemonico',
                                 key: 'short_mnemonico',
                             },
