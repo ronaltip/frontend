@@ -13,7 +13,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "../css/button.css";
 
 import SideBar from '../componentes/sidebar';
-
+import AccountCircleIcon from '@material-ui/icons/AccountCircle';
 import {Save, HorizontalSplit, BarChart, Brush, CalendarToday, Delete, EventNote, Close, Home, PlaylistAddCheck, EventAvailable, PlayCircleOutline, MultilineChart, SlowMotionVideo, LayersClear, InvertColorsOff, CreateNewFolderOutlined, FormatListNumbered } from '@material-ui/icons';
 import { TextField, Menu, MenuItem } from '@material-ui/core'
 import { message } from 'antd';
@@ -795,159 +795,176 @@ class Graficador extends Component {
     }
     getEventos = async (id) => {
         axios.get(URL + "eventos/wells/" + id).then(response => {
-            console.log('OK Eventos');
-            this.setState({ dataEventos: response.data }); 
-            let dataEvents   = [...this.state.dataGP]
-            let layout = {...this.state.layoutGP}
+            if (response.status === 200)
+            {
+                console.log('OK Eventos');
+                this.setState({ dataEventos: response.data }); 
+                let dataEvents   = [...this.state.dataGP]
+                let layout = {...this.state.layoutGP}
 
-            const rsEvents = response.data;
-            let eventShapes = [];
-            let tracesEvents = [];
-            
-            if (rsEvents.length > 0) {
+                const rsEvents = response.data;
+                let eventShapes = [];
+                let tracesEvents = [];
                 
-                let fec1 = ''; let fec2 = '';
-                let pro1 = ''; let pro2 = '';
-                for (let k = 0; k < rsEvents.length; k++) {
-
-                    fec1 = rsEvents[k].fecha_inicial;
-                    fec2 = rsEvents[k].fecha_final;
-                    let idEvento = rsEvents[k].id;
-                    if (rsEvents[k].tipo_tiempo === 1)
-                    {   
-                        //Eventos Puntuales
-                        pro1 = rsEvents[k].profundidad_inicial.replace(',', '.');
-                        let color = hexRgb(rsEvents[k].color, {format: 'css'});
-
-                        let trace = {
-                            t: idEvento, tipo: 'ev', name: rsEvents[k].TipoEvento, x: fec1, y: pro1, c: color
-                        }
-                        tracesEvents.push(trace)
-                    }
-                    else
-                    {
-                        //Eventos en el tiempo
-                        let numberFecI = new Date(fec1).getTime();
-                        let numberFecF = new Date(fec2).getTime();
-                        pro1 = rsEvents[k].profundidad_inicial.replace(',', '.');                       
-                        pro2 = rsEvents[k].profundidad_final.replace(',', '.');
-
-                        let color = hexRgb(rsEvents[k].color, {format: 'css'});
-                        let shape = { name: 'Evento', type: 'rect', xref: 'x', yref: 'y', 
-                            x0: numberFecI, y0: pro1, x1: numberFecF, y1: pro2 ,
-                            line: {color: color , width: 1},
-                            id: idEvento, forma: 'Shape'
-                        };
-                        eventShapes.push(shape);
-                        
-                        let trace = {
-                            t: idEvento, tipo: 'ev', name: rsEvents[k].TipoEvento, x: fec1, y: pro1, c: color
-                        }
-                        tracesEvents.push(trace)
-                    }
-                }
-                if (tracesEvents.length > 0)
-                {              
-                    let grupos = tracesEvents.reduce((r, a)=>{
-                        r[a.name] = [...r[a.name] || [], a];
-                        return r;
-                    },{})
-                
-                    for(let grupo in grupos) 
-                    {
-                        let x = [], y = [], c = '', t = [];
-                        for (let item in grupos[grupo])
-                        {
-                            x.push( grupos[grupo][item].x );
-                            y.push( grupos[grupo][item].y );
-                            c = grupos[grupo][item].c ;
-                            t.push( grupos[grupo][item].t );
-                        }
-                        let traceEvento = {
-                            x: x, y: y, name: grupo, mode: 'markers', type: 'scatter', marker: { symbol: '303', size: 10, color: c }, hovertemplate:'%{x}, %{y}', text: t
-                        }
-                        dataEvents.push(traceEvento);
-                    }
-                    if (eventShapes.length > 0)
-                    {
-                        eventShapes.forEach(sh => {
-                            layout.shapes.push( sh );
-                        });
-                    }
+                if (rsEvents.length > 0) {
                     
-                    layout.datarevision++
-                }
+                    let fec1 = ''; let fec2 = '';
+                    let pro1 = ''; let pro2 = '';
+                    for (let k = 0; k < rsEvents.length; k++) {
 
-                this.setState({
-                    dataGP: dataEvents,
-                    layoutGP: layout
-                });
+                        fec1 = rsEvents[k].fecha_inicial;
+                        fec2 = rsEvents[k].fecha_final;
+                        let idEvento = rsEvents[k].id;
+                        if (rsEvents[k].tipo_tiempo === 1)
+                        {   
+                            //Eventos Puntuales
+                            pro1 = rsEvents[k].profundidad_inicial.replace(',', '.');
+                            let color = hexRgb(rsEvents[k].color, {format: 'css'});
+
+                            let trace = {
+                                t: idEvento, tipo: 'ev', name: rsEvents[k].TipoEvento, x: fec1, y: pro1, c: color
+                            }
+                            tracesEvents.push(trace)
+                        }
+                        else
+                        {
+                            //Eventos en el tiempo
+                            let numberFecI = new Date(fec1).getTime();
+                            let numberFecF = new Date(fec2).getTime();
+                            pro1 = rsEvents[k].profundidad_inicial.replace(',', '.');                       
+                            pro2 = rsEvents[k].profundidad_final.replace(',', '.');
+
+                            let color = hexRgb(rsEvents[k].color, {format: 'css'});
+                            let shape = { name: 'Evento', type: 'rect', xref: 'x', yref: 'y', 
+                                x0: numberFecI, y0: pro1, x1: numberFecF, y1: pro2 ,
+                                line: {color: color , width: 1},
+                                id: idEvento, forma: 'Shape'
+                            };
+                            eventShapes.push(shape);
+                            
+                            let trace = {
+                                t: idEvento, tipo: 'ev', name: rsEvents[k].TipoEvento, x: fec1, y: pro1, c: color
+                            }
+                            tracesEvents.push(trace)
+                        }
+                    }
+                    if (tracesEvents.length > 0)
+                    {              
+                        let grupos = tracesEvents.reduce((r, a)=>{
+                            r[a.name] = [...r[a.name] || [], a];
+                            return r;
+                        },{})
+                    
+                        for(let grupo in grupos) 
+                        {
+                            let x = [], y = [], c = '', t = [];
+                            for (let item in grupos[grupo])
+                            {
+                                x.push( grupos[grupo][item].x );
+                                y.push( grupos[grupo][item].y );
+                                c = grupos[grupo][item].c ;
+                                t.push( grupos[grupo][item].t );
+                            }
+                            let traceEvento = {
+                                x: x, y: y, name: grupo, mode: 'markers', type: 'scatter', marker: { symbol: '303', size: 10, color: c }, hovertemplate:'%{x}, %{y}', text: t
+                            }
+                            dataEvents.push(traceEvento);
+                        }
+                        if (eventShapes.length > 0)
+                        {
+                            eventShapes.forEach(sh => {
+                                layout.shapes.push( sh );
+                            });
+                        }
+                        
+                        layout.datarevision++
+                    }
+
+                    this.setState({
+                        dataGP: dataEvents,
+                        layoutGP: layout
+                    });
+                }
+            }
+            else
+            {
+                message.error('Ha ocurrido un error cargando los eventos del pozo')
+                console.log(response.data)
             }
 
-
         }).catch(error => {
+            message.error('Ha ocurrido un error cargando los eventos del pozo')
             console.log(error.message);
         })
     }
     getOperaciones = async (id) => {
         axios.get(URL + "operaciones/wells/" + id).then(response => {
-            console.log('OK Operaciones');
-            this.setState({ dataOperaciones: response.data }); 
-            let dataOpx   = [...this.state.dataGP]
-            let layout = {...this.state.layoutGP}
-
-            let operacionesShapes = [];
-            let rsOperaciones = response.data;
-            if (rsOperaciones.length > 0)
+            if (response.status === 200)
             {
-                let x = [], y = [], t = [];
-                let pro1 = ''; let pro2 = '';
-                rsOperaciones.forEach( item => {
-                    if (item.desde === item.hasta)
-                    {
-                        x.push(item.desde)
-                        y.push(item.md_from.replace(',','.'))
-                        t.push(item.id)
-                    }
-                    else
-                    {
-                        x.push(item.desde)
-                        y.push(item.md_from.replace(',','.'))
-                        t.push(item.id)
+                console.log('OK Operaciones');
+                this.setState({ dataOperaciones: response.data }); 
+                let dataOpx   = [...this.state.dataGP]
+                let layout = {...this.state.layoutGP}
 
-                        let numberFecI = new Date(item.desde).getTime();
-                        let numberFecF = new Date(item.hasta).getTime();
-                        pro1 = item.md_from.replace(',', '.');                       
-                        pro2 = item.md_to.replace(',', '.');
-                        let shape = { type: 'rect', xref: 'x', yref: 'y', name: 'Operación',
-                            x0: numberFecI, y0: pro1, x1: numberFecF, y1: pro2,
-                            line: {color: 'Gray' , width: 1 }, 
-                            id: item.id, forma: 'Shape'
+                let operacionesShapes = [];
+                let rsOperaciones = response.data;
+                if (rsOperaciones.length > 0)
+                {
+                    let x = [], y = [], t = [];
+                    let pro1 = ''; let pro2 = '';
+                    rsOperaciones.forEach( item => {
+                        if (item.desde === item.hasta)
+                        {
+                            x.push(item.desde)
+                            y.push(item.md_from.replace(',','.'))
+                            t.push(item.id)
                         }
-                        operacionesShapes.push(shape);
-                    }               
-                });
+                        else
+                        {
+                            x.push(item.desde)
+                            y.push(item.md_from.replace(',','.'))
+                            t.push(item.id)
 
-                if (x.length > 0)
-                {
-                    let traceOperaciones = {
-                        x: x, y: y, name: 'Operaciones', mode: 'markers', type: 'scatter', marker: { symbol: '303', size: 10, color: 'Gray' }, hovertemplate:'%{x}, %{y}', text: t
+                            let numberFecI = new Date(item.desde).getTime();
+                            let numberFecF = new Date(item.hasta).getTime();
+                            pro1 = item.md_from.replace(',', '.');                       
+                            pro2 = item.md_to.replace(',', '.');
+                            let shape = { type: 'rect', xref: 'x', yref: 'y', name: 'Operación',
+                                x0: numberFecI, y0: pro1, x1: numberFecF, y1: pro2,
+                                line: {color: 'Gray' , width: 1 }, 
+                                id: item.id, forma: 'Shape'
+                            }
+                            operacionesShapes.push(shape);
+                        }               
+                    });
+
+                    if (x.length > 0)
+                    {
+                        let traceOperaciones = {
+                            x: x, y: y, name: 'Operaciones', mode: 'markers', type: 'scatter', marker: { symbol: '303', size: 10, color: 'Gray' }, hovertemplate:'%{x}, %{y}', text: t
+                        }
+                        dataOpx.push(traceOperaciones);
                     }
-                    dataOpx.push(traceOperaciones);
-                }
-                if (operacionesShapes.length > 0)
-                {
-                    operacionesShapes.forEach(sh => {
-                        layout.shapes.push( sh );
+                    if (operacionesShapes.length > 0)
+                    {
+                        operacionesShapes.forEach(sh => {
+                            layout.shapes.push( sh );
+                        });
+                    }
+
+                    this.setState({
+                        dataGP:   dataOpx,
+                        layoutGP: layout
                     });
                 }
-
-                this.setState({
-                    dataGP:   dataOpx,
-                    layoutGP: layout
-                });
+            }
+            else
+            {
+                message.error('Ha ocurrido un error cargando las operaciones del pozo')
+                console.log(response.data)
             }
         }).catch(error => {
+            message.error('Ha ocurrido un error cargando las operaciones del pozo')
             console.log(error.message);
         })
     }
@@ -1129,8 +1146,8 @@ class Graficador extends Component {
                     toggleTrackHorizontal: true,
                     plotDeptCol: this.state.toggleTrackVertical ? 'col-md-8' : 'col-md-12',
                     plotDeptVH:  '55vh',
-                    plotTrackVH: this.state.dataTH.length > 0 ?  (this.state.dataCaving.length > 0 ? '25vh' : '45vh') : '0vh',
-                    plotCavingVH: this.state.dataCaving.length > 0 ? (this.state.dataTH.length > 0 ? '15vh' : '45vh') : '0vh',
+                    plotTrackVH: this.state.dataTH.length > 0 ?  (this.state.dataCaving.length > 0 ? '25vh' : '40vh') : '0vh',
+                    plotCavingVH: this.state.dataCaving.length > 0 ? (this.state.dataTH.length > 0 ? '15vh' : '40vh') : '0vh',
                 })
                 break;
             case 3:
@@ -1833,7 +1850,7 @@ class Graficador extends Component {
                         datosGraficasVerticales.push(traza);
                                   
                         let propertyAxi = 'xaxis' + (i > 1 ? String(i) : '');
-                        if (hm.grupo_vertical == grupo_anterior)
+                        if (hm.grupo_vertical === grupo_anterior)
                             layout_Vertical[propertyAxi] = { title: '_'+hm.short_mnemonico, titlefont: { size: 10, color: 'red', }, tickfont: { size: 8.0 }, overlaying: 'x' + ((i > 1) ? String(i - 1) : ''), side: side ? 'top': 'bottom', gridcolor: '#eee' }
                         else
                         {
@@ -1852,13 +1869,17 @@ class Graficador extends Component {
                             j++
                         }
                         i++
-                        grupo_anterior = hm.grupo_vertical
+                        grupo_anterior = hm.grupo_vertical === null ? -1 : hm.grupo_vertical
                         side = !side
                     }
-                    //Los Horizontales LAS a Verticales
+                })
+            }
+            else
+            {   //Los Horizontales LAS a Verticales
+                ar.homologacion.forEach( hm => {
+                    
                     if (hm.mostrar_vertical)
                     {
-                        
                         const DMEA = ar.datos.filter( f => f.codigo === '_0110')
                         if (DMEA.length > 0)
                         { 
@@ -1914,19 +1935,20 @@ class Graficador extends Component {
                         }
                     }
                 })
-                
-                layout_Vertical.grid.subplots.push(subplots);
-                layout_Vertical.grid.columns = j
-            }
-           
+            }          
         })
 
+        if (subplots.length > 0)
+        {
+            layout_Vertical.grid.subplots.push(subplots);
+            layout_Vertical.grid.columns = j
+        }  
 
         //Los Horizontales WITS a Verticales
         const DMEA = this.state.dataCurvas.filter( f => f.codigo === '0110')
         if (DMEA.length > 0)
         {       
-            let subplots = [];
+            //let subplots = [];
             grupo_anterior = 0
             curvasVertical.forEach( c => {
                 
@@ -2852,7 +2874,7 @@ class Graficador extends Component {
                     
                     <div className="row border-bottom bg-verdeclaro">
                         <div className="col-md-5 col-lg-5 small text-left mt-2">
-                            <label className="font-weight-bold">Template: </label> {template.template_nombre} | <label  className="font-weight-bold">Campo: </label> {template.field_nombre} | <label  className="font-weight-bold">Pozo: </label> {template.wells_nombre}   
+                           <label  className="font-weight-bold">Campo: </label> {template.field_nombre} | <label  className="font-weight-bold">Pozo: </label> {template.wells_nombre} | <label className="font-weight-bold">Template: </label> {template.template_nombre}  
                         </div>
                         <div className="col-md-4 col-lg-4 text-left  mt-1">
                             <button title="Templates registrados" onClick={() => this.Start()} className="btn btn-sm btn-success btn-circle"><CreateNewFolderOutlined fontSize="small" /></button>
@@ -2874,7 +2896,7 @@ class Graficador extends Component {
                             <button title="Ver/Ocultar Tracks Verticales" onClick={() => this.CollapseTrackVertical()} className="btn btn-sm btn-danger btn-circle"><BarChart fontSize="small" /></button>
                         </div>
                         <div className="col-md-3 col-lg-3 text-right  mt-1">
-                            <small> {this.state.userStorage.nombre_usuario_sesion} </small>
+                            <small> <AccountCircleIcon className='text-success' fontSize='small'/> {this.state.userStorage.nombre_usuario_sesion} </small>
                         </div>
                     </div>
                   
@@ -3320,7 +3342,7 @@ class Graficador extends Component {
                             <div className="col-md-5">
                                 <div className="form-group">
                                     <label><b>Campo: </b></label>
-                                    <select name="field_id" id="field_id" className="form-control" onChange={this.handleChange} defaultValue={template ? template.field_id : 0}>
+                                    <select name="field_id" id="field_id" className="form-control form-control-sm" onChange={this.handleChange} defaultValue={template ? template.field_id : 0}>
                                         <option key="0" value="0">Seleccionar</option>
                                         {this.state.dataFields.length > 0 ? this.state.dataFields.map(elemento => (<option key={elemento.id} value={elemento.id}>{elemento.nombre}</option>)) :null } 
                                     </select>
@@ -3329,9 +3351,9 @@ class Graficador extends Component {
                             <div className="col-md-7">
                                 <div className="form-group">
                                     <label><b>Pozo: </b></label>
-                                    <select name="wells_id" id="wells_id" className="form-control" onChange={this.handleChange} defaultValue={template ? template.wells_id : 0}>
+                                    <select name="wells_id" id="wells_id" className="form-control form-control-sm" onChange={this.handleChange} defaultValue={template ? template.wells_id : 0}>
                                         <option key="0" value="0">Seleccionar</option>
-                                        {this.state.dataWells ? this.state.dataWells.map(elemento => (<option key={elemento.id} value={elemento.id}>{elemento.nombre}</option>)) : null}
+                                        {this.state.dataWells.length > 0 ? this.state.dataWells.map(elemento => (<option key={elemento.id} value={elemento.id}>{elemento.nombre}</option>)) : null}
                                     </select>
                                 </div>
                             </div>
@@ -3359,7 +3381,7 @@ class Graficador extends Component {
                                         <table className="table table-sm table-striped">
                                             <tbody>
                                                 {
-                                                    this.state.dataTemplates ? 
+                                                    this.state.dataTemplates.length > 0  ? 
                                                     this.state.dataTemplates.map( (row , index) => 
                                                         <tr key={'row_'+index}>
                                                             <td> {row.nombre} </td><td> {row.descripcion} </td>
@@ -3394,8 +3416,8 @@ class Graficador extends Component {
                             />
                         : null}
                         
-                        <button className="btn btn-primary"   onClick={() => this.IrHome()}><Home /> Salir</button>
-                        <button className="btn btn-secondary" onClick={() => this.setState({modalStart : false, loadingStart: false}) }><Close /> Cerrar</button>                        
+                        <button className="btn btn-sm btn-primary"   onClick={() => this.IrHome()}><Home fontSize='small' /> Salir</button>
+                        <button className="btn btn-sm btn-secondary" onClick={() => this.setState({modalStart : false, loadingStart: false}) }><Close fontSize='small'/> Cerrar</button>                        
                     </ModalFooter>
                 </Modal>
 
@@ -3714,7 +3736,7 @@ class Graficador extends Component {
                     </ModalFooter>
                 </Modal>
 
-                <Modal isOpen={this.state.modalAlgoritmo} size="lg" >
+                <Modal isOpen={this.state.modalAlgoritmo} size="lg" centered >
                     <ModalHeader>
                         <MultilineChart fontSize="large" className="btn-circle bg-warning"/> <b>Algoritmo de Operaciones</b>
                     </ModalHeader>
