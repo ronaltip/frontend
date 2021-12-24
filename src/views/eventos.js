@@ -109,8 +109,22 @@ class viewEventos extends Component {
 
   peticionPost = async () => {
     delete this.state.form.id;
+    let form = {...this.state.form}
+    if (this.state.showing === false) 
+    {
+      
+      form.tipo_tiempo = 1;
+      form.fecha_final = this.state.form.fecha_inicial;
+      form.hora_final = this.state.form.hora_inicial;
+      form.profundidad_final = this.state.form.profundidad_inicial;
+    } 
+    else 
+    {      
+      form.tipo_tiempo = 2;
+    }
+
     await axios
-      .post(URL + 'eventos', this.state.form)
+      .post(URL + 'eventos', form)
       .then(response => {
         if (response.status === 200)
         {
@@ -247,18 +261,9 @@ class viewEventos extends Component {
       form: {
         ...this.state.form,
         [e.target.name]: e.target.value,
-      },
+      }
     });
-    if (this.state.showing === false) 
-    {
-      this.state.form.tipo_tiempo = '1';
-      this.state.form.fecha_final = this.state.form.fecha_inicial;
-      this.state.form.hora_final = this.state.form.hora_inicial;
-      this.state.form.profundidad_final = this.state.form.profundidad_inicial;
-    } 
-    else {
-      this.state.form.tipo_tiempo = '2';
-    }
+    
   };
 
   setFechaFinal() {

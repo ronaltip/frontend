@@ -14,7 +14,7 @@ import "../css/button.css";
 
 import SideBar from '../componentes/sidebar';
 import AccountCircleIcon from '@material-ui/icons/AccountCircle';
-import {Save, HorizontalSplit, BarChart, Brush, CalendarToday, Delete, EventNote, Close, Home, PlaylistAddCheck, EventAvailable, PlayCircleOutline, MultilineChart, SlowMotionVideo, LayersClear, InvertColorsOff, CreateNewFolderOutlined, FormatListNumbered } from '@material-ui/icons';
+import {Save, HorizontalSplit, BarChart, Brush, CalendarToday, Delete, EventNote, Close, Home, PlaylistAddCheck, EventAvailable, PlayCircleOutline, MultilineChart, SlowMotionVideo, LayersClear, InvertColorsOff, CreateNewFolderOutlined } from '@material-ui/icons';
 import { TextField, Menu, MenuItem } from '@material-ui/core'
 import { message } from 'antd';
 import {CAVING_COLS} from '../util/constants/enums';
@@ -56,7 +56,7 @@ class Graficador extends Component {
                 mensaje: '',
                 show: false
             },
-
+            wells_id_anterior: 0,
             template: {
                 template_id: 0,
                 template_nombre: '',
@@ -555,7 +555,7 @@ class Graficador extends Component {
             let wd    = [...this.state.dataCurvas]
             if (wd.length > 0)
             {    
-                wd.map( opt => 
+                wd.forEach( opt => 
                     op_wd.push( { value: 'wd_' + opt.codigo, text: '[' + opt.codigo + '] ' + opt.short_mnemonico + ' - ' + opt.descripcion } )
                 )
             }
@@ -563,11 +563,11 @@ class Graficador extends Component {
             let ls    = [...this.state.archivos_las]
             if (ls.length > 0)
             {    
-                ls.map( opt => 
+                ls.forEach( opt => 
                     {
                         if (opt.es_tiempo === true)
                         {  
-                            opt.homologacion.map( h => {
+                            opt.homologacion.forEach( h => {
                                 op_wd.push( { value: 'ls_' + opt.id + '_' + h.codigo, text: 'LAS ' + opt.id + ' - [' + h.codigo + '] ' + h.short_mnemonico + ' - ' + h.descripcion } )
                             })
                         }
@@ -1085,7 +1085,7 @@ class Graficador extends Component {
                     
                     const serie = {
                         x: x,
-                        y, y,
+                        y: y,
                         name: fel.id + '_FEL',
                         type: 'scatter',
                         hovertemplate: '%{y}'
@@ -1289,7 +1289,7 @@ class Graficador extends Component {
             const curvas     = response[1].data;
            
             //Obtener Datos y Graficar
-            if (this.state.template.wells_id == template.wells_id)
+            if (this.state.template.wells_id_anterior === template.wells_id)
             {
                 if (this.state.dataWits.length === 0)
                 {    
@@ -1332,7 +1332,8 @@ class Graficador extends Component {
                                         dataCurvas: [...curvas],
                                         modalStart: false,
                                         loadingStart: false,
-                                        toggleHorizontales: 0
+                                        toggleHorizontales: 0,
+                                        wells_id_anterior: template.wells_id
                                     })
                                     
                                     this.ToggleDivHorizontales()
@@ -1360,8 +1361,6 @@ class Graficador extends Component {
                 else
                 {
                     console.log('datos wits existentes')
-                    this.getArchivos(template.wells_id)
-                   
 
                     //Gráfica principal
                     let curvasPrincipal = curvas.filter(c=>c.mostrar === true && c.grupo === null)
@@ -1374,56 +1373,91 @@ class Graficador extends Component {
                     //
             
                     //Track Vertical
-                    this.SetSerieTrackVertical()
+                    this.SetSerieTrackVertical([])
 
-                    this.getEventos(template.wells_id)
-                    this.getOperaciones(template.wells_id)
-                    this.getFEL(template.wells_id)
+                    
                     
                     this.setState({
                         template:   {...template},
                         dataCurvas: [...curvas],
                         modalStart: false,
                         loadingStart: false,
-                        toggleHorizontales: 0
+                        toggleHorizontales: 0,
+                        wells_id_anterior: template.wells_id
                     })
                     this.ToggleDivHorizontales()
+                    console.log(this.now())
                     
                 }
             }
             else
             {
                 console.log('otro pozo')
-                this.getArchivos(template.wells_id)
+                this.getArchivos(template.wells_id).then( rta => {
+                    if (rta)
+                    {
+                        axios.get(URL + "datos_wits/wells/" + template.wells_id + '/0').then(response => {
+                            if (response.status === 200)
+                            {
+                                const data_Wits       = response.data;
+                                const datosToSimplyfy = data_Wits.map( e => ({x: e['id'], y: Number(e['_0108'])}) );
+                                const dataSimplyfy    = Simplify(datosToSimplyfy, 0.9075).map( prop => prop.x ); 
+                                
+                                const dataFilter_Wits = data_Wits.filter( item => dataSimplyfy.includes( item.id ) )
 
-                //Gráfica principal
-                let curvasPrincipal = curvas.filter(c=>c.mostrar === true && c.grupo === null)
-                this.SetSerieGraficaPrincipal(curvasPrincipal)
-                //
+                                this.setState({dataWits: dataFilter_Wits})
+                            
+                                console.log('datos wits inicial')
 
-                //Track Horizontal
-                let traksHorizontales = curvas.filter(c=>c.mostrar === true && c.grupo !== null).sort(c=>c.grupo)
-                this.SetSerieTrackHorizontal(traksHorizontales)
-                //
+                                //Gráfica principal
+                                let curvasPrincipal = curvas.filter(c=>c.mostrar === true && c.grupo === null)
+                                this.SetSerieGraficaPrincipal(curvasPrincipal)
+                                //
 
-                //Track Vertical
-                this.SetSerieTrackVertical()
+                                //Track Horizontal
+                                let curvasTraksHorizontal = curvas.filter(c=>c.mostrar === true && c.grupo !== null).sort(c=>c.grupo)
+                                this.SetSerieTrackHorizontal(curvasTraksHorizontal)
+                                //
 
+                                //Track Vertical
+                                this.SetSerieTrackVertical([])
+
+                                //Archivo FEL
+                                this.getFEL(template.wells_id)
+
+                                this.setState({
+                                    template:   {...template},
+                                    dataCurvas: [...curvas],
+                                    modalStart: false,
+                                    loadingStart: false,
+                                    toggleHorizontales: 0,
+                                    wells_id_anterior: template.wells_id
+                                })
+                                
+                                this.ToggleDivHorizontales()
+                                console.log(this.now())
+                            }
+                            else
+                            {
+                                console.log(response.data);
+                                message.error('Ocurrió un error consultando los datos de telemetría, recargue la página por favor')
+                            }
+                        }).catch(errors => {
+                            console.log(errors.message);
+                            message.error('Ocurrió un error consultando los datos de telemetría, recargue la página por favor')
+                        })
+                    }
+                })
+                .catch(err => {
+                    message.error('Ocurrió un error consultando los archivos LAS, recargue la página por favor')
+                    console.log(err.message);
+                })
+              
                 this.getEventos(template.wells_id)
                 this.getOperaciones(template.wells_id)
-                this.getFEL(template.wells_id)
-
                 
-                this.setState({
-                    template:   {...template},
-                    dataCurvas: [...curvas],
-                    modalStart: false,
-                    loadingStart: false,
-                    toggleHorizontales: 0
-                })
-                this.ToggleDivHorizontales()
             }
-
+            
         })).catch(error => {
             console.log(error.message);
         })
@@ -1477,7 +1511,7 @@ class Graficador extends Component {
         let layout = {...this.state.layoutGP}
         let profundidadFinal_temporal = layout.yaxis.range ? layout.yaxis.range[0] : 1000
         
-        curvas_p.map( (c) => {
+        curvas_p.forEach( (c) => {
                         
             if (c.mostrar)
             {
@@ -1536,7 +1570,7 @@ class Graficador extends Component {
         let j = 0
         let side = true 
         let grupo_anterior = 0  
-        curvas_h.map(c => {
+        curvas_h.forEach(c => {
             
             if (c.mostrar)
             {

@@ -163,7 +163,6 @@ class viewWells extends Component {
           usuario: '',
           clave: '',
           estado_id: '',
-          pkuser: '',
           field_id: '',
           pkuser: JSON.parse(sessionStorage.getItem('user')).pk_usuario_sesion 
         } 

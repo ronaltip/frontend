@@ -1,15 +1,12 @@
 import React, { Component } from 'react';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
-import iconList from '../util/iconList';
 import '../css/styles.css';
 import {
   Col,
   message,
   Row,
   Table,
-  Tooltip,
   Spin,
   Input
 } from 'antd';

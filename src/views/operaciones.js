@@ -174,6 +174,8 @@ class viewOperaciones extends Component {
 
         colDate = date2[2] + '-' + ( date2[0].length === 1 ? ('0'+date2[0]) : date2[0] ) + '-' + ( date2[1].length === 1 ? ('0'+date2[1]) : date2[1] ) + ' ' + ( hora[0].length === 1 ? ('0'+hora[0]) : hora[0] ) + ':' + ( hora[1].length === 1 ? ('0'+hora[1]) : hora[1] ) + ':' + ( hora[2].length === 1 ? ('0'+hora[2]) : hora[2] )
         break;
+        default:
+          break;
     }
     return { addHora: agregarHora, fecha: colDate }
   }

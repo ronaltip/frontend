@@ -735,22 +735,37 @@ const TiempoReal = () => {
             DBTM_0 = DBTM;
         });
 
+        let [Op_0]  = dataConvencion.filter( c => c.id === 0  ).map( p => ({ nombre: p.nombre, color: p.color }) );
+        let [Op_2]  = dataConvencion.filter( c => c.id === 2  ).map( p => ({ nombre: p.nombre, color: p.color }) );
+        let [Op_3]  = dataConvencion.filter( c => c.id === 3  ).map( p => ({ nombre: p.nombre, color: p.color }) );
+        let [Op_4]  = dataConvencion.filter( c => c.id === 4  ).map( p => ({ nombre: p.nombre, color: p.color }) );
+        let [Op_7]  = dataConvencion.filter( c => c.id === 7  ).map( p => ({ nombre: p.nombre, color: p.color }) );
+        let [Op_8]  = dataConvencion.filter( c => c.id === 8  ).map( p => ({ nombre: p.nombre, color: p.color }) );
+        let [Op_9]  = dataConvencion.filter( c => c.id === 9  ).map( p => ({ nombre: p.nombre, color: p.color }) );
+        let [Op_35] = dataConvencion.filter( c => c.id === 35 ).map( p => ({ nombre: p.nombre, color: p.color }) );
+        let [Op_36] = dataConvencion.filter( c => c.id === 36 ).map( p => ({ nombre: p.nombre, color: p.color }) );
+        let [Op_37] = dataConvencion.filter( c => c.id === 37 ).map( p => ({ nombre: p.nombre, color: p.color }) );
+        let [Op_38] = dataConvencion.filter( c => c.id === 38 ).map( p => ({ nombre: p.nombre, color: p.color }) );
+        let [Op_39] = dataConvencion.filter( c => c.id === 39 ).map( p => ({ nombre: p.nombre, color: p.color }) );
+        let [Op_40] = dataConvencion.filter( c => c.id === 40 ).map( p => ({ nombre: p.nombre, color: p.color }) );
+        let [Op_41] = dataConvencion.filter( c => c.id === 41 ).map( p => ({ nombre: p.nombre, color: p.color }) );
+
         setDBTM(DBTM)
         
-        data.push( { x: operacion_0.x,  y: operacion_0.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_0.nombre , marker : {color: hexRgb(dataConvencion.Op_0.color,  {format: 'css'}) , symbol: '100' }} );
-        data.push( { x: operacion_2.x,  y: operacion_2.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_2.nombre , marker : {color: hexRgb(dataConvencion.Op_2.color,  {format: 'css'}) , symbol: '100' }} );
-        data.push( { x: operacion_3.x,  y: operacion_3.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_3.nombre , marker : {color: hexRgb(dataConvencion.Op_3.color,  {format: 'css'}) , symbol: '100' }} );
-        data.push( { x: operacion_4.x,  y: operacion_4.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_4.nombre , marker : {color: hexRgb(dataConvencion.Op_4.color,  {format: 'css'}) , symbol: '100' }} );
-        data.push( { x: operacion_7.x,  y: operacion_7.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_7.nombre , marker : {color: hexRgb(dataConvencion.Op_7.color,  {format: 'css'}) , symbol: '100' }} );
-        data.push( { x: operacion_8.x,  y: operacion_8.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_8.nombre , marker : {color: hexRgb(dataConvencion.Op_8.color,  {format: 'css'}) , symbol: '100' }} );
-        data.push( { x: operacion_9.x,  y: operacion_9.y,   mode: "markers",  type: "scatter", name: dataConvencion.Op_9.nombre , marker : {color: hexRgb(dataConvencion.Op_9.color,  {format: 'css'}) , symbol: '100' }} );
-        data.push( { x: operacion_35.x, y: operacion_35.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_35.nombre, marker : {color: hexRgb(dataConvencion.Op_35.color, {format: 'css'}) , symbol: '100' }} );
-        data.push( { x: operacion_36.x, y: operacion_36.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_36.nombre, marker : {color: hexRgb(dataConvencion.Op_36.color, {format: 'css'}) , symbol: '100' }} );
-        data.push( { x: operacion_37.x, y: operacion_37.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_37.nombre, marker : {color: hexRgb(dataConvencion.Op_37.color, {format: 'css'}) , symbol: '100' }} );
-        data.push( { x: operacion_38.x, y: operacion_38.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_38.nombre, marker : {color: hexRgb(dataConvencion.Op_38.color, {format: 'css'}) , symbol: '100' }} );
-        data.push( { x: operacion_39.x, y: operacion_39.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_39.nombre, marker : {color: hexRgb(dataConvencion.Op_39.color, {format: 'css'}) , symbol: '100' }} );
-        data.push( { x: operacion_40.x, y: operacion_40.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_40.nombre, marker : {color: hexRgb(dataConvencion.Op_40.color, {format: 'css'}) , symbol: '100' }} );
-        data.push( { x: operacion_41.x, y: operacion_41.y,  mode: "markers",  type: "scatter", name: dataConvencion.Op_41.nombre, marker : {color: hexRgb(dataConvencion.Op_41.color, {format: 'css'}) , symbol: '100' }} );
+        data.push( { x: operacion_0.x,  y: operacion_0.y,   mode: "markers",  type: "scatter", name: Op_0.nombre , marker : {color: hexRgb(Op_0.color,  {format: 'css'}) , symbol: '100' }} );
+        data.push( { x: operacion_2.x,  y: operacion_2.y,   mode: "markers",  type: "scatter", name: Op_2.nombre , marker : {color: hexRgb(Op_2.color,  {format: 'css'}) , symbol: '100' }} );
+        data.push( { x: operacion_3.x,  y: operacion_3.y,   mode: "markers",  type: "scatter", name: Op_3.nombre , marker : {color: hexRgb(Op_3.color,  {format: 'css'}) , symbol: '100' }} );
+        data.push( { x: operacion_4.x,  y: operacion_4.y,   mode: "markers",  type: "scatter", name: Op_4.nombre , marker : {color: hexRgb(Op_4.color,  {format: 'css'}) , symbol: '100' }} );
+        data.push( { x: operacion_7.x,  y: operacion_7.y,   mode: "markers",  type: "scatter", name: Op_7.nombre , marker : {color: hexRgb(Op_7.color,  {format: 'css'}) , symbol: '100' }} );
+        data.push( { x: operacion_8.x,  y: operacion_8.y,   mode: "markers",  type: "scatter", name: Op_8.nombre , marker : {color: hexRgb(Op_8.color,  {format: 'css'}) , symbol: '100' }} );
+        data.push( { x: operacion_9.x,  y: operacion_9.y,   mode: "markers",  type: "scatter", name: Op_9.nombre , marker : {color: hexRgb(Op_9.color,  {format: 'css'}) , symbol: '100' }} );
+        data.push( { x: operacion_35.x, y: operacion_35.y,  mode: "markers",  type: "scatter", name: Op_35.nombre, marker : {color: hexRgb(Op_35.color, {format: 'css'}) , symbol: '100' }} );
+        data.push( { x: operacion_36.x, y: operacion_36.y,  mode: "markers",  type: "scatter", name: Op_36.nombre, marker : {color: hexRgb(Op_36.color, {format: 'css'}) , symbol: '100' }} );
+        data.push( { x: operacion_37.x, y: operacion_37.y,  mode: "markers",  type: "scatter", name: Op_37.nombre, marker : {color: hexRgb(Op_37.color, {format: 'css'}) , symbol: '100' }} );
+        data.push( { x: operacion_38.x, y: operacion_38.y,  mode: "markers",  type: "scatter", name: Op_38.nombre, marker : {color: hexRgb(Op_38.color, {format: 'css'}) , symbol: '100' }} );
+        data.push( { x: operacion_39.x, y: operacion_39.y,  mode: "markers",  type: "scatter", name: Op_39.nombre, marker : {color: hexRgb(Op_39.color, {format: 'css'}) , symbol: '100' }} );
+        data.push( { x: operacion_40.x, y: operacion_40.y,  mode: "markers",  type: "scatter", name: Op_40.nombre, marker : {color: hexRgb(Op_40.color, {format: 'css'}) , symbol: '100' }} );
+        data.push( { x: operacion_41.x, y: operacion_41.y,  mode: "markers",  type: "scatter", name: Op_41.nombre, marker : {color: hexRgb(Op_41.color, {format: 'css'}) , symbol: '100' }} );
         
         await delay(1000);
         setDataGP( data )
