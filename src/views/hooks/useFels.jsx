@@ -9,7 +9,7 @@ import { Button, Col, message, notification, Row, Space } from 'antd';
 import { generateImgCanvanTobase64 } from '../../util/converterToBase64';
 import HttpServices from '../../services/HttpServices';
 
-const useFels = () => {
+const useFels = userState => {
   const imgRef = useRef(null);
   const [userStorage, setUserStorage] = useState({});
   const [listRegistersFels, setListRegistersFels] = useState([]);
@@ -61,7 +61,12 @@ const useFels = () => {
         <Row justify="space-around">
           <Col style={{ cursor: 'pointer' }}>
             <Tooltip title="Visualizar recorte">
-              <span onClick={() => OpenCrop(info_upload)}>
+              <span
+                // disabled={
+                //   userState ? userState.modules.loadData.fels.edit : true
+                // }
+                onClick={() => OpenCrop(info_upload)}
+              >
                 <ScissorOutlined />
               </span>
             </Tooltip>

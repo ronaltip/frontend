@@ -1,0 +1,13 @@
+.buttonHeader {
+  margin: 24px 0px;
+  transform: translate(80%, 0%);
+}
+
+.btn-success {
+  background-color: #55c21b;
+  border-color: #55c21b;
+}
+.btn-success:hover {
+  background-color: #55c21b;
+  border-color: #55c21b;
+}

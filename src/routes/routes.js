@@ -1,75 +1,280 @@
-import React, { Component } from 'react';
-import { BrowserRouter, Switch, Route } from 'react-router-dom';
-import Login from '../views/login';
-import Home from '../views/home';
-import viewUsuario from '../views/usuarios';
-import viewCavings from '../views/components/Cavings';
-import viewArchivoLas from '../views/components/ArchivoLas';
-import viewFels from '../views/components/Fels';
-import viewEventos from '../views/eventos';
-
-import viewGrupoCurvas from '../views/grupo_curvas';
-import viewOperaciones from '../views/operaciones';
-import viewTiposCurvas from '../views/tipo_curvas';
-import viewTiposEventos from '../views/tipo_eventos';
-import viewUnidades from '../views/unidades';
-
+import React from 'react';
+import Cavings from '../views/components/Cavings'
+import Fels from '../views/components/Fels'
+import ArchivoLas from '../views/components/ArchivoLas'
+import Usuarios from '../views/usuarios'
+import Unidades from '../views/unidades'
+import TipoEventos from '../views/tipo_eventos'
+import Fields from '../views/fields'
+import Wells from '../views/wells';
+import Wits from '../views/wits';
+import Operaciones from '../views/operaciones';
+import Eventos from '../views/eventos';
+import Graficador from '../views/graficador';
+import TiempoReal from '../views/tiemporeal';
 import viewVisualConfig from '../views/visual_config';
-import viewVisualConfigEdi from '../views/visual_config_edi';
-import viewVisualConfigTrack from '../views/visual_config_track';
-import viewVisualConfigLista from '../views/visual_config_lista';
 
-import viewVisualHistorico from '../views/visual_historicos';
-import viewVisualHistoricoDP from '../views/visual_historicos_dp';
-import viewVisualHistoricoDPC from '../views/visual_historicos_dc';
+class RoutesModules {
+  routes;
+  constructor(modules) {
+    return (this.routes = [
+      {
+        path: '/configuracion',
+        name: 'configuration',
 
-import viewWells from '../views/wells';
-import viewFields from '../views/fields';
+        text: 'Configuración',
+        icon: null,
+        main: () => { },
+        active: true,
+        // active: modules
+        //   ? modules.configuration.users.edit ||
+        //     modules.configuration.users.read ||
+        //     modules.configuration.unitMeasurement.edit ||
+        //     modules.configuration.unitMeasurement.read ||
+        //     modules.configuration.typesEvents.edit ||
+        //     modules.configuration.typesEvents.read
+        //   : false,
+        children: [
+          {
+            path: '/usuarios',
+            name: 'users',
+            icon: null,
+            main: () => <Usuarios />,
+            text: 'Usuarios',
+            // active: modules
+            //   ? modules.configuration.users.edit ||
+            //     modules.configuration.users.read
+            //   : false,
+            hidden: false,
+            active: true,
+          },
+          {
+            path: '/unidades',
+            name: 'units',
+            icon: null,
+            main: () => <Unidades />,
+            text: 'Unidades',
+            // active: modules
+            //   ? modules.configuration.unitMeasurement.edit ||
+            //     modules.configuration.unitMeasurement.read
+            //   : false,
+            hidden: false,
+            active: true,
+          },
+          {
+            path: '/tipo_eventos',
+            name: 'eventsType',
+            icon: null,
+            main: () => <TipoEventos />,
+            text: 'Tipos de eventos',
+            // active: modules
+            //   ? modules.configuration.typesEvents.edit ||
+            //     modules.configuration.typesEvents.read
+            //   : false,
+            hidden: false,
+            active: true,
+          },
+        ]
+      },
+      {
+        path: '/curvas',
+        name: 'curves',
 
-import viewWitsHomologacion from '../views/wits_homologacion';
-//import viewHomologacionArchivos from '../views/homologacion_archivos';
+        text: 'Curvas',
+        icon: null,
+        main: () => { },
+        active: true,
+        // active: modules
+        //   ? modules.curves.felds.edit ||
+        //     modules.curves.felds.read ||
+        //     modules.curves.wills.edit ||
+        //     modules.curves.wills.read ||
+        //     modules.curves.tableWits.edit ||
+        //     modules.curves.tableWits.read
+        //   : false,
+        children: [
+          {
+            path: '/fields',
+            name: 'fields',
+            icon: null,
+            main: () => <Fields />,
+            text: 'Campos',
+            // active: modules
+            //   ? modules.curves.felds.edit || modules.curves.felds.read
+            //   : false,
+            hidden: false,
+            active: true,
+          },
+          {
+            path: '/pozos',
+            name: 'wells',
+            icon: null,
+            main: () => <Wells />,
+            text: 'Pozos',
+            // active: modules
+            //   ? modules.curves.wills.edit || modules.curves.wills.read
+            //   : false,
+            hidden: false,
+            active: true,
+          },
+          {
+            path: '/wits',
+            name: 'wits',
+            icon: null,
+            main: () => <Wits />,
+            text: 'Tabla Wits 0',
+            // active: modules
+            //   ? modules.curves.tableWits.edit || modules.curves.tableWits.read
+            //   : false,
+            hidden: false,
+            active: true,
+          },
+        ]
+      },
+      {
+        path: '/cargue_datos',
+        name: 'loadData',
 
-import viewWits from '../views/wits';
-import viewGraficador from '../views/graficador';
-import viewTiempoReal from '../views/tiemporeal';
+        text: 'Cargue de datos',
+        icon: null,
+        main: () => { },
+        active: true,
+        // active: modules
+        //   ? modules.loadData.operations.edit ||
+        //     modules.loadData.operations.read ||
+        //     modules.loadData.events.edit ||
+        //     modules.loadData.events.read ||
+        //     modules.loadData.cavings.edit ||
+        //     modules.loadData.cavings.edit ||
+        //     modules.loadData.las.edit ||
+        //     modules.loadData.las.edit ||
+        //     modules.loadData.fels.edit ||
+        //     modules.loadData.fels.read ||
+        //     modules.loadData.fileSettings.edit ||
+        //     modules.loadData.fileSettings.read
+        //   : false,
+        children: [
+          {
+            path: '/operaciones',
+            name: 'operations',
+            icon: null,
+            main: () => <Operaciones />,
+            text: 'Operaciones',
+            // active: modules
+            //   ? modules.loadData.operations.edit ||
+            //     modules.loadData.operations.read
+            //   : false,
+            hidden: false,
+            active: true,
+          },
+          {
+            path: '/eventos',
+            name: 'events',
+            icon: null,
+            main: () => <Eventos />,
+            text: 'Eventos',
+            // active: modules
+            //   ? modules.loadData.events.edit || modules.loadData.events.read
+            //   : false,
+            hidden: false,
+            active: true,
+          },
+          {
+            path: '/cavings',
+            name: 'cavings',
+            icon: null,
+            main: () => <Cavings />,
+            text: 'Cavings',
+            // active: modules
+            //   ? modules.loadData.cavings.edit || modules.loadData.cavings.read
+            //   : false,
+            hidden: false,
+            active: true,
+          },
+          {
+            path: '/archivolas',
+            name: 'archivolas',
+            icon: null,
+            main: () => <ArchivoLas />,
+            text: 'Archivo Las',
+            // active: modules
+            //   ? modules.loadData.las.edit || modules.loadData.las.read
+            //   : false,
+            hidden: false,
+            active: true,
+          },
+          {
+            path: '/archivofels',
+            name: 'fels',
+            icon: null,
+            main: () => <Fels />,
+            text: 'Archivo Fels',
+            // active: modules
+            //   ? modules.loadData.fels.edit || modules.loadData.fels.read
+            //   : false,
+            hidden: false,
+            active: true,
+          },
+          {
+            path: '/configuracion_archivos',
+            name: 'configurationsFile',
+            icon: null,
+            main: () => <viewVisualConfig />,
+            text: 'Configuración de archivos',
+            // active: modules
+            //   ? modules.fileSettings.las.edit || modules.fileSettings.las.read
+            //   : false,
+            hidden: false,
+            active: true,
+          },
+        ]
+      },
+      {
+        path: '/visualizacion',
+        name: 'visualization',
 
-class Routes extends Component {
-  render() {
-    return (
-      <BrowserRouter>
-        <Switch>
-          <Route exact path="/" component={Login} />
-          <Route exact path="/home" component={Home} />
-          <Route exact path="/usuarios" component={viewUsuario} />
-          <Route exact path="/unidades" component={viewUnidades} />
-          <Route exact path="/Cavings" component={viewCavings} />
-          <Route exact path="/fels" component={viewFels} />
-          <Route exact path="/operaciones" component={viewOperaciones} />
-          <Route exact path="/ArchivoLas" component={viewArchivoLas} />
-          {/*<Route exact path="/homologacion_archivos" component={viewHomologacionArchivos} />  */}
-          <Route exact path="/eventos" component={viewEventos} />
-          <Route exact path="/tipo_eventos" component={viewTiposEventos} />
-          {/*<Route exact path="/tipo_curvas" component={viewTiposCurvas} /> 
+        text: 'Visualización',
+        icon: null,
+        main: () => { },
+        active: true,
+        // active: modules
+        //   ? modules.visualization.realTime.edit ||
+        //     modules.visualization.realTime.read ||
+        //     modules.visualization.plotter.edit ||
+        //     modules.visualization.plotter.read
+        //   : false,
+        children: [
+          {
+            path: '/tiemporeal',
+            name: 'realTime',
+            icon: null,
+            main: () => <TiempoReal />,
+            text: 'Tiempo real',
+            // active: modules
+            //   ? modules.visualization.realTime.edit ||
+            //     modules.visualization.realTime.read
+            //   : false,
+            hidden: false,
+            active: true,
+          },
+          {
+            path: '/graficador',
+            name: 'plotter',
+            icon: null,
+            main: () => <Graficador />,
+            text: 'Graficador',
+            // active: modules
+            //   ? modules.visualization.plotter.edit ||
+            //     modules.visualization.plotter.read
+            //   : false,
+            hidden: false,
+            active: true,
+          },
 
-                    <Route path='/visual_config_edi:id' component={viewVisualConfigEdi} />
-                    <Route exact path="/visual_config_lista" component={viewVisualConfigLista} />
-                    <Route exact path="/visual_config_track" component={viewVisualConfigTrack} />
-                    <Route exact path="/visual_config" component={viewVisualConfig} />            */}
-
-          {/* <Route exact path="/visual_historicos" component={viewVisualHistorico} />  
-                    <Route exact path="/visual_historicos_dp:id" component={viewVisualHistoricoDP} />  
-                    <Route exact path="/visual_historicos_dc/:id" component={viewVisualHistoricoDPC} />   */}
-
-          <Route exact path="/fields" component={viewFields} />
-          <Route exact path="/wells" component={viewWells} />
-          <Route exact path="/wits" component={viewWits} />
-          <Route exact path="/tiemporeal" component={viewTiempoReal} />
-          {/*<Route exact path="/wits_homologacion" component={viewWitsHomologacion} />   */}
-
-          <Route exact path="/graficador" component={viewGraficador} />
-        </Switch>
-      </BrowserRouter>
-    );
+        ]
+      },
+    ]);
   }
 }
-export default Routes;
+
+export default RoutesModules;

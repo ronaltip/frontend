@@ -6,7 +6,7 @@ import onSearch from '../../util/onSearch';
 import HttpServices from '../../services/HttpServices';
 import { TYPE_OF_FILES } from '../../util/constants/enums';
 
-const useUploadCavingLas = typeFile => {
+const useUploadCavingLas = (typeFile, userState) => {
   const [listTotalRegisters, setListTotalRegisters] = useState([]);
   const [listWells, setListWells] = useState([]);
   const [isActiveHomologation, setIsActiveHomologation] = useState(false);
@@ -60,14 +60,30 @@ const useUploadCavingLas = typeFile => {
         <Row justify="space-around">
           <Col style={{ cursor: 'pointer' }}>
             <Tooltip title="Editar homologación">
-              <span onClick={() => goToHomogolationUpdate(info_upload)}>
+              <span
+                // disabled={
+                //   userState
+                //     ? userState.modules.loadData.cavings.edit ||
+                //       userState.modules.loadData.fels.edit
+                //     : true
+                // }
+                onClick={() => goToHomogolationUpdate(info_upload)}
+              >
                 <FileSearchOutlined />
               </span>
             </Tooltip>
           </Col>
           <Col style={{ cursor: 'pointer' }}>
             <Tooltip title="Eliminar cargue">
-              <span onClick={() => commandDeteteRegister(info_upload)}>
+              <span
+                // disabled={
+                //   userState
+                //     ? userState.modules.loadData.cavings.edit ||
+                //       userState.modules.loadData.las.edit
+                //     : true
+                // }
+                onClick={() => commandDeteteRegister(info_upload)}
+              >
                 <DeleteOutlined />
               </span>
             </Tooltip>

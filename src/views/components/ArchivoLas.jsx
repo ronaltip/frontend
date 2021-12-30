@@ -1,13 +1,16 @@
-import React, { Fragment } from 'react';
-import HeaderSection from '../../libs/headerSection/headerSection';
+import React, { Fragment, useContext } from 'react';
 import ModalUpload from '../../libs/modalUpload/modalUpload';
 import ModalHomologation from '../../libs/modalHomologation/modalHomologation';
 import { Col, Input, Row, Table } from 'antd';
 import useUploadCavingLas from '../hooks/useUploadCavingLas';
+import { UserContext } from '../../context/UserContext';
+import ButtonUpload from '../../libs/ButtonUpload/ButtonUpload';
 
 const { Search } = Input;
 
 const ArchivoLas = () => {
+  const [userState, userDispatch] = useContext(UserContext);
+
   const {
     userStorage,
     columns,
@@ -22,11 +25,11 @@ const ArchivoLas = () => {
     onClickCancel,
     onClickInsert,
     onClickSave,
-  } = useUploadCavingLas('LAS');
+  } = useUploadCavingLas('LAS', userState);
 
   return (
     <Fragment>
-      <HeaderSection onClick={clickOpenFileUpload} titleButton="Archivo .las" />
+      <ButtonUpload onClick={clickOpenFileUpload} titleButton="Archivo .las" />
       <Row justify="space-around">
         <Col span={22}>
           <h3>Listado de Archivo .Las</h3>

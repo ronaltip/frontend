@@ -1,43 +1,42 @@
 * {
-    font-family:'Titillium Web',sans-serif;
+  font-family: 'monospace', sans-serif;
 }
 
 .title {
-    font-family: arial, helvetica, roboto, "new times roman", lato;  
-    font-size: 25px;
-    font-weight: bold;
-    top: 10%;
+  font-family: arial, helvetica, roboto, 'new times roman', lato;
+  font-size: 25px;
+  font-weight: bold;
+  top: 10%;
 }
 
 .containerUno {
-    top: 10%;
-    left: 100%;
-    transform: translate(10%,15%);
-    background-color: white;
-    height: 70px;
+  top: 10%;
+  left: 100%;
+  transform: translate(10%, 15%);
+  background-color: white;
+  height: 70px;
 }
 
 .containerDos {
-    top: 10%;
-    left: 80%;
-    transform: translate(70%,-170%);
-    padding: 14px;
-    background-color: white;
-    font-size: 12px;
+  top: 10%;
+  left: 80%;
+  transform: translate(70%, -170%);
+  padding: 14px;
+  background-color: white;
+  font-size: 12px;
 }
 
 .containerTres {
-    transform: translate(65%,-90%);
-    background-color: white;    
-} 
+  transform: translate(65%, -90%);
+  background-color: white;
+}
 
 .containerCuatro {
-    top: 10%;
-    left: 100%;
-    transform: translate(80%,0%);
+  top: 10%;
+  left: 100%;
+  transform: translate(80%, 0%);
 }
 
 .btn-success {
-    background-color :#55c21b;
+  background-color: #55c21b;
 }
- 

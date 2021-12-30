@@ -1,18 +1,23 @@
-import React, { Fragment, useState } from 'react';
-import HeaderSection from '../../libs/headerSection/headerSection';
+import React, { Fragment, useState, useContext } from 'react';
 import ModalUpload from '../../libs/modalUpload/modalUpload';
 import { Col, Row, Table, Modal, Spin, InputNumber, Space } from 'antd';
 import ReactCrop from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
+import { UserContext } from '../../context/UserContext';
 
 import useFels from '../hooks/useFels';
+import ButtonUpload from '../../libs/ButtonUpload/ButtonUpload';
 const Fels = () => {
-  const { userStorage, columns, states, listResponse, functions } = useFels();
+  const [userState, userDispatch] = useContext(UserContext);
+
+  const { userStorage, columns, states, listResponse, functions } = useFels(
+    userState
+  );
 
   return (
     <Fragment>
       <Spin tip="Cargardo..." spinning={states.isLoading}>
-        <HeaderSection
+        <ButtonUpload
           onClick={functions.clickOpenFileUpload}
           titleButton="Archivo .Fels"
         />

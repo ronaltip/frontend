@@ -1,97 +1,60 @@
-import React, { Component } from 'react';
+import React, { Component, forwardRef } from 'react';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
+import Materialtable from 'material-table';
 import iconList from '../util/iconList';
 import '../css/styles.css';
-import {
-  Col,
-  message,
-  Row,
-  Table,
-  Tooltip,
-  Input,
-  Spin
-} from 'antd';
-import Cabecera from '../componentes/cabecera';
-import Sidebar from '../componentes/sidebar';
-import Footer  from '../componentes/footer';
-
+import ButtonUpload from '../libs/ButtonUpload/ButtonUpload';
 
 const URL = process.env.REACT_APP_API_HOST;
-const { Search } = Input;
 
-class viewFields extends Component {
+const columns = [
+  { title: 'Nombre', field: 'nombre' },
+  { title: 'Descripción', field: 'descripcion' },
+];
+
+class Fields extends Component {
   state = {
-    data: [], dataSearch: [], loading: false,
+    data: [],
     modalInsertar: false,
     modalEliminar: false,
-    modalEditar: false,
     tipoModal: '',
     form: { id: '', nombre: '', descripcion: '', estado_id: '', pkuser: '' },
   };
 
- 
-  peticionGet = () => {
-    this.setLoading(true)
+  useEffect = () => {
+    this.peticionGet();
+  };
+
+  peticionGet = async () => {
     axios
       .get(URL + 'fields')
       .then(response => {
-        if (response.status === 200)
-          this.setState({ data: response.data, dataSearch: response.data, loading: false });
-        else
-        {
-          console.log(response.data);
-          message.error('Ocurrió un error consultando los campos, intente nuevamente')
-          this.setLoading(false)
-        }
+        this.setState({ data: response.data });
       })
       .catch(error => {
-        message.error('Ocurrió un error consultando los campos, intente nuevamente')
         console.log(error.message);
-        this.setLoading(false)
       });
   };
 
-  peticionPost = () => {
+  peticionPost = async () => {
     delete this.state.form.id;
-    axios
+    await axios
       .post(URL + 'fields', this.state.form)
       .then(response => {
-        if (response.status === 200)
-        {
-          this.modalInsertar();
-          this.peticionGet();
-          message.success('Campo creado con éxito')
-        }
-        else
-        {
-          console.log(response.data);
-          message.error('Ocurrió un error creando el campo, intente nuevamente')
-        }
+        this.modalInsertar();
+        this.peticionGet();
       })
       .catch(error => {
         console.log(error.message);
-        message.error('Ocurrió un error creando el campo, intente nuevamente')
       });
   };
 
   peticionPut = () => {
     axios.put(URL + 'fields', this.state.form).then(response => {
-      if (response.status === 200)
-      {
-        this.modalInsertar();
-        this.peticionGet();
-        message.success('Campo actualizado con éxito')
-      }
-      else
-      {
-        console.log(response.data);
-        message.error('Ocurrió un error actualizando el campo, intente nuevamente')
-      }
-    }).catch(error => {
-      console.log(error.message);
-      message.error('Ocurrió un error actualizando el campo, intente nuevamente')
+      this.modalInsertar();
+      this.peticionGet();
     });
   };
 
@@ -102,48 +65,16 @@ class viewFields extends Component {
     };
 
     axios.delete(URL + 'fields', { data: datos }).then(response => {
-      if (response.status === 200)
-      {
-        this.setState({ modalEliminar: false });
-        this.peticionGet();
-        message.success('Campo eliminado con éxito')
-      }
-      else
-      {
-        console.log(response.data);
-        message.error('Ocurrió un error eliminando el campo, intente nuevamente')
-      }
-    }).catch(error => {
-      console.log(error.message);
-      message.error('Ocurrió un error eliminando el campo, intente nuevamente')
+      this.setState({ modalEliminar: false });
+      this.peticionGet();
     });
   };
 
   modalInsertar = () => {
-    let pkuser = JSON.parse(
-      sessionStorage.getItem('user')
-    ).pk_usuario_sesion;
-    this.setState({ 
-        modalInsertar: !this.state.modalInsertar, 
-        tipoModal: 'insertar', 
-        form: { id: 0, nombre: '', descripcion: '', estado_id: '', pkuser: pkuser } 
-    });
-  };
-
-  modalEditar = (info) => {
-    this.seleccionarRegistro(info)
     this.setState({ modalInsertar: !this.state.modalInsertar });
   };
 
-  modalEliminar = (info) => {
-    this.seleccionarRegistro(info)
-    this.setState({ modalEliminar: !this.state.modalEliminar });
-  };
-
   seleccionarRegistro = field => {
-    let pkuser = JSON.parse(
-      sessionStorage.getItem('user')
-    ).pk_usuario_sesion;
     this.setState({
       tipoModal: 'actualizar',
       form: {
@@ -151,32 +82,21 @@ class viewFields extends Component {
         nombre: field.nombre,
         descripcion: field.descripcion,
         estado_id: field.estado_id,
-        pkuser: pkuser
-      }
+      },
     });
   };
 
-  handleChange = e => {
+  handleChange = async e => {
     e.persist();
-    this.setState({
+    await this.setState({
       form: {
         ...this.state.form,
         [e.target.name]: e.target.value,
       },
     });
-  };
-
-  setLoading = e => {
-    this.setState({loading: e})
-  }
-
-  onFilter = search => {
-    this.setLoading(true)
-    const responseSearch = this.state.data.filter( ({nombre}) => {
-      nombre = nombre.toLowerCase();
-      return nombre.includes(search.target.value.toLowerCase());
-    });
-    this.setState({dataSearch:  responseSearch, loading: false});
+    this.state.form.pkuser = JSON.parse(
+      sessionStorage.getItem('user')
+    ).pk_usuario_sesion;
   };
 
   componentDidMount() {
@@ -186,101 +106,54 @@ class viewFields extends Component {
   render() {
     const { form } = this.state;
     return (
-      <>
-        <Cabecera />
-        <Sidebar />
-        <nav aria-label="breadcrumb" className='small'>
-          <ol className="breadcrumb">
-            <li className="breadcrumb-item">Curvas</li>
-            <li className="breadcrumb-item active" aria-current="page">Campos</li>
-          </ol>
-        </nav>
-       
-        <div className='container-xl'>
-          <Row >
-            <Col span={24}>
-              <h3>Listado de Campos</h3>
-            </Col>
-          </Row>
-          <Row >
-            <Col span={12}>
-              <Search
-                placeholder="Buscar"
-                onChange={(value) => this.onFilter(value)}
-                enterButton={false}
-              />
-            </Col>
-            <Col span={12} className='text-right'>
-              <button
-                className="btn btn-success btn-sm"
-                onClick={() => {
-                  this.setState({ form: null, tipoModal: 'insertar' });
+      <div className="App">
+        <ButtonUpload
+          titleButton='Agregar Campo'
+          onClick={() => {
+            this.setState({ form: null, tipoModal: 'insertar' });
+            this.modalInsertar();
+          }} />
+        <div
+          className="form-group col-11"
+          style={{ float: 'left', padding: '30px 0 0 30px' }}
+        >
+          <Materialtable
+            title={'Listado de Campos'}
+            columns={columns}
+            data={this.state.data}
+            icons={iconList}
+            actions={[
+              {
+                icon: iconList.Edit,
+                tooltip: 'Editar',
+                onClick: (event, rowData) => {
+                  this.seleccionarRegistro(rowData);
                   this.modalInsertar();
-                }}
-              >
-                <iconList.Add /> Agregar Campo
-              </button>
-            </Col>
-          </Row>
-          <Row >
-            <Col span={24}>
-              <Table
-                tableLayout="fixed"
-                pagination={{ pageSize: 10 }}
-                dataSource={this.state.dataSearch}
-                rowKey="id"
-                key="id"
-                loading={{  indicator: <div><Spin /></div>, spinning: this.state.loading }}
-                columns={[
-                  {
-                    title: 'Nombre',
-                    dataIndex: 'nombre',
-                    key: 'nombre',
-                    width: '30%',
-                  },
-                  {
-                    title: 'Descripción',
-                    dataIndex: 'descripcion',
-                    key: 'descripcion',
-                    width: '60%',
-                  },
-                  {
-                    title: 'Acción',
-                    render: info => {
-                      return (
-                      <Row gutter={16} justify="center">
-                        <Col span={8} style={{ cursor: 'pointer' }}>
-                          <Tooltip title="Editar">
-                            <span onClick={() => this.modalEditar(info)}>
-                              <iconList.Edit />
-                            </span>
-                          </Tooltip>
-                        </Col>
-                        <Col span={8} style={{ cursor: 'pointer' }}>
-                          <Tooltip title="Eliminar">
-                            <span onClick={() => this.modalEliminar(info)}>
-                              <iconList.Delete />
-                            </span>
-                          </Tooltip>
-                        </Col>
-                      </Row>
-                      )
-                    }
-                  }
-                ]}
-                bordered
-              />
-            </Col>
-          </Row>
-        </div> 
-
-        <Footer />
+                },
+              },
+              {
+                icon: iconList.Delete,
+                tooltip: 'Eliminar',
+                onClick: (event, rowData) => {
+                  this.seleccionarRegistro(rowData);
+                  this.setState({ modalEliminar: true });
+                },
+              },
+            ]}
+            options={{
+              actionsColumnIndex: -1,
+            }}
+            localization={{
+              header: { actions: 'Acciones' },
+            }}
+          />
+        </div>
 
         <Modal isOpen={this.state.modalInsertar}>
           <ModalHeader style={{ display: 'block' }}>
             <span
               style={{ float: 'right' }}
-              onClick={() => this.modalEditar()}
+              onClick={() => this.modalInsertar()}
             >
               <iconList.CancelIcon />
             </span>
@@ -364,7 +237,7 @@ class viewFields extends Component {
                 onChange={this.handleChange}
                 value={form ? form.id : this.state.data.length + 1}
               />
-              <label htmlFor="nombre"><b>Nombre:</b></label> &nbsp;
+              <label htmlFor="nombre">Nombre</label> &nbsp;
               {form ? form.nombre : ''}
             </div>
           </ModalBody>
@@ -376,15 +249,15 @@ class viewFields extends Component {
               Si
             </button>
             <button
-              className="btn btn-secondary"
+              className="btn btn-secundary"
               onClick={() => this.setState({ modalEliminar: false })}
             >
               No
             </button>
           </ModalFooter>
         </Modal>
-      </>
+      </div>
     );
   }
 }
-export default viewFields;
+export default Fields;

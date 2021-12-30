@@ -1,14 +1,54 @@
-.containerPrincipal {
-    position: absolute;
-    top:50%;
-    left: 50%;
-    transform:translate(-50%,-50%);
-    border:1px solid blue;
-    padding:40px;
-    background-color:white;
-
+.auth-container {
+  height: 100vh;
+  width: 100vw;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, #f2f2f2 100%);
+  background-image: url('./../assets/img/screenlogin.png');
+  background-color: #f4f4f4;
+  background-size: cover;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  @media (min-width: 50px) and (max-width: 480px) {
+    display: block;
+    background-image: none;
+    overflow-y: scroll;
+  }
+}
+#content-singIn {
+  margin: auto auto;
+  border: 1px solid #55c21b;
+  border-radius: 8px;
+  padding: 40px;
+  background-color: white;
+  box-shadow: 0px 0px 10px 6px #63d856;
+  width: 350px;
+}
+#wrapper-singIn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
 }
 
 .containerSecundario {
-    text-align:center; 
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+#col-singIn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: monospace;
+}
+.btn-success {
+  background-color: #55c21b;
+  border-color: #55c21b;
+}
+.btn-success:hover {
+  background-color: #55c21b;
+  border-color: #55c21b;
 }

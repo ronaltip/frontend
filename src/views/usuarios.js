@@ -3,10 +3,9 @@ import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
 import Materialtable from 'material-table';
-import SideBar from '../componentes/sidebar';
-import Cabecera from '../componentes/cabecera';
 import iconList from '../util/iconList';
 import '../css/styles.css';
+import ButtonUpload from '../libs/ButtonUpload/ButtonUpload';
 
 const URL = process.env.REACT_APP_API_HOST;
 //const url = "http://localhost:9000/usuarios";
@@ -18,7 +17,7 @@ const columns = [
   { title: 'Codigo', field: 'codigo' },
   { title: 'Perfil', field: 'Perfil' },
 ];
-class viewUsuario extends Component {
+class Usuarios extends Component {
   state = {
     data: [],
     dataPerfil: [],
@@ -140,21 +139,12 @@ class viewUsuario extends Component {
     const { form } = this.state;
     return (
       <div className="App">
-        <Cabecera />
-        <SideBar pageWrapId={'page-wrap'} outerContainerId={'App'} />
-
-        <div className="containerCuatro">
-          <button
-            className="btn btn-success"
-            onClick={() => {
-              this.setState({ form: null, tipoModal: 'insertar' });
-              this.modalInsertar();
-            }}
-          >
-            <iconList.Add /> Agregar Usuario
-          </button>
-        </div>
-
+        <ButtonUpload
+          titleButton='Agregar usuario'
+          onClick={() => {
+            this.setState({ form: null, tipoModal: 'insertar' });
+            this.modalInsertar()
+          }} />
         <div
           className="form-group col-11"
           style={{ float: 'left', padding: '30px 0 0 30px' }}
@@ -339,4 +329,4 @@ class viewUsuario extends Component {
     );
   }
 }
-export default viewUsuario;
+export default Usuarios;
