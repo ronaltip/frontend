@@ -1,24 +1,49 @@
-import React, { Fragment, useState } from 'react';
-import HeaderSection from '../../libs/headerSection/headerSection';
+import React, { Fragment, useEffect } from 'react';
 import ModalUpload from '../../libs/modalUpload/modalUpload';
-import { Col, Row, Table, Modal, Spin, InputNumber, Space } from 'antd';
+import { Col, Row, Table, Modal, Spin, InputNumber, Space, Input } from 'antd';
 import ReactCrop from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 
 import useFels from '../hooks/useFels';
+import HeaderSection from '../../libs/headerSection/headerSection';
+const { Search } = Input;
+let modules = null;
+
 const Fels = () => {
-  const { userStorage, columns, states, listResponse, functions } = useFels();
+  useEffect(() => {
+    modules = JSON.parse(sessionStorage.getItem('modules'));
+  }, []);
+
+  const { userStorage, columns, states, listResponse, functions } = useFels(
+    modules && modules.loadData.fels.edit
+  );
 
   return (
     <Fragment>
+      <HeaderSection
+        onClick={functions.clickOpenFileUpload}
+        titleButton="Archivo Fels"
+        title={'Fels'}
+        content={'Cargue de datos'}
+        disabled={modules && modules.loadData.fels.edit}
+      />
       <Spin tip="Cargardo..." spinning={states.isLoading}>
-        <HeaderSection
-          onClick={functions.clickOpenFileUpload}
-          titleButton="Archivo .Fels"
-        />
         <Row justify="space-around">
           <Col span={22}>
             <h3>Listado de Archivo .Fels</h3>
+          </Col>
+        </Row>
+        <Row gutter={16} justify="space-around">
+          <Col span={22}>
+            <Search
+              placeholder="Buscar"
+              onChange={functions.onFilter}
+              enterButton={false}
+              style={{
+                width: '30%',
+                marginBottom: '24px',
+              }}
+            />
           </Col>
         </Row>
         <Row justify="center" align="center">
@@ -26,7 +51,7 @@ const Fels = () => {
             <Table
               bordered
               tableLayout="fixed"
-              dataSource={listResponse.listRegistersFels}
+              dataSource={listResponse.listRegistersFilter}
               rowKey="id"
               key="id"
               columns={columns}

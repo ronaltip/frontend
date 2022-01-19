@@ -11,15 +11,16 @@ import {
   Table,
   Tooltip,
   Input,
-  Spin
+  Spin,
+  Button
 } from 'antd';
-import Cabecera from '../componentes/cabecera';
-import Sidebar from '../componentes/sidebar';
 import Footer from '../componentes/footer';
+import HeaderSection from '../libs/headerSection/headerSection';
+import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 
 const URL = process.env.REACT_APP_API_HOST;
 const { Search } = Input;
-
+let modules = null;
 
 class viewWells extends Component {
   state = {
@@ -52,8 +53,7 @@ class viewWells extends Component {
       .then(response => {
         if (response.status === 200)
           this.setState({ data: response.data, dataSearch: response.data, loading: false });
-        else
-        {
+        else {
           console.log(response.data);
           message.error('Ocurrió un error consultando los pozos, intente nuevamente')
           this.setLoading(false)
@@ -72,8 +72,7 @@ class viewWells extends Component {
       .then(response => {
         if (response.status === 200)
           this.setState({ dataFields: response.data });
-        else
-        {
+        else {
           console.log(response.data);
           message.error('Ocurrió un error consultando los campos, intente nuevamente')
         }
@@ -89,14 +88,12 @@ class viewWells extends Component {
     axios
       .post(URL + 'wells', this.state.form)
       .then(response => {
-        if (response.status === 200)
-        {
+        if (response.status === 200) {
           this.modalInsertar();
           this.peticionGet();
           message.success('Pozo creado con éxito')
         }
-        else
-        {
+        else {
           console.log(response.data);
           message.error('Ocurrió un error creando el pozo, intente nuevamente')
         }
@@ -109,14 +106,12 @@ class viewWells extends Component {
 
   peticionPut = () => {
     axios.put(URL + 'wells', this.state.form).then(response => {
-      if (response.status === 200)
-      {
+      if (response.status === 200) {
         this.modalInsertar();
         this.peticionGet();
         message.success('Pozo actualizado con éxito')
       }
-      else
-      {
+      else {
         console.log(response.data);
         message.error('Ocurrió un error actualizando el pozo, intente nuevamente')
       }
@@ -133,14 +128,12 @@ class viewWells extends Component {
     };
 
     axios.delete(URL + 'wells', { data: datos }).then(response => {
-      if (response.status === 200)
-      {
+      if (response.status === 200) {
         this.setState({ modalEliminar: false });
         this.peticionGet();
         message.success('Pozo eliminado con éxito')
       }
-      else
-      {
+      else {
         console.log(response.data);
         message.error('Ocurrió un error eliminando el pozo, intente nuevamente')
       }
@@ -151,21 +144,22 @@ class viewWells extends Component {
   };
 
   modalInsertar = () => {
-    this.setState({ 
-        modalInsertar: !this.state.modalInsertar, 
-        tipoModal: 'insertar', 
-        form: { id: '',
-          nombre: '',
-          tag: '',
-          ip: '',
-          puerto: '',
-          url: '',
-          usuario: '',
-          clave: '',
-          estado_id: '',
-          field_id: '',
-          pkuser: JSON.parse(sessionStorage.getItem('user')).pk_usuario_sesion 
-        } 
+    this.setState({
+      modalInsertar: !this.state.modalInsertar,
+      tipoModal: 'insertar',
+      form: {
+        id: '',
+        nombre: '',
+        tag: '',
+        ip: '',
+        puerto: '',
+        url: '',
+        usuario: '',
+        clave: '',
+        estado_id: '',
+        field_id: '',
+        pkuser: JSON.parse(sessionStorage.getItem('user')).pk_usuario_sesion
+      }
     });
   };
 
@@ -211,23 +205,24 @@ class viewWells extends Component {
   };
 
   setLoading = e => {
-    this.setState({loading: e})
+    this.setState({ loading: e })
   }
 
   onFilter = search => {
     this.setLoading(true)
     let searched = search.target.value.toLowerCase();
-    const responseSearch = this.state.data.filter( ({nombre, campo}) => {
+    const responseSearch = this.state.data.filter(({ nombre, campo }) => {
       nombre = nombre.toLowerCase();
       campo = campo.toLowerCase();
       return nombre.includes(searched) || campo.includes(searched);
     });
-    this.setState({dataSearch:  responseSearch, loading: false});
+    this.setState({ dataSearch: responseSearch, loading: false });
   };
 
   componentDidMount() {
     this.peticionGet();
     this.peticionCamposGet();
+    modules = JSON.parse(sessionStorage.getItem('modules'));
   }
 
   render() {
@@ -235,15 +230,16 @@ class viewWells extends Component {
 
     return (
       <>
-        <Cabecera />
-        <Sidebar />
-        <nav aria-label="breadcrumb" className='small'>
-          <ol className="breadcrumb">
-            <li className="breadcrumb-item">Curvas</li>
-            <li className="breadcrumb-item active" aria-current="page">Pozos</li>
-          </ol>
-        </nav>
-
+        <HeaderSection
+          onClick={() => {
+            this.setState({ form: null, tipoModal: 'insertar' });
+            this.modalInsertar();
+          }}
+          titleButton="Agregar Pozo"
+          content='Curvas'
+          title={'Pozos'}
+          disabled={modules && modules.curves.wells.edit}
+        />
         <div className='container-xl'>
           <Row >
             <Col span={24}>
@@ -258,19 +254,8 @@ class viewWells extends Component {
                 enterButton={false}
               />
             </Col>
-            <Col span={12} className='text-right'>
-              <button
-                className="btn btn-success btn-sm"
-                onClick={() => {
-                  this.setState({ form: null, tipoModal: 'insertar' });
-                  this.modalInsertar();
-                }}
-              >
-                <iconList.Add /> Agregar Pozo
-              </button>
-            </Col>
           </Row>
-          <Row >
+          <Row style={{ marginTop: '10px' }}>
             <Col span={24}>
               <Table
                 tableLayout="fixed"
@@ -278,7 +263,7 @@ class viewWells extends Component {
                 dataSource={this.state.dataSearch}
                 rowKey="id"
                 key="id"
-                loading={{  indicator: <div><Spin /></div>, spinning: this.state.loading }}
+                loading={{ indicator: <div><Spin /></div>, spinning: this.state.loading }}
                 columns={[
                   {
                     title: 'Campo',
@@ -314,24 +299,35 @@ class viewWells extends Component {
                   },
                   {
                     title: 'Acción',
+                    width: '20%',
                     render: info => {
                       return (
-                      <Row gutter={16} justify="center">
-                        <Col span={8} style={{ cursor: 'pointer' }}>
-                          <Tooltip title="Editar">
-                            <span onClick={() => this.modalEditar(info)}>
-                              <iconList.Edit />
-                            </span>
-                          </Tooltip>
-                        </Col>
-                        <Col span={8} style={{ cursor: 'pointer' }}>
-                          <Tooltip title="Eliminar">
-                            <span onClick={() => this.modalEliminar(info)}>
-                              <iconList.Delete />
-                            </span>
-                          </Tooltip>
-                        </Col>
-                      </Row>
+                        <Row gutter={16} justify="center">
+                          <Col span={8} style={{ cursor: 'pointer' }}>
+                            <Tooltip
+                              title={modules && modules.curves.wells.edit
+                                ? "Editar" : "No tienes permisos."}>
+                              <Button
+                                shape='circle'
+                                disabled={!(modules && modules.curves.wells.edit)}
+                                onClick={() => this.modalEditar(info)}>
+                                <EditOutlined />
+                              </Button>
+                            </Tooltip>
+                          </Col>
+                          <Col span={8} style={{ cursor: 'pointer' }}>
+                            <Tooltip
+                              title={modules && modules.curves.wells.edit
+                                ? "Eliminar" : "No tienes permisos."}>
+                              <Button
+                                shape='circle'
+                                disabled={!(modules && modules.curves.wells.edit)}
+                                onClick={() => this.modalEliminar(info)}>
+                                <DeleteOutlined />
+                              </Button>
+                            </Tooltip>
+                          </Col>
+                        </Row>
                       )
                     }
                   }
@@ -342,7 +338,7 @@ class viewWells extends Component {
           </Row>
         </div>
         <Footer />
-        
+
         <Modal isOpen={this.state.modalInsertar}>
           <ModalHeader style={{ display: 'block' }}>
             <span

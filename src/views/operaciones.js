@@ -11,21 +11,25 @@ import {
   Table,
   Tooltip,
   Input,
-  Spin
+  Spin,
+  Select,
+  Button
 } from 'antd';
-import SideBar from '../componentes/sidebar';
-import Cabecera from '../componentes/cabecera';
+
 import Footer from '../componentes/footer';
 
 import '../css/styles.css';
 import iconList from '../util/iconList';
+import HeaderSection from '../libs/headerSection/headerSection';
+import { SearchOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 
 const URL = process.env.REACT_APP_API_HOST;
 const { Search } = Input;
+const { Option } = Select;
 
 
 const buttonRef = React.createRef();
-
+let modules = null;
 
 var ArrayD = [];
 
@@ -43,26 +47,24 @@ class viewOperaciones extends Component {
   };
 
   peticionGet = (pozo_id) => {
-    return new Promise((resolve, reject) =>  {
+    return new Promise((resolve, reject) => {
       axios
-        .get(URL + 'operaciones/wells/'+ pozo_id)
+        .get(URL + 'operaciones/wells/' + pozo_id)
         .then(response => {
-          if (response.status === 200)
-          {     
-            this.setState({ data: response.data, dataSearch: response.data});      
+          if (response.status === 200) {
+            this.setState({ data: response.data, dataSearch: response.data });
             resolve(true)
           }
-          else
-          {
+          else {
             console.log(response.data);
             message.error('Ocurrió un error consultando las operaciones, intente nuevamente')
             reject(false)
           }
         })
         .catch(error => {
-            message.error('Ocurrió un error consultando las operaciones, intente nuevamente')
-            console.log(error.message);
-            reject(false)
+          message.error('Ocurrió un error consultando las operaciones, intente nuevamente')
+          console.log(error.message);
+          reject(false)
         });
     })
   };
@@ -73,15 +75,14 @@ class viewOperaciones extends Component {
       .then(response => {
         if (response.status === 200)
           this.setState({ dataWells: response.data });
-        else
-        {
+        else {
           console.log(response.data);
           message.error('Ocurrió un error consultando los pozos, intente nuevamente')
         }
       })
       .catch(error => {
-          message.error('Ocurrió un error consultando los pozos, intente nuevamente')
-          console.log(error.message);
+        message.error('Ocurrió un error consultando los pozos, intente nuevamente')
+        console.log(error.message);
       });
   };
 
@@ -90,33 +91,30 @@ class viewOperaciones extends Component {
     for (let i = 1; i < ArrayD.value.length - 1; i++) {
       let col1 = ArrayD.value[i].data[0]
       let col2 = ArrayD.value[i].data[1]
-      
 
-      if (col1 !== '' && col2 !== '')
-      {
-          
+
+      if (col1 !== '' && col2 !== '') {
+
         //Desde
         let desde = await this.ConvertirFecha(ArrayD.value[i].data[4])
-        
+
         //Hasta   
         let hasta = await this.ConvertirFecha(ArrayD.value[i].data[5])
 
-        if (desde.addHora)
-        {
+        if (desde.addHora) {
           let extractHora1 = hasta.fecha.split(' ')
           ArrayD.value[i].data[4] = desde.fecha + ' ' + extractHora1[1]
         }
         else
-          ArrayD.value[i].data[4] = desde.fecha 
-        if (hasta.addHora)
-        {
+          ArrayD.value[i].data[4] = desde.fecha
+        if (hasta.addHora) {
           let extractHora2 = desde.fecha.split(' ')
           ArrayD.value[i].data[5] = hasta.fecha + ' ' + extractHora2[1]
         }
         else
           ArrayD.value[i].data[5] = hasta.fecha
 
-        datos.push(ArrayD.value[i].data)    
+        datos.push(ArrayD.value[i].data)
       }
     }
     let form = {
@@ -124,18 +122,16 @@ class viewOperaciones extends Component {
       pkuser: JSON.parse(sessionStorage.getItem('user')).pk_usuario_sesion,
       datos: datos
     }
-    
-    
+
+
     axios
-      .post(URL + 'operaciones', {data: form})
+      .post(URL + 'operaciones', { data: form })
       .then(response => {
-        if (response.status === 200)
-        {
+        if (response.status === 200) {
           this.modalInsertar();
           message.success('Archivo de operaciones cargado con éxito.')
         }
-        else
-        {
+        else {
           console.log(response.data);
           message.error('Ocurrió un error cargando el archivo de operaciones, intente nuevamente')
         }
@@ -144,38 +140,35 @@ class viewOperaciones extends Component {
         message.error('Ocurrió un error cargando el archivo de operaciones, intente nuevamente')
         console.log(error.message);
       });
-    
+
   };
 
   ConvertirFecha = async (fecha) => {
     let colDate = fecha.split(' ')
     let agregarHora = false
-    switch (colDate.length)
-    {
+    switch (colDate.length) {
       case 1:
         let date1 = colDate[0].split('/')
-        colDate = date1[2] + '-' + ( date1[0].length === 1 ? ('0'+date1[0]) : date1[0] ) + '-' + ( date1[1].length === 1 ? ('0'+date1[1]) : date1[1] )
+        colDate = date1[2] + '-' + (date1[0].length === 1 ? ('0' + date1[0]) : date1[0]) + '-' + (date1[1].length === 1 ? ('0' + date1[1]) : date1[1])
         agregarHora = true
         break;
       case 3:
         let date2 = colDate[0].split('/')
         let fullhora = colDate[1]
         let hora = fullhora.split(':')
-        if (colDate[2] === 'AM')
-        {
+        if (colDate[2] === 'AM') {
           if (hora[0] === '12')
             hora[0] = '0'
         }
-        else
-        {
+        else {
           if (hora[0] !== '12')
             hora[0] = Number(hora[0]) + 12
         }
 
-        colDate = date2[2] + '-' + ( date2[0].length === 1 ? ('0'+date2[0]) : date2[0] ) + '-' + ( date2[1].length === 1 ? ('0'+date2[1]) : date2[1] ) + ' ' + ( hora[0].length === 1 ? ('0'+hora[0]) : hora[0] ) + ':' + ( hora[1].length === 1 ? ('0'+hora[1]) : hora[1] ) + ':' + ( hora[2].length === 1 ? ('0'+hora[2]) : hora[2] )
+        colDate = date2[2] + '-' + (date2[0].length === 1 ? ('0' + date2[0]) : date2[0]) + '-' + (date2[1].length === 1 ? ('0' + date2[1]) : date2[1]) + ' ' + (hora[0].length === 1 ? ('0' + hora[0]) : hora[0]) + ':' + (hora[1].length === 1 ? ('0' + hora[1]) : hora[1]) + ':' + (hora[2].length === 1 ? ('0' + hora[2]) : hora[2])
         break;
-        default:
-          break;
+      default:
+        break;
     }
     return { addHora: agregarHora, fecha: colDate }
   }
@@ -187,14 +180,12 @@ class viewOperaciones extends Component {
     };
 
     axios.delete(URL + 'operaciones', { data: datos }).then(response => {
-      if (response.status === 200)
-      {
+      if (response.status === 200) {
         this.setState({ modalEliminar: false });
         this.onSearchByPozo()
         message.success('Operación eliminada con éxito')
       }
-      else
-      {
+      else {
         console.log(response.data);
         message.error('Ocurrió un error eliminando la operación, intente nuevamente')
       }
@@ -208,10 +199,11 @@ class viewOperaciones extends Component {
     let pkuser = JSON.parse(
       sessionStorage.getItem('user')
     ).pk_usuario_sesion;
-    this.setState({ modalInsertar: !this.state.modalInsertar,
+    this.setState({
+      modalInsertar: !this.state.modalInsertar,
       form: {
         id: '', wells_id: '', estado_id: '', pkuser: pkuser, datoFile: ''
-      } 
+      }
     });
   };
 
@@ -231,19 +223,17 @@ class viewOperaciones extends Component {
   };
 
   onFiltered = (search) => {
-    this.setState({search: search.target.value})
+    this.setState({ search: search.target.value })
     if (this.state.pozo_id === '0')
       message.info('Seleccione el pozo')
-    else
-    {
+    else {
       let searched = search.target.value.toLowerCase();
-      if (this.state.dataSearch.length > 0)
-      {
-        const responseSearch = this.state.data.filter( ({operacion, desde, hasta}) => {
+      if (this.state.dataSearch.length > 0) {
+        const responseSearch = this.state.data.filter(({ operacion, desde, hasta }) => {
           operacion = operacion.toLowerCase();
-          return  operacion.includes(searched) || desde.includes(searched) || hasta.includes(searched);
+          return operacion.includes(searched) || desde.includes(searched) || hasta.includes(searched);
         });
-        this.setState({dataSearch:  responseSearch});
+        this.setState({ dataSearch: responseSearch });
       }
     }
   }
@@ -251,21 +241,19 @@ class viewOperaciones extends Component {
   onSearchByPozo = () => {
     if (this.state.pozo_id === '0')
       message.info('Seleccione el pozo')
-    else
-    {
+    else {
       this.setLoading(true)
-      this.peticionGet(this.state.pozo_id).then( res => {
-        if (res)
-        {
+      this.peticionGet(this.state.pozo_id).then(res => {
+        if (res) {
           this.setState({ loading: false });
         }
         else
-          this.setState({dataSearch:  [], loading: false });
+          this.setState({ dataSearch: [], loading: false });
       })
     }
   }
 
-  handleChange =  e => {
+  handleChange = e => {
     this.setState({
       form: {
         ...this.state.form,
@@ -274,19 +262,19 @@ class viewOperaciones extends Component {
     });
   };
 
-  handleChangeFilter =  e => {
+  handleChangeFilter = e => (
     this.setState({
-        [e.target.name]: e.target.value,
-        dataSearch: [], search: ''
-    });
-  };
+      pozo_id: e,
+      dataSearch: [], search: ''
+    }));
 
   setLoading = e => {
-    this.setState({loading: e})
+    this.setState({ loading: e })
   }
 
   componentDidMount() {
     this.peticionWellsGet();
+    modules = JSON.parse(sessionStorage.getItem('modules'));
   }
 
   handleOpenDialog = e => {
@@ -308,69 +296,58 @@ class viewOperaciones extends Component {
 
     return (
       <div className="App">
-        <Cabecera />
-        <SideBar />
-
-        <nav aria-label="breadcrumb" className='small'>
-          <ol className="breadcrumb">
-            <li className="breadcrumb-item">Cargue de datos</li>
-            <li className="breadcrumb-item active" aria-current="page">Operaciones</li>
-          </ol>
-        </nav>
-
+        <HeaderSection
+          onClick={() => {
+            this.setState({ form: null, tipoModal: 'insertar' });
+            this.modalInsertar();
+          }}
+          titleButton="Agregar archivo"
+          content='Cargue de datos'
+          title={'Operaciones'}
+          disabled={modules && modules.loadData.operations.edit}
+        />
         <div className='container-xl'>
-          <div className='row'>
-            <div className='col-sm-12 col-md-12 col-lg-12'>
-              <h3>Listado de Operaciones</h3>
-            </div>
-          </div>
-          <div className='row'>
-            <div className='col-sm-12 col-md-4 col-lg-4'>
-              <div className="input-group mb-3">
-                <select
+          <Row >
+            <Col span={24}>
+              <h3>Lista de Operaciones</h3>
+            </Col>
+          </Row>
+          <Row >
+            <Col span={10}>
+              <div className="input-group-append">
+                <Select
                   name="pozo_id"
                   id="pozo_id"
                   className="form-control form-control-sm"
+                  style={{ width: '80%' }}
                   onChange={this.handleChangeFilter}
                   defaultValue={this.state.pozo_id}
                   aria-describedby="basic-addon2"
                 >
-                  <option key="0" value="0">
+                  <Option key="0" value="0">
                     Seleccione el Pozo
-                  </option>
+                  </Option>
                   {this.state.dataWells.map(elemento => (
-                    <option key={elemento.id} value={elemento.id}>
+                    <Option key={elemento.id} value={elemento.id}>
                       {elemento.nombre}
-                    </option>
+                    </Option>
                   ))}
-                </select>
-                <div className="input-group-append">
-                  <button className='btn btn-sm btn-outline-secondary' style={{height:'31px'}} type='button' title='Buscar' onClick={() => this.onSearchByPozo()}><iconList.Search /></button>
-                </div>
+                </Select>
+                <Button className='btn btn-sm btn-outline-secondary'
+                  style={{ height: '31px' }} type='button' title='Buscar'
+                  onClick={() => this.onSearchByPozo()}><SearchOutlined /></Button>
               </div>
-            </div>
-            <div className='col-sm-6 col-md-4 col-lg-4'>
+            </Col>
+            <Col span={10}>
               <Search
                 placeholder="Buscar"
                 onChange={(v) => this.onFiltered(v)}
                 enterButton={false}
                 value={this.state.search}
               />
-            </div>
-            <div className='col-sm-6 col-md-4 col-lg-4 text-right'>
-              <button
-                className="btn btn-success btn-sm"
-                onClick={() => {
-                  this.setState({ form: null, tipoModal: 'insertar' });
-                  this.modalInsertar();
-                }}
-              >
-                <iconList.Add /> Agregar archivo
-              </button>
-            </div>
-          </div>
-    
-          <Row >
+            </Col>
+          </Row>
+          <Row style={{ marginTop: '10px' }}>
             <Col span={24}>
               <Table
                 tableLayout="fixed"
@@ -378,9 +355,9 @@ class viewOperaciones extends Component {
                 dataSource={this.state.dataSearch}
                 rowKey="id"
                 key="id"
-                loading={{  indicator: <div><Spin /></div>, spinning: this.state.loading }}
+                loading={{ indicator: <div><Spin /></div>, spinning: this.state.loading }}
                 columns={[
-                  
+
                   {
                     title: 'Desde',
                     dataIndex: 'desde',
@@ -412,15 +389,19 @@ class viewOperaciones extends Component {
                     width: '10%',
                     render: info => {
                       return (
-                      <Row  justify="center">
-                        <Col  style={{ cursor: 'pointer' }}>
-                          <Tooltip title="Eliminar">
-                            <span onClick={() => this.modalEliminar(info)}>
-                              <iconList.Delete />
-                            </span>
-                          </Tooltip>
-                        </Col>
-                      </Row>
+                        <Row justify="center">
+                          <Col style={{ cursor: 'pointer' }}>
+                            <Tooltip
+                              title={modules && modules.loadData.operations.edit
+                                ? "Eliminar" : "No tienes permisos."}>
+                              <Button
+                                shape='circle'
+                                onClick={() => this.modalEliminar(info)}>
+                                <DeleteOutlined />
+                              </Button>
+                            </Tooltip>
+                          </Col>
+                        </Row>
                       )
                     }
                   }
@@ -429,7 +410,7 @@ class viewOperaciones extends Component {
               />
             </Col>
           </Row>
-        </div> 
+        </div>
 
         <Footer />
 
@@ -576,7 +557,7 @@ class viewOperaciones extends Component {
                 onChange={this.handleChange}
                 value={form ? form.id : this.state.data.length + 1}
               />
-              <label htmlFor="nombre"><b>Operación:</b> &nbsp; </label><br/>
+              <label htmlFor="nombre"><b>Operación:</b> &nbsp; </label><br />
               {form ? <span>{form.operacion}</span> : ''}
             </div>
           </ModalBody>

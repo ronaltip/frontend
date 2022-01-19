@@ -9,7 +9,7 @@ const HttpServices = () => {
           if (response && response.status === 200) {
             return response.data;
           } else {
-            console.log(response.status);
+            return [];
           }
         })
         .catch(error => console.log(error));

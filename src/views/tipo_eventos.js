@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
@@ -11,17 +11,18 @@ import {
   Table,
   Tooltip,
   Input,
-  Spin
+  Spin,
+  Button
 } from 'antd';
-import Cabecera from '../componentes/cabecera';
-import Sidebar from '../componentes/sidebar';
 import Footer from '../componentes/footer';
 import { SketchPicker } from 'react-color';
+import HeaderSection from '../libs/headerSection/headerSection';
+import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 
 const URL = process.env.REACT_APP_API_HOST;
 const { Search } = Input;
 
-
+let modules = null;
 class viewTipoEventos extends Component {
   constructor() {
     super();
@@ -48,18 +49,17 @@ class viewTipoEventos extends Component {
       .get(URL + 'tipo_eventos')
       .then(response => {
         if (response.status === 200)
-          this.setState({ data: response.data, dataSearch: response.data, loading: false});
-        else
-        {
+          this.setState({ data: response.data, dataSearch: response.data, loading: false });
+        else {
           console.log(response.data);
           message.error('Ocurrió un error consultando los tipos de evento, intente nuevamente')
           this.setLoading(false)
         }
       })
       .catch(error => {
-          message.error('Ocurrió un error consultando los tipos de evento, intente nuevamente')
-          console.log(error.message)
-          this.setLoading(false)
+        message.error('Ocurrió un error consultando los tipos de evento, intente nuevamente')
+        console.log(error.message)
+        this.setLoading(false)
       });
   };
 
@@ -68,34 +68,30 @@ class viewTipoEventos extends Component {
     await axios
       .post(URL + 'tipo_eventos', this.state.form)
       .then(response => {
-        if (response.status === 200)
-        {
+        if (response.status === 200) {
           this.modalInsertar();
           this.peticionGet();
           message.success('Tipo de Evento creado con éxito')
         }
-        else
-        {
+        else {
           console.log(response.data);
           message.error('Ocurrió un error creando el Tipo de Evento, intente nuevamente')
         }
       })
       .catch(error => {
-          message.error('Ocurrió un error creando el Tipo de Evento, intente nuevamente')
-          console.log(error.message);
+        message.error('Ocurrió un error creando el Tipo de Evento, intente nuevamente')
+        console.log(error.message);
       });
   };
 
   peticionPut = () => {
     axios.put(URL + 'tipo_eventos', this.state.form).then(response => {
-      if (response.status === 200)
-      {
+      if (response.status === 200) {
         this.modalInsertar();
         this.peticionGet();
         message.success('Tipo de Evento actualizado con éxito')
       }
-      else
-      {
+      else {
         console.log(response.data);
         message.error('Ocurrió un error actualizando el Tipo de Evento, intente nuevamente')
       }
@@ -112,30 +108,29 @@ class viewTipoEventos extends Component {
     };
 
     axios.delete(URL + 'tipo_eventos', { params: datos }).then(response => {
-      if (response.status === 200)
-      {
+      if (response.status === 200) {
         this.setState({ modalEliminar: false });
         this.peticionGet();
         message.success('Tipo de Evento eliminado con éxito')
       }
-      else
-      {
+      else {
         console.log(response.data);
         message.error('Ocurrió un error eliminando el Tipo de Evento, intente nuevamente')
       }
     }).catch(error => {
       message.error('Ocurrió un error eliminando el Tipo de Evento, intente nuevamente')
       console.log(error.message);
-  });
+    });
   };
 
   modalInsertar = () => {
     let pkuser = JSON.parse(
       sessionStorage.getItem('user')
     ).pk_usuario_sesion;
-    this.setState({ modalInsertar: !this.state.modalInsertar,
-      tipoModal: 'insertar', 
-      form: { id: 0, nombre: '', tag: '', color: '', estado_id: '', pkuser: pkuser } 
+    this.setState({
+      modalInsertar: !this.state.modalInsertar,
+      tipoModal: 'insertar',
+      form: { id: 0, nombre: '', tag: '', color: '', estado_id: '', pkuser: pkuser }
     });
   };
 
@@ -162,7 +157,7 @@ class viewTipoEventos extends Component {
     });
   };
 
-  handleChange =  e => {
+  handleChange = e => {
     this.setState({
       form: {
         ...this.state.form,
@@ -184,37 +179,39 @@ class viewTipoEventos extends Component {
   };
 
   onFilter = search => {
-    const responseSearch = this.state.data.filter( ({nombre, tag}) => {
+    const responseSearch = this.state.data.filter(({ nombre, tag }) => {
       nombre = nombre.toLowerCase();
       tag = tag.toLowerCase();
 
       return nombre.includes(search.target.value.toLowerCase()) || tag.includes(search.target.value.toLowerCase());
     });
-    this.setState({dataSearch:  responseSearch});
+    this.setState({ dataSearch: responseSearch });
   };
 
   setLoading = e => {
-    this.setState({loading: e})
+    this.setState({ loading: e })
   }
 
   componentDidMount() {
     this.peticionGet();
+    modules = JSON.parse(sessionStorage.getItem('modules'));
   }
 
   render() {
     const { form } = this.state;
 
     return (
-      <>
-        <Cabecera />
-        <Sidebar />
-        <nav aria-label="breadcrumb" className='small'>
-          <ol className="breadcrumb">
-            <li className="breadcrumb-item">Configuración</li>
-            <li className="breadcrumb-item active" aria-current="page">Tipos de Evento</li>
-          </ol>
-        </nav>
-
+      <Fragment>
+        <HeaderSection
+          onClick={() => {
+            this.setState({ form: null, tipoModal: 'insertar' });
+            this.modalInsertar();
+          }}
+          titleButton="Agregar Tipo"
+          content='Configuración'
+          title={'Tipos de Evento'}
+          disabled={modules && modules.configuration.typesEvents.edit}
+        />
         <div className='container-xl'>
           <Row >
             <Col span={24}>
@@ -229,19 +226,8 @@ class viewTipoEventos extends Component {
                 enterButton={false}
               />
             </Col>
-            <Col span={12} className='text-right'>
-              <button
-                className="btn btn-success btn-sm"
-                onClick={() => {
-                  this.setState({ form: null, tipoModal: 'insertar' });
-                  this.modalInsertar();
-                }}
-              >
-                <iconList.Add /> Agregar Tipo
-              </button>
-            </Col>
           </Row>
-          <Row >
+          <Row style={{ marginTop: '10px' }}>
             <Col span={24}>
               <Table
                 tableLayout="fixed"
@@ -249,46 +235,55 @@ class viewTipoEventos extends Component {
                 dataSource={this.state.dataSearch}
                 rowKey="id"
                 key="id"
-                loading={{  indicator: <div><Spin /></div>, spinning: this.state.loading }}
+                loading={{ indicator: <div><Spin /></div>, spinning: this.state.loading }}
                 columns={[
                   {
                     title: 'Nombre',
                     dataIndex: 'nombre',
-                    key: 'nombre'
+                    key: 'nombre',
+                    width: '55%',
                   },
                   {
                     title: 'Tag',
                     dataIndex: 'tag',
                     key: 'tag',
-                    width: '10%',
+                    width: '15%',
                   },
                   {
                     title: 'Color',
                     dataIndex: 'color',
                     key: 'color',
-                    width: '10%',
+                    width: '15%',
                   },
                   {
                     title: 'Acción',
-                    width: '10%',
+                    width: '15%',
                     render: info => {
                       return (
-                      <Row gutter={16} justify="center">
-                        <Col span={8}  style={{ cursor: 'pointer' }}>
-                          <Tooltip title="Editar">
-                            <span onClick={() => this.modalEditar(info)}>
-                              <iconList.Edit />
-                            </span>
-                          </Tooltip>
-                        </Col>
-                        <Col span={8} style={{ cursor: 'pointer' }}>
-                          <Tooltip title="Eliminar">
-                            <span onClick={() => this.modalEliminar(info)}>
-                              <iconList.Delete />
-                            </span>
-                          </Tooltip>
-                        </Col>
-                      </Row>
+                        <Row gutter={16} justify="center">
+                          <Col span={8} style={{ cursor: 'pointer' }}>
+                            <Tooltip title={modules && modules.configuration.typesEvents.edit
+                              ? "Editar" : "No tienes permisos."}>
+                              <Button
+                                shape='circle'
+                                disabled={!(modules && modules.configuration.typesEvents.edit)}
+                                onClick={() => this.modalEditar(info)}                              >
+                                <EditOutlined />
+                              </Button>
+                            </Tooltip>
+                          </Col>
+                          <Col span={8} style={{ cursor: 'pointer' }}>
+                            <Tooltip title={modules && modules.configuration.typesEvents.edit
+                              ? "Eliminar" : "No tienes permisos."}>
+                              <Button
+                                shape='circle'
+                                disabled={!(modules && modules.configuration.typesEvents.edit)}
+                                onClick={() => this.modalEliminar(info)}>
+                                <DeleteOutlined />
+                              </Button>
+                            </Tooltip>
+                          </Col>
+                        </Row>
                       )
                     }
                   }
@@ -298,8 +293,8 @@ class viewTipoEventos extends Component {
             </Col>
           </Row>
         </div>
-        
-        <Footer/>
+
+        <Footer />
 
         <Modal isOpen={this.state.modalInsertar}>
           <ModalHeader style={{ display: 'block' }}>
@@ -408,7 +403,7 @@ class viewTipoEventos extends Component {
             </button>
           </ModalFooter>
         </Modal>
-      </>
+      </Fragment>
     );
   }
 }

@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { DeleteOutlined, FileSearchOutlined } from '@ant-design/icons';
-import { Col, message, Row } from 'antd';
+import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
+import { Button, Col, message, Row } from 'antd';
 import { Tooltip } from '@material-ui/core';
 import onSearch from '../../util/onSearch';
 import HttpServices from '../../services/HttpServices';
 import { TYPE_OF_FILES } from '../../util/constants/enums';
 
-const useUploadCavingLas = typeFile => {
+const useUploadCavingLas = (typeFile, modules) => {
   const [listTotalRegisters, setListTotalRegisters] = useState([]);
   const [listWells, setListWells] = useState([]);
   const [isActiveHomologation, setIsActiveHomologation] = useState(false);
@@ -22,6 +22,12 @@ const useUploadCavingLas = typeFile => {
     definitionHour: null,
   });
 
+  useEffect(() => {
+    getRecordList();
+    getWellList();
+    getListCurves();
+    setUserStorage(JSON.parse(sessionStorage.getItem('user')));
+  }, []);
   const columns = [
     {
       title: 'Id',
@@ -39,7 +45,7 @@ const useUploadCavingLas = typeFile => {
       title: 'Encabezados',
       dataIndex: 'columnas',
       key: 'columnas',
-      width: '60%',
+      width: '50%',
     },
     {
       title: 'Fecha de Cargue',
@@ -55,21 +61,33 @@ const useUploadCavingLas = typeFile => {
     },
     {
       title: 'Acción',
-      width: '5%',
+      width: '10%',
       render: info_upload => (
         <Row justify="space-around">
           <Col style={{ cursor: 'pointer' }}>
-            <Tooltip title="Editar homologación">
-              <span onClick={() => goToHomogolationUpdate(info_upload)}>
-                <FileSearchOutlined />
-              </span>
+            <Tooltip
+              title={modules ? 'Editar hmologación' : 'No tienes permisos.'}
+            >
+              <Button
+                shape="circle"
+                disabled={!modules}
+                onClick={() => goToHomogolationUpdate(info_upload)}
+              >
+                <EditOutlined />
+              </Button>
             </Tooltip>
           </Col>
           <Col style={{ cursor: 'pointer' }}>
-            <Tooltip title="Eliminar cargue">
-              <span onClick={() => commandDeteteRegister(info_upload)}>
+            <Tooltip
+              title={modules ? 'Eliminar cargue' : 'No tienes permisos.'}
+            >
+              <Button
+                shape="circle"
+                disabled={!modules}
+                onClick={() => commandDeteteRegister(info_upload)}
+              >
                 <DeleteOutlined />
-              </span>
+              </Button>
             </Tooltip>
           </Col>
         </Row>
@@ -77,21 +95,20 @@ const useUploadCavingLas = typeFile => {
     },
   ];
 
-  useEffect(() => {
-    getRecordList();
-    getWellList();
-    getListCurves();
-    setUserStorage(JSON.parse(sessionStorage.getItem('user')));
-  }, []);
-
   const getRecordList = () => {
     HttpServices()
       .get(`archivo_encabezado/tipocargue/${TYPE_OF_FILES[typeFile]}`)
       .then(response => {
-        if (response) {
+        if (response && Array.isArray(response)) {
           setListTotalRegisters(response);
           setListRegistersFilter(response);
         }
+      })
+      .catch(error => {
+        console.log(error);
+        message.error(
+          'Ocurrió un error consultando los tipos de evento, intente nuevamente'
+        );
       });
   };
 
@@ -99,10 +116,11 @@ const useUploadCavingLas = typeFile => {
     HttpServices()
       .get('wells')
       .then(response => {
-        if (response) {
+        if (response && Array.isArray(response)) {
           setListWells(response);
         }
-      });
+      })
+      .catch(error => console.log(error));
   };
 
   const getListCurves = () => {
@@ -111,7 +129,12 @@ const useUploadCavingLas = typeFile => {
       .then(responseList =>
         responseList ? setListCurves(responseList) : setListCurves([])
       )
-      .catch(error => console.log(error));
+      .catch(error => {
+        console.log(error);
+        message.error(
+          'Ocurrió un error consultando los tipos de evento, intente nuevamente'
+        );
+      });
   };
   const clickOpenFileUpload = () => {
     setIsActiveUpload(true);

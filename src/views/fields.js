@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
@@ -11,16 +11,17 @@ import {
   Table,
   Tooltip,
   Input,
-  Spin
+  Spin,
+  Button
 } from 'antd';
-import Cabecera from '../componentes/cabecera';
-import Sidebar from '../componentes/sidebar';
-import Footer  from '../componentes/footer';
+import Footer from '../componentes/footer';
+import HeaderSection from '../libs/headerSection/headerSection';
+import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 
 
 const URL = process.env.REACT_APP_API_HOST;
 const { Search } = Input;
-
+let modules = null;
 class viewFields extends Component {
   state = {
     data: [], dataSearch: [], loading: false,
@@ -31,7 +32,7 @@ class viewFields extends Component {
     form: { id: '', nombre: '', descripcion: '', estado_id: '', pkuser: '' },
   };
 
- 
+
   peticionGet = () => {
     this.setLoading(true)
     axios
@@ -39,8 +40,7 @@ class viewFields extends Component {
       .then(response => {
         if (response.status === 200)
           this.setState({ data: response.data, dataSearch: response.data, loading: false });
-        else
-        {
+        else {
           console.log(response.data);
           message.error('Ocurrió un error consultando los campos, intente nuevamente')
           this.setLoading(false)
@@ -58,14 +58,12 @@ class viewFields extends Component {
     axios
       .post(URL + 'fields', this.state.form)
       .then(response => {
-        if (response.status === 200)
-        {
+        if (response.status === 200) {
           this.modalInsertar();
           this.peticionGet();
           message.success('Campo creado con éxito')
         }
-        else
-        {
+        else {
           console.log(response.data);
           message.error('Ocurrió un error creando el campo, intente nuevamente')
         }
@@ -78,14 +76,12 @@ class viewFields extends Component {
 
   peticionPut = () => {
     axios.put(URL + 'fields', this.state.form).then(response => {
-      if (response.status === 200)
-      {
+      if (response.status === 200) {
         this.modalInsertar();
         this.peticionGet();
         message.success('Campo actualizado con éxito')
       }
-      else
-      {
+      else {
         console.log(response.data);
         message.error('Ocurrió un error actualizando el campo, intente nuevamente')
       }
@@ -102,14 +98,12 @@ class viewFields extends Component {
     };
 
     axios.delete(URL + 'fields', { data: datos }).then(response => {
-      if (response.status === 200)
-      {
+      if (response.status === 200) {
         this.setState({ modalEliminar: false });
         this.peticionGet();
         message.success('Campo eliminado con éxito')
       }
-      else
-      {
+      else {
         console.log(response.data);
         message.error('Ocurrió un error eliminando el campo, intente nuevamente')
       }
@@ -123,10 +117,10 @@ class viewFields extends Component {
     let pkuser = JSON.parse(
       sessionStorage.getItem('user')
     ).pk_usuario_sesion;
-    this.setState({ 
-        modalInsertar: !this.state.modalInsertar, 
-        tipoModal: 'insertar', 
-        form: { id: 0, nombre: '', descripcion: '', estado_id: '', pkuser: pkuser } 
+    this.setState({
+      modalInsertar: !this.state.modalInsertar,
+      tipoModal: 'insertar',
+      form: { id: 0, nombre: '', descripcion: '', estado_id: '', pkuser: pkuser }
     });
   };
 
@@ -167,35 +161,37 @@ class viewFields extends Component {
   };
 
   setLoading = e => {
-    this.setState({loading: e})
+    this.setState({ loading: e })
   }
 
   onFilter = search => {
     this.setLoading(true)
-    const responseSearch = this.state.data.filter( ({nombre}) => {
+    const responseSearch = this.state.data.filter(({ nombre }) => {
       nombre = nombre.toLowerCase();
       return nombre.includes(search.target.value.toLowerCase());
     });
-    this.setState({dataSearch:  responseSearch, loading: false});
+    this.setState({ dataSearch: responseSearch, loading: false });
   };
 
   componentDidMount() {
     this.peticionGet();
+    modules = JSON.parse(sessionStorage.getItem('modules'));
   }
 
   render() {
     const { form } = this.state;
     return (
-      <>
-        <Cabecera />
-        <Sidebar />
-        <nav aria-label="breadcrumb" className='small'>
-          <ol className="breadcrumb">
-            <li className="breadcrumb-item">Curvas</li>
-            <li className="breadcrumb-item active" aria-current="page">Campos</li>
-          </ol>
-        </nav>
-       
+      <Fragment>
+        <HeaderSection
+          onClick={() => {
+            this.setState({ form: null, tipoModal: 'insertar' });
+            this.modalInsertar();
+          }}
+          titleButton="Agregar Campo"
+          content='Curvas'
+          title={'Campos'}
+          disabled={modules && modules.curves.fields.edit}
+        />
         <div className='container-xl'>
           <Row >
             <Col span={24}>
@@ -210,19 +206,8 @@ class viewFields extends Component {
                 enterButton={false}
               />
             </Col>
-            <Col span={12} className='text-right'>
-              <button
-                className="btn btn-success btn-sm"
-                onClick={() => {
-                  this.setState({ form: null, tipoModal: 'insertar' });
-                  this.modalInsertar();
-                }}
-              >
-                <iconList.Add /> Agregar Campo
-              </button>
-            </Col>
           </Row>
-          <Row >
+          <Row style={{ marginTop: '10px' }}>
             <Col span={24}>
               <Table
                 tableLayout="fixed"
@@ -230,7 +215,7 @@ class viewFields extends Component {
                 dataSource={this.state.dataSearch}
                 rowKey="id"
                 key="id"
-                loading={{  indicator: <div><Spin /></div>, spinning: this.state.loading }}
+                loading={{ indicator: <div><Spin /></div>, spinning: this.state.loading }}
                 columns={[
                   {
                     title: 'Nombre',
@@ -242,28 +227,39 @@ class viewFields extends Component {
                     title: 'Descripción',
                     dataIndex: 'descripcion',
                     key: 'descripcion',
-                    width: '60%',
+                    width: '50%',
                   },
                   {
                     title: 'Acción',
+                    width: '20%',
                     render: info => {
                       return (
-                      <Row gutter={16} justify="center">
-                        <Col span={8} style={{ cursor: 'pointer' }}>
-                          <Tooltip title="Editar">
-                            <span onClick={() => this.modalEditar(info)}>
-                              <iconList.Edit />
-                            </span>
-                          </Tooltip>
-                        </Col>
-                        <Col span={8} style={{ cursor: 'pointer' }}>
-                          <Tooltip title="Eliminar">
-                            <span onClick={() => this.modalEliminar(info)}>
-                              <iconList.Delete />
-                            </span>
-                          </Tooltip>
-                        </Col>
-                      </Row>
+                        <Row gutter={16} justify="center">
+                          <Col span={8} style={{ cursor: 'pointer' }}>
+                            <Tooltip
+                              title={modules && modules.curves.fields.edit
+                                ? "Editar" : "No tienes permisos."}>
+                              <Button
+                                shape='circle'
+                                disabled={!(modules && modules.curves.fields.edit)}
+                                onClick={() => this.modalEditar(info)}>
+                                <EditOutlined />
+                              </Button>
+                            </Tooltip>
+                          </Col>
+                          <Col span={4} style={{ cursor: 'pointer' }}>
+                            <Tooltip
+                              title={modules && modules.curves.fields.edit
+                                ? "Eliminar" : "No tienes permisos."}>
+                              <Button
+                                shape='circle'
+                                disabled={!(modules && modules.curves.fields.edit)}
+                                onClick={() => this.modalEliminar(info)}>
+                                <DeleteOutlined />
+                              </Button>
+                            </Tooltip>
+                          </Col>
+                        </Row>
                       )
                     }
                   }
@@ -272,7 +268,7 @@ class viewFields extends Component {
               />
             </Col>
           </Row>
-        </div> 
+        </div>
 
         <Footer />
 
@@ -383,7 +379,7 @@ class viewFields extends Component {
             </button>
           </ModalFooter>
         </Modal>
-      </>
+      </Fragment>
     );
   }
 }

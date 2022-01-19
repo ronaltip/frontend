@@ -8,8 +8,9 @@ import { Tooltip } from '@material-ui/core';
 import { Button, Col, message, notification, Row, Space } from 'antd';
 import { generateImgCanvanTobase64 } from '../../util/converterToBase64';
 import HttpServices from '../../services/HttpServices';
+import onSearch from '../../util/onSearch';
 
-const useFels = () => {
+const useFels = modules => {
   const imgRef = useRef(null);
   const [userStorage, setUserStorage] = useState({});
   const [listRegistersFels, setListRegistersFels] = useState([]);
@@ -20,6 +21,8 @@ const useFels = () => {
   const [openModalCrop, setOpenModalCrop] = useState(false);
   const [registerRowId, setRegisterRowId] = useState('');
   const [upImg, setUpImg] = useState();
+  const [listRegistersFilter, setListRegistersFilter] = useState([]);
+
   const [crop, setCrop] = useState({
     unit: '%',
   });
@@ -46,7 +49,7 @@ const useFels = () => {
       title: 'Nombre Carga Fels',
       dataIndex: 'name_upload',
       key: 'name_upload',
-      width: '55%',
+      width: '45%',
     },
     {
       title: 'Fecha cargue',
@@ -56,27 +59,43 @@ const useFels = () => {
     },
     {
       title: 'Acción',
-      width: '10%',
+      width: '20%',
       render: info_upload => (
         <Row justify="space-around">
           <Col style={{ cursor: 'pointer' }}>
-            <Tooltip title="Visualizar recorte">
-              <span onClick={() => OpenCrop(info_upload)}>
+            <Tooltip
+              title={modules ? 'Visualizar recorte' : 'No tienes permisos.'}
+            >
+              <Button
+                shape="circle"
+                disabled={!modules}
+                onClick={() => OpenCrop(info_upload)}
+              >
                 <ScissorOutlined />
-              </span>
+              </Button>
             </Tooltip>
           </Col>
           <Col style={{ cursor: 'pointer' }}>
-            <Tooltip title="Visualizar archivo">
-              <span onClick={() => OpenAndViewPdf(info_upload)}>
+            <Tooltip
+              title={modules ? 'Visualizar archivo' : 'No tienes permisos.'}
+            >
+              <Button
+                shape="circle"
+                disabled={!modules}
+                onClick={() => OpenAndViewPdf(info_upload)}
+              >
                 <FileSearchOutlined />
-              </span>
+              </Button>
             </Tooltip>
           </Col>
-          <Tooltip title="Eliminar cargue">
-            <span onClick={() => commandDeteteRegister(info_upload)}>
+          <Tooltip title={modules ? 'Eliminar cargue' : 'No tienes permisos.'}>
+            <Button
+              shape="circle"
+              disabled={!modules}
+              onClick={() => commandDeteteRegister(info_upload)}
+            >
               <DeleteOutlined />
-            </span>
+            </Button>
           </Tooltip>
         </Row>
       ),
@@ -87,20 +106,32 @@ const useFels = () => {
     HttpServices()
       .get('archivo_encabezado_fel')
       .then(response => {
-        if (response) {
+        if (response && Array.isArray(response)) {
           setListRegistersFels(response);
+          setListRegistersFilter(response);
+        } else {
+          setListRegistersFels([]);
         }
-      });
+      })
+      .catch(error => console.log(error));
   };
 
   const getWellList = () => {
     HttpServices()
       .get('wells')
       .then(response => {
-        if (response) {
+        if (response && Array.isArray(response)) {
           setListWells(response);
+        } else {
+          setListWells([]);
         }
       });
+  };
+  const onFilter = value => {
+    const responseSearch = onSearch(value, listRegistersFels);
+    !responseSearch
+      ? setListRegistersFilter(listRegistersFels)
+      : setListRegistersFilter(responseSearch);
   };
 
   const clickOpenFileUpload = () => {
@@ -279,8 +310,9 @@ const useFels = () => {
       crop,
       stepFields,
     },
-    listResponse: { listRegistersFels, listWells },
+    listResponse: { listRegistersFilter, listWells },
     functions: {
+      onFilter,
       clickOpenFileUpload,
       onClickCancel,
       onClickInsert,

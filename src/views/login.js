@@ -4,6 +4,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import '../css/login.css';
 import md5 from 'md5';
 import { message } from 'antd';
+import * as accessByRoles from '../util/constants/accessByRoles';
 
 const url = process.env.REACT_APP_API_HOST;
 
@@ -23,8 +24,6 @@ class Login extends Component {
         [e.target.name]: e.target.value,
       },
     });
-    //console.log(this.state.form);
-    //console.log(md5(this.state.form.clave))
   };
 
   iniciarSesion = async () => {
@@ -35,16 +34,17 @@ class Login extends Component {
       await axios
         .get(
           url +
-            'usuarios/' +
-            this.state.form.codigo +
-            '/' +
-            md5(this.state.form.clave)
+          'usuarios/' +
+          this.state.form.codigo +
+          '/' +
+          md5(this.state.form.clave)
         )
         .then(response => {
           return response.data;
         })
         .then(response => {
-          if (response.length > 0) {
+          if (response && Array.isArray(response) &&
+            response.length > 0) {
             var respuesta = response[0];
             const user = {
               id_usuario_sesion: respuesta.id,
@@ -53,6 +53,7 @@ class Login extends Component {
               pk_usuario_sesion: respuesta.id,
             };
             sessionStorage.setItem('user', JSON.stringify(user));
+            sessionStorage.setItem('modules', JSON.stringify(accessByRoles[respuesta.perfil_nombre]));
             window.location.href = './home';
           } else {
             message.error('El usuario o contraseña no son correctos.');
@@ -73,8 +74,8 @@ class Login extends Component {
         <div className="containerPrincipal">
           <div className="containerSecundario">
             <div className="form-groop">
-            <img src="favicon.ico" width="30" height="30" className="d-inline-block align-top" alt="ECOPETROL" />
-          
+              <img src="favicon.ico" width="30" height="30" className="d-inline-block align-top" alt="ECOPETROL" />
+
               <label className="navbar-brand"> EcoAge </label><br />
               <label>Usuario:</label>
               <br />

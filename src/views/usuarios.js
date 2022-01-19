@@ -1,26 +1,19 @@
-import React, { Component, forwardRef } from 'react';
+import React, { Component } from 'react';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
-import Materialtable from 'material-table';
-import SideBar from '../componentes/sidebar';
-import Cabecera from '../componentes/cabecera';
 import iconList from '../util/iconList';
 import '../css/styles.css';
+import HeaderSection from '../libs/headerSection/headerSection';
+import { Button, Col, message, Row, Spin, Table, Tooltip } from 'antd';
+import Search from 'antd/lib/transfer/search';
+import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 
 const URL = process.env.REACT_APP_API_HOST;
-//const url = "http://localhost:9000/usuarios";
-//const urlPerfil = "http://localhost:9000/perfiles";
-
-const columns = [
-  { title: 'Nombre', field: 'nombre' },
-  { title: 'Email', field: 'email' },
-  { title: 'Codigo', field: 'codigo' },
-  { title: 'Perfil', field: 'Perfil' },
-];
+let modules = null;
 class viewUsuario extends Component {
   state = {
-    data: [],
+    data: [], dataSearch: [], loading: false,
     dataPerfil: [],
     modalInsertar: false,
     modalEliminar: false,
@@ -39,12 +32,24 @@ class viewUsuario extends Component {
   };
 
   peticionGet = async () => {
+    this.setLoading(true)
     axios
       .get(URL + 'usuarios')
       .then(response => {
-        this.setState({ data: response.data });
+        if (response.status === 200) {
+          this.setState({
+            data: response.data,
+            dataSearch: response.data,
+            loading: false
+          });
+        } else {
+          message.error('Ocurrió un error consultando las unidades de medida, intente nuevamente')
+          this.setLoading(false)
+        }
       })
       .catch(error => {
+        this.setLoading(false)
+
         console.log(error.message);
       });
   };
@@ -125,7 +130,6 @@ class viewUsuario extends Component {
         [e.target.name]: e.target.value,
       },
     });
-    console.log(this.state.form);
     this.state.form.pkuser = JSON.parse(
       sessionStorage.getItem('user')
     ).pk_usuario_sesion;
@@ -134,63 +138,130 @@ class viewUsuario extends Component {
   componentDidMount() {
     this.peticionGet();
     this.peticionPerfilesGet();
+    modules = JSON.parse(sessionStorage.getItem('modules'));
+  };
+  onFilter = search => {
+    const responseSearch = this.state.data.filter(({ nombre }) => {
+      nombre = nombre.toLowerCase();
+      return nombre.includes(search.target.value.toLowerCase());
+    });
+    this.setState({ dataSearch: responseSearch });
+  };
+  setLoading = e => {
+    this.setState({ loading: e })
   }
 
   render() {
     const { form } = this.state;
     return (
       <div className="App">
-        <Cabecera />
-        <SideBar pageWrapId={'page-wrap'} outerContainerId={'App'} />
-
-        <div className="containerCuatro">
-          <button
-            className="btn btn-success"
-            onClick={() => {
-              this.setState({ form: null, tipoModal: 'insertar' });
-              this.modalInsertar();
-            }}
-          >
-            <iconList.Add /> Agregar Usuario
-          </button>
+        <HeaderSection
+          onClick={() => {
+            this.setState({ form: null, tipoModal: 'insertar' });
+            this.modalInsertar();
+          }}
+          titleButton="Agregar Usuario"
+          content='Configuración'
+          title={'Listado Usuario'}
+          disabled={modules && modules.configuration.users.edit}
+        />
+        <div className='container-xl'>
+          <Row >
+            <Col span={24}>
+              <h3>Lista de Usuarios</h3>
+            </Col>
+          </Row>
+          <Row >
+            <Col span={12}>
+              <Search
+                placeholder="Buscar"
+                onChange={(value) => this.onFilter(value)}
+                enterButton={false}
+              />
+            </Col>
+          </Row>
+          <Row style={{ marginTop: '10px' }}>
+            <Col span={24}>
+              <Table
+                tableLayout="fixed"
+                pagination={{ pageSize: 10 }}
+                dataSource={this.state.dataSearch}
+                rowKey="id"
+                key="id"
+                loading={{ indicator: <div><Spin /></div>, spinning: this.state.loading }}
+                columns={[
+                  {
+                    title: 'Nombre',
+                    dataIndex: 'nombre',
+                    key: 'nombre',
+                    width: '25%',
+                  },
+                  {
+                    title: 'Email',
+                    dataIndex: 'email',
+                    key: 'email',
+                    width: '15%',
+                  },
+                  {
+                    title: 'Código',
+                    dataIndex: 'codigo',
+                    key: 'codigo',
+                    width: '15%',
+                  },
+                  {
+                    title: 'Perfil',
+                    dataIndex: 'Perfil',
+                    key: 'Perfil',
+                    width: '15%',
+                  },
+                  {
+                    title: 'Acción',
+                    width: '20%',
+                    render: info => {
+                      return (
+                        <Row gutter={8} justify="center">
+                          <Col span={4} style={{ cursor: 'pointer' }}>
+                            <Tooltip
+                              title={modules && modules.configuration.users.edit
+                                ? "Editar" : "No tienes permisos."}>
+                              <Button
+                                shape='circle'
+                                disabled={!(modules && modules.configuration.users.edit)}
+                                onClick={(event, rowData) => {
+                                  this.seleccionarUsuario(rowData);
+                                  this.modalInsertar();
+                                }}
+                              >
+                                <EditOutlined />
+                              </Button>
+                            </Tooltip>
+                          </Col>
+                          <Col span={4} style={{ cursor: 'pointer' }}>
+                            <Tooltip
+                              title={modules && modules.configuration.users.edit
+                                ? "Eliminar" : "No tienes permisos."}>
+                              <Button
+                                shape='circle'
+                                disabled={!(modules && modules.configuration.users.edit)}
+                                onClick={(event, rowData) => {
+                                  this.seleccionarUsuario(rowData);
+                                  this.setState({ modalEliminar: true });
+                                }}
+                              >
+                                <DeleteOutlined />
+                              </Button>
+                            </Tooltip>
+                          </Col>
+                        </Row>
+                      )
+                    }
+                  }
+                ]}
+                bordered
+              />
+            </Col>
+          </Row>
         </div>
-
-        <div
-          className="form-group col-11"
-          style={{ float: 'left', padding: '30px 0 0 30px' }}
-        >
-          <Materialtable
-            title={'Lista de Usuarios'}
-            columns={columns}
-            data={this.state.data}
-            icons={iconList}
-            actions={[
-              {
-                icon: iconList.Edit,
-                tooltip: 'Editar',
-                onClick: (event, rowData) => {
-                  this.seleccionarUsuario(rowData);
-                  this.modalInsertar();
-                },
-              },
-              {
-                icon: iconList.Delete,
-                tooltip: 'Eliminar',
-                onClick: (event, rowData) => {
-                  this.seleccionarUsuario(rowData);
-                  this.setState({ modalEliminar: true });
-                },
-              },
-            ]}
-            options={{
-              actionsColumnIndex: -1,
-            }}
-            localization={{
-              header: { actions: 'Acciones' },
-            }}
-          />
-        </div>
-
         <Modal isOpen={this.state.modalInsertar}>
           <ModalHeader style={{ display: 'block' }}>
             <span

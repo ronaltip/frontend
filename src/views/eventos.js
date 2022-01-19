@@ -1,25 +1,27 @@
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
 import { TextField } from '@material-ui/core';
 import iconList from '../util/iconList';
-import {CalendarToday} from '@material-ui/icons';
-import SideBar from '../componentes/sidebar';
-import Cabecera from '../componentes/cabecera';
-import Footer  from '../componentes/footer';
+import { CalendarToday } from '@material-ui/icons';
+import Footer from '../componentes/footer';
 import {
   Col,
   message,
   Row,
   Table,
   Tooltip,
-  Input
+  Input,
+  Button
 } from 'antd';
 import '../css/styles.css';
+import HeaderSection from '../libs/headerSection/headerSection';
+import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 
-const URL = process.env.REACT_APP_API_HOST; 
+const URL = process.env.REACT_APP_API_HOST;
 const { Search } = Input;
+let modules = null;
 
 class viewEventos extends Component {
   state = {
@@ -59,15 +61,14 @@ class viewEventos extends Component {
       .then(response => {
         if (response.status === 200)
           this.setState({ data: response.data, dataSearch: response.data });
-        else
-        {
+        else {
           console.log(response.data);
           message.error('Ocurrió un error consultando los eventos, intente nuevamente')
         }
       })
       .catch(error => {
-          message.error('Ocurrió un error consultando los eventos, intente nuevamente')
-          console.log(error.message);
+        message.error('Ocurrió un error consultando los eventos, intente nuevamente')
+        console.log(error.message);
       });
   };
 
@@ -77,15 +78,14 @@ class viewEventos extends Component {
       .then(response => {
         if (response.status === 200)
           this.setState({ dataTipoEvento: response.data });
-        else
-        {
+        else {
           console.log(response.data);
           message.error('Ocurrió un error consultando los campos, intente nuevamente')
         }
       })
       .catch(error => {
-          message.error('Ocurrió un error consultando los tipos de evento, intente nuevamente')
-          console.log(error.message);
+        message.error('Ocurrió un error consultando los tipos de evento, intente nuevamente')
+        console.log(error.message);
       });
   };
 
@@ -95,65 +95,58 @@ class viewEventos extends Component {
       .then(response => {
         if (response.status === 200)
           this.setState({ dataWells: response.data });
-        else
-        {
+        else {
           console.log(response.data);
           message.error('Ocurrió un error consultando los pozos, intente nuevamente')
         }
       })
       .catch(error => {
-          message.error('Ocurrió un error consultando los pozos, intente nuevamente')
-          console.log(error.message);
+        message.error('Ocurrió un error consultando los pozos, intente nuevamente')
+        console.log(error.message);
       });
   };
 
   peticionPost = async () => {
     delete this.state.form.id;
-    let form = {...this.state.form}
-    if (this.state.showing === false) 
-    {
-      
+    let form = { ...this.state.form }
+    if (this.state.showing === false) {
+
       form.tipo_tiempo = 1;
       form.fecha_final = this.state.form.fecha_inicial;
       form.hora_final = this.state.form.hora_inicial;
       form.profundidad_final = this.state.form.profundidad_inicial;
-    } 
-    else 
-    {      
+    }
+    else {
       form.tipo_tiempo = 2;
     }
 
     await axios
       .post(URL + 'eventos', form)
       .then(response => {
-        if (response.status === 200)
-        {
+        if (response.status === 200) {
           this.modalInsertar();
           this.peticionGet();
           message.success('Evento creado con éxito')
         }
-        else
-        {
+        else {
           console.log(response.data);
           message.error('Ocurrió un error creando el evento, intente nuevamente')
         }
       })
       .catch(error => {
-          message.error('Ocurrió un error creando el evento, intente nuevamente')
-          console.log(error.message);
+        message.error('Ocurrió un error creando el evento, intente nuevamente')
+        console.log(error.message);
       });
   };
 
   peticionPut = () => {
     axios.put(URL + 'eventos', this.state.form).then(response => {
-      if (response.status === 200)
-      {
+      if (response.status === 200) {
         this.modalInsertar();
         this.peticionGet();
         message.success('Evento actualizado con éxito')
       }
-      else
-      {
+      else {
         console.log(response.data);
         message.error('Ocurrió un error actualizando el evento, intente nuevamente')
       }
@@ -170,14 +163,12 @@ class viewEventos extends Component {
     };
 
     axios.delete(URL + 'eventos', { data: datos }).then(response => {
-      if (response.status === 200)
-      {
+      if (response.status === 200) {
         this.setState({ modalEliminar: false });
         this.peticionGet();
         message.success('Evento eliminado con éxito')
       }
-      else
-      {
+      else {
         console.log(response.data);
         message.error('Ocurrió un error eliminando el evento, intente nuevamente')
       }
@@ -213,10 +204,10 @@ class viewEventos extends Component {
         pkuser: pkuser
       },
       tipoModal: 'insertar',
-      modalInsertar: !this.state.modalInsertar, 
+      modalInsertar: !this.state.modalInsertar,
       showing: false
     });
-  
+
   };
 
   modalEditar = (info) => {
@@ -263,7 +254,7 @@ class viewEventos extends Component {
         [e.target.name]: e.target.value,
       }
     });
-    
+
   };
 
   setFechaFinal() {
@@ -272,16 +263,17 @@ class viewEventos extends Component {
 
   onFilter = search => {
     let serched = search.target.value.toLowerCase();
-    const responseSearch = this.state.data.filter( ({nombre_pozo, nombre_tipo_eventos, profundidad_inicial, profundidad_final}) => {
+    const responseSearch = this.state.data.filter(({ nombre_pozo, nombre_tipo_eventos, profundidad_inicial, profundidad_final }) => {
       nombre_pozo = nombre_pozo.toLowerCase();
       nombre_tipo_eventos = nombre_tipo_eventos.toLowerCase();
-    
+
       return nombre_pozo.includes(serched) || nombre_tipo_eventos.includes(serched) || profundidad_inicial.includes(serched) || profundidad_final.includes(serched);
     });
-    this.setState({dataSearch:  responseSearch});
+    this.setState({ dataSearch: responseSearch });
   };
 
   componentDidMount() {
+    modules = JSON.parse(sessionStorage.getItem('modules'));
     this.peticionGet();
     this.peticionTipoEventosGet();
     this.peticionWellsGet();
@@ -292,17 +284,17 @@ class viewEventos extends Component {
     const { showing } = this.state;
 
     return (
-      <>
-        <Cabecera />
-        <SideBar />
-
-        <nav aria-label="breadcrumb" className='small'>
-          <ol className="breadcrumb">
-            <li className="breadcrumb-item">Cargue de Datos</li>
-            <li className="breadcrumb-item active" aria-current="page">Eventos</li>
-          </ol>
-        </nav>
-
+      <Fragment>
+        <HeaderSection
+          onClick={() => {
+            this.setState({ form: null, tipoModal: 'insertar' });
+            this.modalInsertar();
+          }}
+          titleButton="Agregar evento"
+          content='Cargue de Datos'
+          title={'Eventos'}
+          disabled={modules && modules.loadData.events.edit}
+        />
         <div className='container-xl'>
           <Row >
             <Col span={24}>
@@ -317,19 +309,8 @@ class viewEventos extends Component {
                 enterButton={false}
               />
             </Col>
-            <Col span={12} className='text-right'>
-              <button
-                className="btn btn-success btn-sm"
-                onClick={() => {
-                  this.setState({ form: null, tipoModal: 'insertar' });
-                  this.modalInsertar();
-                }}
-              >
-                <iconList.Add /> Agregar Evento
-              </button>
-            </Col>
           </Row>
-          <Row >
+          <Row style={{ marginTop: '10px' }}>
             <Col span={24}>
               <Table
                 tableLayout="fixed"
@@ -341,48 +322,64 @@ class viewEventos extends Component {
                   {
                     title: 'Pozo',
                     dataIndex: 'nombre_pozo',
-                    key: 'nombre_pozo'
+                    key: 'nombre_pozo',
+                    width: '25%',
                   },
                   {
                     title: 'Tipo de Evento',
                     dataIndex: 'nombre_tipo_eventos',
-                    key: 'nombre_tipo_eventos'
+                    key: 'nombre_tipo_eventos',
+                    width: '15%',
                   },
                   {
                     title: 'Fecha Inicial',
                     dataIndex: 'fecha_inicial',
-                    key: 'fecha_inicial'
+                    key: 'fecha_inicial',
+                    width: '10%',
                   },
                   {
                     title: 'Hora Inicial',
                     dataIndex: 'hora_inicial',
-                    key: 'hora_inicial'
+                    key: 'hora_inicial',
+                    width: '10%',
                   },
                   {
                     title: 'Profundidad Inicial',
                     dataIndex: 'profundidad_inicial',
-                    key: 'profundidad_inicial'
+                    key: 'profundidad_inicial',
+                    width: '15%',
                   },
                   {
                     title: 'Acción',
+                    width: '25%',
                     render: info => {
                       return (
-                      <Row gutter={8} justify="center">
-                        <Col span={4} style={{ cursor: 'pointer' }}>
-                          <Tooltip title="Editar">
-                            <span onClick={() => this.modalEditar(info)}>
-                              <iconList.Edit />
-                            </span>
-                          </Tooltip>
-                        </Col>
-                        <Col span={4} style={{ cursor: 'pointer' }}>
-                          <Tooltip title="Eliminar">
-                            <span onClick={() => this.modalEliminar(info)}>
-                              <iconList.Delete />
-                            </span>
-                          </Tooltip>
-                        </Col>
-                      </Row>
+                        <Row gutter={8} justify="center">
+                          <Col span={4} style={{ cursor: 'pointer' }}>
+                            <Tooltip
+                              title={modules && modules.loadData.events.edit
+                                ? "Editar" : "No tienes permisos."}>
+                              <Button
+                                shape='circle'
+                                disabled={!(modules && modules.loadData.events.edit)}
+                                onClick={() => this.modalEditar(info)}>
+                                <EditOutlined />
+                              </Button>
+                            </Tooltip>
+                          </Col>
+                          <Col span={4} style={{ cursor: 'pointer' }}>
+                            <Tooltip
+                              title={modules && modules.loadData.events.edit
+                                ? "Eliminar" : "No tienes permisos."}>
+                              <Button
+                                shape='circle'
+                                disabled={!(modules && modules.loadData.events.edit)}
+                                onClick={() => this.modalEliminar(info)}>
+                                <DeleteOutlined />
+                              </Button>
+                            </Tooltip>
+                          </Col>
+                        </Row>
                       )
                     }
                   }
@@ -391,7 +388,7 @@ class viewEventos extends Component {
               />
             </Col>
           </Row>
-        </div> 
+        </div>
 
         <Footer />
 
@@ -494,8 +491,8 @@ class viewEventos extends Component {
                 style={{ float: 'right' }}
                 onClick={() => this.setFechaFinal()}
               >
-                <CalendarToday style={{cursor:'pointer'}} /> Click
-                para { showing ? 'desactivar' : 'activar' } fecha final{' '}
+                <CalendarToday style={{ cursor: 'pointer' }} /> Click
+                para {showing ? 'desactivar' : 'activar'} fecha final{' '}
               </span>
 
               <div style={{ display: showing ? 'block' : 'none' }}>
@@ -637,7 +634,7 @@ class viewEventos extends Component {
             </button>
           </ModalFooter>
         </Modal>
-      </>
+      </Fragment>
     );
   }
 }

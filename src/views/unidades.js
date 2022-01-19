@@ -11,15 +11,16 @@ import {
   Table,
   Tooltip,
   Input,
-  Spin
+  Spin,
+  Button
 } from 'antd';
-import Cabecera from '../componentes/cabecera';
-import Sidebar from '../componentes/sidebar';
-import Footer  from '../componentes/footer';
+import Footer from '../componentes/footer';
+import HeaderSection from '../libs/headerSection/headerSection';
+import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 
 const URL = process.env.REACT_APP_API_HOST;
 const { Search } = Input;
-
+let modules = null;
 class viewUnidades extends Component {
   state = {
     data: [], dataSearch: [], loading: false,
@@ -37,17 +38,15 @@ class viewUnidades extends Component {
       .then(response => {
         if (response.status === 200)
           this.setState({ data: response.data, dataSearch: response.data, loading: false });
-        else
-        {
-          console.log(response.data);
+        else {
           message.error('Ocurrió un error consultando las unidades de medida, intente nuevamente')
           this.setLoading(false)
         }
       })
       .catch(error => {
-          message.error('Ocurrió un error consultando las unidades de medida, intente nuevamente')
-          console.log(error.message)
-          this.setLoading(false)
+        message.error('Ocurrió un error consultando las unidades de medida, intente nuevamente')
+        console.log(error.message)
+        this.setLoading(false)
       });
   };
 
@@ -56,34 +55,30 @@ class viewUnidades extends Component {
     await axios
       .post(URL + 'unidades', this.state.form)
       .then(response => {
-        if (response.status === 200)
-        {
+        if (response.status === 200) {
           this.modalInsertar();
           this.peticionGet();
           message.success('Unidad de medida creada con éxito')
         }
-        else
-        {
+        else {
           console.log(response.data);
           message.error('Ocurrió un error creando la unidad de medida, intente nuevamente')
         }
       })
       .catch(error => {
-          message.error('Ocurrió un error creando la unidad de medida, intente nuevamente')
-          console.log(error.message);
+        message.error('Ocurrió un error creando la unidad de medida, intente nuevamente')
+        console.log(error.message);
       });
   };
 
   peticionPut = () => {
     axios.put(URL + 'unidades', this.state.form).then(response => {
-      if (response.status === 200)
-      {
+      if (response.status === 200) {
         this.modalInsertar();
         this.peticionGet();
         message.success('Unidad de medida actualizado con éxito')
       }
-      else
-      {
+      else {
         console.log(response.data);
         message.error('Ocurrió un error actualizando la unidad de medida, intente nuevamente')
       }
@@ -100,14 +95,12 @@ class viewUnidades extends Component {
     };
 
     axios.delete(URL + 'unidades', { data: datos }).then(response => {
-      if (response.status === 200)
-      {
+      if (response.status === 200) {
         this.setState({ modalEliminar: false });
         this.peticionGet();
         message.success('Unidad de medida eliminada con éxito')
       }
-      else
-      {
+      else {
         console.log(response.data);
         message.error('Ocurrió un error eliminando la unidad de medida, intente nuevamente')
       }
@@ -121,9 +114,10 @@ class viewUnidades extends Component {
     let pkuser = JSON.parse(
       sessionStorage.getItem('user')
     ).pk_usuario_sesion;
-    this.setState({ modalInsertar: !this.state.modalInsertar,
-      tipoModal: 'insertar', 
-      form: { id: 0, nombre: '', tag: '', estado_id: '', pkuser: pkuser } 
+    this.setState({
+      modalInsertar: !this.state.modalInsertar,
+      tipoModal: 'insertar',
+      form: { id: 0, nombre: '', tag: '', estado_id: '', pkuser: pkuser }
     });
   };
 
@@ -163,19 +157,20 @@ class viewUnidades extends Component {
   };
 
   onFilter = search => {
-    const responseSearch = this.state.data.filter( ({nombre}) => {
+    const responseSearch = this.state.data.filter(({ nombre }) => {
       nombre = nombre.toLowerCase();
       return nombre.includes(search.target.value.toLowerCase());
     });
-    this.setState({dataSearch:  responseSearch});
+    this.setState({ dataSearch: responseSearch });
   };
-  
+
   setLoading = e => {
-    this.setState({loading: e})
+    this.setState({ loading: e })
   }
 
   componentDidMount() {
     this.peticionGet();
+    modules = JSON.parse(sessionStorage.getItem('modules'));
   }
 
   render() {
@@ -183,15 +178,16 @@ class viewUnidades extends Component {
 
     return (
       <>
-        <Cabecera />
-        <Sidebar />
-        <nav aria-label="breadcrumb" className='small'>
-          <ol className="breadcrumb">
-            <li className="breadcrumb-item">Configuración</li>
-            <li className="breadcrumb-item active" aria-current="page">Unidades de Medida</li>
-          </ol>
-        </nav>
-       
+        <HeaderSection
+          onClick={() => {
+            this.setState({ form: null, tipoModal: 'insertar' });
+            this.modalInsertar();
+          }}
+          titleButton="Agregar Unidad"
+          content='Configuración'
+          title={'Unidades de Medida'}
+          disabled={modules && modules.configuration.unitMeasurement.edit}
+        />
         <div className='container-xl'>
           <Row >
             <Col span={24}>
@@ -206,19 +202,8 @@ class viewUnidades extends Component {
                 enterButton={false}
               />
             </Col>
-            <Col span={12} className='text-right'>
-              <button
-                className="btn btn-success btn-sm"
-                onClick={() => {
-                  this.setState({ form: null, tipoModal: 'insertar' });
-                  this.modalInsertar();
-                }}
-              >
-                <iconList.Add /> Agregar Unidad
-              </button>
-            </Col>
           </Row>
-          <Row >
+          <Row style={{ marginTop: '10px' }}>
             <Col span={24}>
               <Table
                 tableLayout="fixed"
@@ -226,7 +211,7 @@ class viewUnidades extends Component {
                 dataSource={this.state.dataSearch}
                 rowKey="id"
                 key="id"
-                loading={{  indicator: <div><Spin /></div>, spinning: this.state.loading }}
+                loading={{ indicator: <div><Spin /></div>, spinning: this.state.loading }}
                 columns={[
                   {
                     title: 'Nombre',
@@ -238,27 +223,41 @@ class viewUnidades extends Component {
                     title: 'Tag',
                     dataIndex: 'tag',
                     key: 'tag',
+                    width: '30%',
                   },
                   {
                     title: 'Acción',
+                    width: '20%',
                     render: info => {
                       return (
-                      <Row gutter={8} justify="center">
-                        <Col span={4} style={{ cursor: 'pointer' }}>
-                          <Tooltip title="Editar">
-                            <span onClick={() => this.modalEditar(info)}>
-                              <iconList.Edit />
-                            </span>
-                          </Tooltip>
-                        </Col>
-                        <Col span={4} style={{ cursor: 'pointer' }}>
-                          <Tooltip title="Eliminar">
-                            <span onClick={() => this.modalEliminar(info)}>
-                              <iconList.Delete />
-                            </span>
-                          </Tooltip>
-                        </Col>
-                      </Row>
+                        <Row gutter={8} justify="center">
+                          <Col span={4} style={{ cursor: 'pointer' }}>
+                            <Tooltip
+                              title={modules && modules.configuration.unitMeasurement.edit
+                                ? "Editar" : "No tienes permisos."}>
+                              <Button
+                                shape='circle'
+                                disabled={!(modules && modules.configuration.unitMeasurement.edit)}
+                                onClick={() => this.modalEditar(info)}
+                              >
+                                <EditOutlined
+                                /></Button>
+                            </Tooltip>
+                          </Col>
+                          <Col span={4} style={{ cursor: 'pointer' }}>
+                            <Tooltip
+                              title={modules && modules.configuration.unitMeasurement.edit
+                                ? "Eliminar" : "No tienes permisos."}>
+                              <Button
+                                shape='circle'
+                                disabled={!(modules && modules.configuration.unitMeasurement.edit)}
+                                onClick={() => this.modalEliminar(info)}
+                              >
+                                <DeleteOutlined />
+                              </Button>
+                            </Tooltip>
+                          </Col>
+                        </Row>
                       )
                     }
                   }
@@ -267,7 +266,7 @@ class viewUnidades extends Component {
               />
             </Col>
           </Row>
-        </div> 
+        </div>
 
         <Footer />
 

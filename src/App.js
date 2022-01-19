@@ -11,12 +11,7 @@ const App = () => {
     return (window.location.href = '/');
   } else {
     return (
-      <BrowserRouter>
-        <Switch>
-          <Route exact path="/" component={Login} />
-          <Routes />
-        </Switch>
-      </BrowserRouter>
+      <Routes />
     );
   }
 };
