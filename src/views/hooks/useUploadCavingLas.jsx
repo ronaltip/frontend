@@ -13,6 +13,7 @@ const useUploadCavingLas = (typeFile, modules) => {
   const [isActiveUpload, setIsActiveUpload] = useState(false);
   const [listCurves, setListCurves] = useState([]);
   const [userStorage, setUserStorage] = useState({});
+  const [isVisible, setIsVisible] = useState({ status: false, data: null });
   const [listRegistersFilter, setListRegistersFilter] = useState([]);
   const [homologationRow, setHomologationRow] = useState({
     resultArray: [],
@@ -84,7 +85,12 @@ const useUploadCavingLas = (typeFile, modules) => {
               <Button
                 shape="circle"
                 disabled={!modules}
-                onClick={() => commandDeteteRegister(info_upload)}
+                onClick={() =>
+                  setIsVisible({
+                    status: true,
+                    data: info_upload,
+                  })
+                }
               >
                 <DeleteOutlined />
               </Button>
@@ -141,6 +147,7 @@ const useUploadCavingLas = (typeFile, modules) => {
   };
 
   const commandDeteteRegister = value => {
+    onCancelDelete();
     var payload = {
       id: value.id,
       pkuser:
@@ -309,6 +316,10 @@ const useUploadCavingLas = (typeFile, modules) => {
       : setListRegistersFilter(responseSearch);
   };
 
+  const onCancelDelete = () => {
+    setIsVisible({ status: false, data: null });
+  };
+
   return {
     userStorage,
     columns,
@@ -323,6 +334,9 @@ const useUploadCavingLas = (typeFile, modules) => {
     onClickCancel,
     onClickInsert,
     onClickSave,
+    onCancelDelete,
+    isVisible,
+    commandDeteteRegister,
   };
 };
 

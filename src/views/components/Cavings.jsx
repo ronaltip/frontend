@@ -4,6 +4,7 @@ import ModalHomologation from '../../libs/modalHomologation/modalHomologation';
 import { Col, Row, Table, Input } from 'antd';
 import useUploadCavingLas from '../hooks/useUploadCavingLas';
 import ModalUpload from '../../libs/modalUpload/modalUpload';
+import ConfirmationAlert from '../../libs/ConfirmationAlert/ConfirmationAlert';
 
 const { Search } = Input;
 let modules = null;
@@ -27,10 +28,18 @@ const Cavings = () => {
     onClickCancel,
     onClickInsert,
     onClickSave,
+    commandDeteteRegister,
+    isVisible,
+    onCancelDelete,
   } = useUploadCavingLas('CAVING', modules && modules.loadData.cavings.edit);
 
   return (
     <Fragment>
+      <ConfirmationAlert
+        onClickGo={() => commandDeteteRegister(isVisible.data)}
+        isVisible={isVisible.status}
+        onCancel={onCancelDelete}
+      />
       <HeaderSection
         onClick={clickOpenFileUpload}
         titleButton="Archivo CAVING"

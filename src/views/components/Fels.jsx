@@ -6,6 +6,7 @@ import 'react-image-crop/dist/ReactCrop.css';
 
 import useFels from '../hooks/useFels';
 import HeaderSection from '../../libs/headerSection/headerSection';
+import ConfirmationAlert from '../../libs/ConfirmationAlert/ConfirmationAlert';
 const { Search } = Input;
 let modules = null;
 
@@ -20,6 +21,11 @@ const Fels = () => {
 
   return (
     <Fragment>
+      <ConfirmationAlert
+        onClickGo={() => functions.commandDeteteRegister(states.isVisible.data)}
+        isVisible={states.isVisible.status}
+        onCancel={functions.onCancelDelete}
+      />
       <HeaderSection
         onClick={functions.clickOpenFileUpload}
         titleButton="Archivo Fels"

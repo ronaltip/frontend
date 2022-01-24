@@ -4,6 +4,7 @@ import ModalUpload from '../../libs/modalUpload/modalUpload';
 import ModalHomologation from '../../libs/modalHomologation/modalHomologation';
 import { Col, Input, Row, Table } from 'antd';
 import useUploadCavingLas from '../hooks/useUploadCavingLas';
+import ConfirmationAlert from '../../libs/ConfirmationAlert/ConfirmationAlert';
 
 const { Search } = Input;
 let modules = null;
@@ -27,10 +28,18 @@ const ArchivoLas = () => {
     onClickCancel,
     onClickInsert,
     onClickSave,
+    commandDeteteRegister,
+    isVisible,
+    onCancelDelete,
   } = useUploadCavingLas('LAS', modules && modules.loadData.las.edit);
 
   return (
     <Fragment>
+      <ConfirmationAlert
+        onClickGo={() => commandDeteteRegister(isVisible.data)}
+        isVisible={isVisible.status}
+        onCancel={onCancelDelete}
+      />
       <HeaderSection
         onClick={clickOpenFileUpload}
         titleButton="Archivo Las"

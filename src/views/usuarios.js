@@ -227,8 +227,8 @@ class viewUsuario extends Component {
                               <Button
                                 shape='circle'
                                 disabled={!(modules && modules.configuration.users.edit)}
-                                onClick={(event, rowData) => {
-                                  this.seleccionarUsuario(rowData);
+                                onClick={() => {
+                                  this.seleccionarUsuario(info);
                                   this.modalInsertar();
                                 }}
                               >
@@ -243,8 +243,8 @@ class viewUsuario extends Component {
                               <Button
                                 shape='circle'
                                 disabled={!(modules && modules.configuration.users.edit)}
-                                onClick={(event, rowData) => {
-                                  this.seleccionarUsuario(rowData);
+                                onClick={() => {
+                                  this.seleccionarUsuario(info);
                                   this.setState({ modalEliminar: true });
                                 }}
                               >

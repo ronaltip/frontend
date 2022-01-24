@@ -22,6 +22,7 @@ const useFels = modules => {
   const [registerRowId, setRegisterRowId] = useState('');
   const [upImg, setUpImg] = useState();
   const [listRegistersFilter, setListRegistersFilter] = useState([]);
+  const [isVisible, setIsVisible] = useState({ status: false, data: null });
 
   const [crop, setCrop] = useState({
     unit: '%',
@@ -92,7 +93,12 @@ const useFels = modules => {
             <Button
               shape="circle"
               disabled={!modules}
-              onClick={() => commandDeteteRegister(info_upload)}
+              onClick={() =>
+                setIsVisible({
+                  status: true,
+                  data: info_upload,
+                })
+              }
             >
               <DeleteOutlined />
             </Button>
@@ -138,7 +144,12 @@ const useFels = modules => {
     setIsActive(true);
   };
 
+  const onCancelDelete = () => {
+    setIsVisible({ status: false, data: null });
+  };
+
   const commandDeteteRegister = value => {
+    onCancelDelete();
     var payload = {
       id: value.id,
     };
@@ -309,6 +320,7 @@ const useFels = modules => {
       upImg,
       crop,
       stepFields,
+      isVisible,
     },
     listResponse: { listRegistersFilter, listWells },
     functions: {
@@ -320,6 +332,8 @@ const useFels = modules => {
       setCrop,
       makeClientCrop,
       setStepFields,
+      onCancelDelete,
+      commandDeteteRegister,
     },
   };
 };
